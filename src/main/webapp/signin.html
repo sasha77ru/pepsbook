@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pepsbook login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+
+    </script>
+</head>
+<body>
+<div style="position: absolute; left: 50%; top: 10%;">
+    <div style="position: relative; left: -50%;padding: 10px">
+        <div class="card border-primary mb-3" style="max-width: 20rem;">
+            <div class="card-header">Новый пользователь</div>
+            <div class="card-body">
+                <form action="/rest/addUser" name="signInForm" method="post">
+                    <input class="form-control form-control-lg" type="text" placeholder="Name" name="name" style="display: block;margin: 1em 0">
+                    <input class="form-control form-control-lg" type="text" placeholder="Email" name="email" style="display: block;margin: 1em 0">
+                    <input class="form-control form-control-lg" type="text" placeholder="Country" name="country" style="display: block;margin: 1em 0">
+                    <a class="btn btn-primary btn-lg" role="button" onclick="signInForm.submit()" href="javascript:undefined" style="width: 100%">Добавить</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
