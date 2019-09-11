@@ -13,8 +13,8 @@
 </thead>
 <tbody>
 	<%--@elvariable id="lizt" type="java.util.List"--%>
-	<%--@elvariable id="i" type="ru.sasha77.spring.pepsbook.User"--%>
-	<%--@elvariable id="currUser" type="ru.sasha77.spring.pepsbook.User"--%>
+    <%--@elvariable id="i" type="ru.sasha77.spring.pepsbook.User"--%>
+    <%--@elvariable id="currUser" type="ru.sasha77.spring.pepsbook.User"--%>
 	<c:forEach var="i" items="${lizt}">
 	<tr>
 		<td>${i.name}</td>

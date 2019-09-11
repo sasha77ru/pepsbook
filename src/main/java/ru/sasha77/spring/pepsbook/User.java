@@ -1,106 +1,96 @@
 package ru.sasha77.spring.pepsbook;
 
 
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import static ru.sasha77.spring.pepsbook.ToolsKt.getNewCookie;
-
-@Entity // This tells Hibernate to make a table out of this class
+@ToString(onlyExplicitlyIncluded = true)
+@Data
+@NoArgsConstructor(access=AccessLevel.PRIVATE, force=true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Entity
 @Table(name="users")
-public class User {
-    @Id
+public class User implements UserDetails {
+    @Setter
+	@EqualsAndHashCode.Include
+	@Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
-    private String name;
+	@Setter
+	@ToString.Include
+	private String name;
 
+	@SuppressWarnings("unused")
+	@Setter
+	@ToString.Include
 	@Column(unique = true)
 	private String email;
 
+	@SuppressWarnings("unused")
+	@Setter
+	@ToString.Include
 	private String country;
 
+	@Setter
 	@Column(unique = true)
-	private String keyCookie;
+	private String username;
 
-	public Set<User> getFriends() {
-		return friends;
-	}
+	@Setter
+	private String password;
 
-	public Set<User> getMates() {
-		return mates;
-	}
+	@Setter
+	private boolean enabled;
 
+	@Setter
 	@ManyToMany(/*cascade = {CascadeType.ALL},*/ fetch = FetchType.EAGER)
 	@JoinTable(name="friendship",
 			joinColumns = @JoinColumn(name="user_id"),
 			inverseJoinColumns = @JoinColumn(name="friend_id"))
 	private Set<User> friends = new HashSet<>();
 
+	@Setter
 	@ManyToMany(mappedBy = "friends", fetch = FetchType.EAGER)
 	private Set<User> mates = new HashSet<>();
 
-	@SuppressWarnings("unused")
-	public User() {}
-
-	public User(String name, String email, String country) {
+	public User(String name, String email, String country, String username, String password) {
 		this.name = name;
 		this.email = email;
 		this.country = country;
-		this.keyCookie = getNewCookie();
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	@SuppressWarnings("unused")
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getCountry() {
-		return country;
-	}
-
-	@SuppressWarnings("unused")
-	public void setCountry(String country) {
-		this.country = country;
-	}
-
-	public String getKeyCookie() {
-		return keyCookie;
-	}
-
-	void setKeyCookie(String keyCookie) {
-		this.keyCookie = keyCookie;
+		this.username = username;
+		this.password = password;
+		this.enabled = true;
 	}
 
 	@Override
-	public String toString() {
-		return "User{" +
-				"id=" + id +
-				", name='" + name + '\'' +
-				", email='" + email + '\'' +
-				", country='" + country + '\'' +
-				'}';
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	UserSimple getUserSimple () {
+		return new UserSimple(id, name, email);
+	}
+
+
 }
 

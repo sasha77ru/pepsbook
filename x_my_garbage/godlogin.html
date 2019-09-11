@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pepsbook login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+        function myOnLoad() {
+            //get all users from server and fill the selector by them
+            $.ajax("/rest/allUsersSimple", {method:"GET"})
+                .done(function (data) {
+                    for (var i in data) {
+                        var opt = document.createElement("option")
+                        opt.value = data[i].email
+                        opt.innerHTML = data[i].name
+                        selector.appendChild(opt)
+                    }
+                })
+        }
+        function onChangeSelector(login) {
+            //onChange selector get keyCookie from server and reload with it to get in
+            $.ajax("/rest/checkUser",{data:{"login" : login},method:"GET"})
+                .done(function (data) {document.location.reload(true)})
+                .fail(function (x) {if (x.status==401) {alert("Wrong user")}})
+        }
+    </script>
+</head>
+<body onload="myOnLoad()">
+<div style="position: absolute; left: 50%; top: 10%;">
+    <div style="position: relative; left: -50%;padding: 10px">
+        <div class="card border-primary mb-3" style="max-width: 20rem;">
+            <div class="card-header">Вход</div>
+            <div class="card-body">
+                <select class="custom-select" id="selector" onchange="onChangeSelector(this.value)">
+                    <option selected="" value="" id="toKill">Существующий пользователь</option>
+                </select>
+                <a class="nav-link" href="signin.html" style="width: 1;text-align: center">Новый пользователь</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

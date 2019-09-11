@@ -5,7 +5,11 @@ create table users
     name varchar(100) null,
     email varchar(100) null,
     country varchar(100) null,
-    key_cookie varchar(255) null
+    username varchar(20) null,
+    password varchar(100) null,
+    enabled tinyint(1) default 1 not null,
+    constraint users_username_uindex
+        unique (username)
 );
 
 create table minds
