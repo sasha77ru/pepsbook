@@ -4,13 +4,17 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Comparator;
@@ -22,8 +26,7 @@ public class MainController {
 	private final UserRepository userRepository;
 	private final MindRepository mindRepository;
 
-	final
-	PasswordEncoder passwordEncoder;
+	private final PasswordEncoder passwordEncoder;
 
 	public MainController(UserRepository userRepository, MindRepository mindRepository, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
@@ -44,13 +47,31 @@ public class MainController {
 	}
 
 	@GetMapping(path = "/register")
-	public String registerForm() {
-		return "register.html";
+	public String registerForm(UserRegister form) {
+		return "register";
 	}
 
 	@PostMapping(path = "/register")
-	public String processRegistration(UserRegister form) {
+	public String submitRegistration(@Valid UserRegister form, Errors errors, HttpServletRequest request) {
+		if (userRepository.findByUsername(form.getUsername()) != null) {
+			errors.rejectValue("repeatPassword","","Такой username уже существует");
+		}
+		if (userRepository.findByEmail(form.getEmail()) != null) {
+			errors.rejectValue("repeatPassword","","Такой email уже существует");
+		}
+		if (!form.getPassword().equals(form.getRepeatPassword())) {
+			errors.rejectValue("repeatPassword","","Пароли не совпадают");
+		}
+		if (errors.hasErrors()) {
+		    return "register";
+        }
 		userRepository.save(form.toUser(passwordEncoder));
+//        securityService.autologin(form.getUsername(), form.getPassword());
+		try {
+			request.login(form.getUsername(), form.getPassword());
+		} catch (ServletException e) {
+			return "register";
+		}
 		return "redirect:/";
 	}
 
@@ -64,7 +85,7 @@ public class MainController {
 	public ModelAndView users (@NotNull Principal principal, String subs) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("WEB-INF/users.jsp");
+		mv.setViewName("users");
 		mv.addObject("currUser",user);
 		mv.addObject("lizt", userRepository.findLike(subs!=null?subs:"",user.getId()));
 		return mv;
@@ -79,7 +100,7 @@ public class MainController {
 	public ModelAndView friends (@NotNull Principal principal, String subs) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("/WEB-INF/users.jsp");
+		mv.setViewName("users");
 		mv.addObject("currUser",user);
 		mv.addObject("lizt", user.getFriends().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList()));
 		return mv;
@@ -94,7 +115,7 @@ public class MainController {
 	public ModelAndView mates (@NotNull Principal principal, String subs) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("/WEB-INF/users.jsp");
+		mv.setViewName("users");
 		mv.addObject("currUser",user);
 		mv.addObject("lizt", user.getMates().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList()));
 		return mv;
@@ -109,7 +130,7 @@ public class MainController {
 	public ModelAndView minds (@NotNull Principal principal, String subs) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("/WEB-INF/minds.jsp");
+		mv.setViewName("minds");
 		mv.addObject("currUser", user);
 		mv.addObject("lizt", mindRepository.findLike(subs==null?"":subs));
 		return mv;

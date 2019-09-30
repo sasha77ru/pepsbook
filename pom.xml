@@ -147,7 +147,22 @@
 			<scope>provided</scope>
 		</dependency>
 
-    </dependencies>
+		<!-- Thymeleaf -->
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
+		<!-- Selenium -->
+
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-chrome-driver</artifactId>
+			<version>3.9.1</version>
+		</dependency>
+
+	</dependencies>
 
 	<build>
 		<plugins>

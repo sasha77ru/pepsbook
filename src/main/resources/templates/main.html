@@ -124,8 +124,9 @@
          * @param mindId undefined if new mind
          */
         function openNewMindWindow(menuThis,mindId) {
+            if (document.getElementById("mindWindow")) return //to not open second window
             let win = document.createElement("div")
-            let text = menuThis ? $(menuThis).closest('.mindEntity').find(".mindText")[0].innerHTML : ""
+            let text = menuThis ? $(menuThis).closest(".mindEntity").find(".mindText")[0].innerHTML : "" //CRUTCH: text is got from the page
             with (win) {
                 setAttribute("id","mindWindow")
                 setAttribute("class","alert alert-dismissible alert-success")
@@ -133,6 +134,7 @@
                     '<button type="button" class="close" data-dismiss="alert">&times;</button>\n' +
                     '<label for="mindTextarea">Мысль:</label>' +
                     '<div contenteditable id="mindTextarea">'+text+'</div>\n' +
+                    '<div id="mindErrSign" style="display: none"></div>' +
                     '<button type="button" class="btn btn-primary" onclick="saveMind('+mindId+')" style="margin-top: 1em">Опубликовать</button>'
             }
             document.body.append(win)
@@ -143,6 +145,18 @@
          * @param id
          */
         function saveMind(id) {
+            /* Length validation */
+            if (mindTextarea.innerText.length > 4) {
+                with (mindErrSign) {
+                    style.display = "";
+                    innerHTML =
+                        '<div class="alert alert-dismissible alert-danger">\n' +
+                        '  <button type="button" class="close" data-dismiss="alert">&times;</button>\n' +
+                        '  <p class="mb-0">Слишком длинная мысль. Максимальная длинна 4000</p>' +
+                        '</div>'
+                }
+                return
+            }
             $.ajax("/rest/saveMind",{data:{text : mindTextarea.innerText, id : id||0},method:"POST"})
                 .done(function (data, status) {
                     onChangeFilter()
@@ -155,7 +169,7 @@
          * @param id
          */
         function removeMind(id) {
-            $.ajax("/rest/removeMind",{data:{id : id},method:"POST"})
+            $.ajax("/rest/removeMind",{data:{id : id},method:"DELETE"})
                 .done (function (data, status) {
                     if (status != "success"||data.search(/^error/)>=0) {onError(data||"bad status="+status);return};
                     onChangeFilter()
@@ -191,7 +205,7 @@
                 <a class="nav-link" href="javascript:undefined" onclick="changeView(this.parentNode,'minds')">Мысли <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="javascript:undefined" onclick="changeView(this.parentNode,'users')">Другие</a>
+                <a class="nav-link" href="javascript:undefined" onclick="changeView(this.parentNode,'users')" id="mainMenuOthers">Другие</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="javascript:undefined" onclick="changeView(this.parentNode,'friends')">Друзья</a>

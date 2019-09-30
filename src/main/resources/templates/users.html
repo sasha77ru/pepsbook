@@ -1,0 +1,38 @@
+<thh xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:th="http://www.thymeleaf.org">
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th scope="col">Имя</th>
+        <th scope="col">Страна</th>
+        <th scope="col"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="i : ${lizt}">
+        <td th:text="${i.name}"></td>
+        <td th:text="${i.country}"></td>
+        <td>
+            <ul class="nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>
+                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
+                        <a class="dropdown-item toFriends"
+                           href="javascript:undefined"
+                           th:onclick="@{${currUser.friends.contains(i) ? 'toFriends' : 'fromFriends'}+'(this.parentNode,'+${i.id}+')'}"
+                           th:text="${currUser.friends.contains(i) ? 'В друзья' : 'Из друзей'}"></a>
+                    </div>
+                </li>
+                <li class="friendship">
+                    <span th:class="badge"
+                        th:classappend="${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'badge-success':'badge-primary') : 'badge-secondary'"
+                        th:text=       "${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'Взаимный Друг':'ПолуДруг') : 'Почитатель'">
+                    </span>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</thh>

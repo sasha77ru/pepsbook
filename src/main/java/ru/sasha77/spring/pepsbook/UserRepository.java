@@ -16,5 +16,5 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 //    Iterable<User> findUsersByNameContainsAndIdIsNotOrCountryContainsAndIdIsNot(String subs1, Integer id1, String subs2, Integer id2);
 
     User findByUsername(String username);
-    User findUserByEmail(String name);
+    User findByEmail(String name);
 }

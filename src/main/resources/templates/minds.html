@@ -1,0 +1,25 @@
+<thh xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<div th:each="i : ${lizt}" class="card mb-3 mindEntity"
+     th:classappend="${i.user.id==currUser.id} ? 'border-primary' : 'border-light'">
+    <div class="card-header">
+        <span th:text="${i.time}"></span>
+        <span class="nav-item dropdown" style="display: inline">
+              <a style="display: inline" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>
+                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
+                        <a th:if="${i.user.id==currUser.id}" class="dropdown-item ownerMenu" href="javascript:undefined"
+                           th:onclick="@{'openNewMindWindow(this,'+${i.id}+')'}">Редактировать</a>
+                        <a th:if="${i.user.id==currUser.id}" class="dropdown-item ownerMenu"
+                           th:href="@{'javascript:removeMind('+${i.id}+')'}">Удалить</a>
+                        <a class="dropdown-item">Ответить</a>
+                    </div>
+        </span>
+    </div>
+    <div class="card-body">
+        <h4 class="card-title" th:text="${i.user.name}"></h4>
+        <p class="card-text mindText" th:text="${i.text}"></p>
+    </div>
+</div>
+<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow()" role="button" style="display: block;width: 40%;margin: 1em auto">Новая мысль</a>
+</thh>

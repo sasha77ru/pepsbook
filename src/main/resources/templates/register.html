@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pepsbook registration</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+<div style="position: absolute; left: 50%; top: 10%;">
+    <div style="position: relative; left: -50%;padding: 10px">
+        <div class="card border-primary mb-3" style="max-width: 20rem;">
+            <div class="card-header">Новый пользователь</div>
+            <div class="card-body">
+                <form action="/register" id="signInForm" method="post" th:object="${userRegister}">
+                    <input class="form-control form-control-lg" type="text" placeholder="Логин" name="username"
+                           style="display: block;margin: 1em 0" th:field="*{username}">
+                    <div  class="alert alert-dismissible alert-danger"
+                           th:if="${#fields.hasErrors('username')}"
+                           th:errors="*{username}"></div>
+                    <input class="form-control form-control-lg" type="text" placeholder="Пароль"
+                           name="password" id="password"
+                           style="display: block;margin: 1em 0" th:field="${userRegister.password}">
+                    <div  class="alert alert-dismissible alert-danger"
+                           th:if="${#fields.hasErrors('password')}"
+                           th:errors="*{password}"></div>
+                    <input class="form-control form-control-lg" type="text" placeholder="Пароль еще раз"
+                           name="repeatPassword" id="repeatPassword"
+                           style="display: block;margin: 1em 0" th:field="*{repeatPassword}">
+                    <div  class="alert alert-dismissible alert-danger"
+                          th:if="${#fields.hasErrors('repeatPassword')}"
+                          th:errors="*{repeatPassword}"></div>
+                    <input class="form-control form-control-lg" type="text" placeholder="Имя" name="name"
+                           style="display: block;margin: 1em 0" th:field="*{name}">
+                    <div  class="alert alert-dismissible alert-danger"
+                          th:if="${#fields.hasErrors('name')}"
+                          th:errors="*{name}"></div>
+                    <input class="form-control form-control-lg" type="text" placeholder="Email" name="email"
+                           style="display: block;margin: 1em 0" th:field="*{email}">
+                    <div  class="alert alert-dismissible alert-danger"
+                          th:if="${#fields.hasErrors('email')}"
+                          th:errors="*{email}"></div>
+                    <input class="form-control form-control-lg" type="text" placeholder="Страна" name="country"
+                           style="display: block;margin: 1em 0" th:field="*{country}">
+                    <div  class="alert alert-dismissible alert-danger"
+                          th:if="${#fields.hasErrors('country')}"
+                          th:errors="*{country}"></div>
+                    <a class="btn btn-primary btn-lg" role="button" onclick="signInForm.submit()" href="javascript:undefined" style="width: 100%">Добавить</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -97,7 +97,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
      * Than does actualUsersArray = tstUsersArray, actualMindsArray = tstMindsArray
      * if friendship==false then friendship information ignored
      */
-    fun fillDB (friendship : Boolean = true) {
+    fun fillDB (friendship : Boolean = true, minds : Boolean = true) {
 
         tstUsersArray =
                 listOf(
@@ -139,7 +139,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
             }
             usersRepo.save(theUser.user)
         }
-        tstMindsArray.forEach { mindsRepo.save(Mind(it.text, tstUsersArray.getByName(it.user).user)) }
+        if (minds) tstMindsArray.forEach { mindsRepo.save(Mind(it.text, tstUsersArray.getByName(it.user).user)) }
     }
 
     /**
