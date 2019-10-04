@@ -1,0 +1,14 @@
+INSERT INTO pepsbook.users (id, name, email, country, username, password, enabled) VALUES (1382, 'Porky', 'porky@pig.com', 'USA', 'porky', '$2a$10$bFGAzF1a/v.snHXyOg4x1.gDG4NEZMojufBaf40Ay5EQs/4NRh8T2', 1);
+INSERT INTO pepsbook.users (id, name, email, country, username, password, enabled) VALUES (1383, 'Pluto', 'pluto@dog.com', 'USA', 'pluto', '$2a$10$Ws7lVRHhITcJnKroZCBUeOM0NFMe6rYv5wG/sa6K74pu9l2GaUN46', 1);
+INSERT INTO pepsbook.users (id, name, email, country, username, password, enabled) VALUES (1384, 'Masha', 'masha@child.com', 'Russia', 'masha', '$2a$10$uCoc2BBPHvSyhYGwK4xwfuFreud0qKmnlZByYCs738scNr4zBe2KW', 1);
+INSERT INTO pepsbook.users (id, name, email, country, username, password, enabled) VALUES (1385, 'Luntik', 'luntik@alien.com', 'Russia', 'luntik', '$2a$10$e2hITYGYc8cniFhB5.fVa.P0l6WakB2orqGdxLPf3HCU/AAqBc7YC', 1);
+INSERT INTO pepsbook.friendship (user_id, friend_id) VALUES (1383, 1382);
+INSERT INTO pepsbook.friendship (user_id, friend_id) VALUES (1385, 1382);
+INSERT INTO pepsbook.friendship (user_id, friend_id) VALUES (1382, 1383);
+INSERT INTO pepsbook.friendship (user_id, friend_id) VALUES (1382, 1384);
+INSERT INTO pepsbook.minds (id, text, user_id, time) VALUES (1322, 'Hru-hru', 1382, '2019-10-04 15:04:52');
+INSERT INTO pepsbook.minds (id, text, user_id, time) VALUES (1323, 'Gaff-gaff', 1383, '2019-10-04 15:04:52');
+INSERT INTO pepsbook.minds (id, text, user_id, time) VALUES (1324, 'Понятненько', 1384, '2019-10-04 15:04:52');
+INSERT INTO pepsbook.minds (id, text, user_id, time) VALUES (1325, 'Я лунная пчела', 1385, '2019-10-04 15:04:52');
+INSERT INTO pepsbook.answers (id, text, mind_id, user_id, time) VALUES (61, 'Вы свинья', 1322, 1384, '2019-10-04 15:04:52');
+INSERT INTO pepsbook.answers (id, text, mind_id, user_id, time) VALUES (62, 'Соласен', 1322, 1385, '2019-10-04 15:04:52');

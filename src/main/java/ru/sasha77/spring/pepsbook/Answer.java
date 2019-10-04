@@ -4,37 +4,36 @@ package ru.sasha77.spring.pepsbook;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Date;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
-@Table(name="minds")
-public class Mind {
+@Table(name="answers")
+public class Answer {
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
     private String text;
 
-    @OneToMany(mappedBy = "mind", fetch = FetchType.EAGER)
-    @OrderBy("time")
-    @ToString.Exclude
-    private List<Answer> answers = new ArrayList<>();
-
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date time = new Date();
+    @ManyToOne
+    @JoinColumn(name = "mind_id",referencedColumnName = "id", nullable = false)
+    private Mind mind;
 
 	@ManyToOne
 	@JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
     private User user;
 
-	public Mind(String text, User user) {
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date time = new Date();
+
+	public Answer(String text, Mind mind, User user) {
 		this.text = text;
+		this.mind = mind;
 		this.user = user;
 	}
-
 }
 

@@ -9,17 +9,36 @@
               <a style="display: inline" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>
                     <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
                         <a th:if="${i.user.id==currUser.id}" class="dropdown-item ownerMenu" href="javascript:undefined"
-                           th:onclick="@{'openNewMindWindow(this,'+${i.id}+')'}">Редактировать</a>
+                           th:onclick="@{'openNewMindWindow(\'mind\',this,'+${i.id}+')'}">Редактировать</a>
                         <a th:if="${i.user.id==currUser.id}" class="dropdown-item ownerMenu"
-                           th:href="@{'javascript:removeMind('+${i.id}+')'}">Удалить</a>
-                        <a class="dropdown-item">Ответить</a>
+                           th:href="@{'javascript:removeMind(\'mind\','+${i.id}+')'}">Удалить</a>
+                        <a class="dropdown-item" href="javascript:undefined"
+                           th:onclick="@{'openNewMindWindow(\'answer\',this,undefined,'+${i.id}+')'}">
+                            Ответить</a>
                     </div>
         </span>
     </div>
     <div class="card-body">
         <h4 class="card-title" th:text="${i.user.name}"></h4>
         <p class="card-text mindText" th:text="${i.text}"></p>
+        <div th:each="j : ${i.answers}" class="answerEntity" style="margin-left: 2em">
+            <strong th:text="${j.user.name}" style="margin-right: 1em"></strong>
+            <span class="answerText" th:text="${j.text}"></span>
+            <em th:text="${j.time}" style="margin-left: 1em"></em>
+            <span class="nav-item dropdown" style="display: inline">
+              <a style="display: inline" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>
+                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
+                        <a th:if="${j.user.id==currUser.id}" class="dropdown-item ownerMenu" href="javascript:undefined"
+                           th:onclick="@{'openNewMindWindow(\'answer\',this,'+${j.id}+','+${i.id}+')'}">Редактировать</a>
+                        <a th:if="${j.user.id==currUser.id}" class="dropdown-item ownerMenu"
+                           th:href="@{'javascript:removeMind(\'answer\','+${j.id}+')'}">Удалить</a>
+                        <a class="dropdown-item" href="javascript:undefined"
+                           th:onclick="@{'openNewMindWindow(\'answer\',this,undefined,'+${j.id}+',\'@'+${j.user.name}+'&nbsp;\')'}">
+                            Ответить</a>
+                    </div>
+            </span>
+        </div>
     </div>
 </div>
-<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow()" role="button" style="display: block;width: 40%;margin: 1em auto">Новая мысль</a>
+<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow('mind')" role="button" style="display: block;width: 40%;margin: 1em auto">Новая мысль</a>
 </thh>

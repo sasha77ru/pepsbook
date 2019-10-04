@@ -15,9 +15,9 @@ import javax.servlet.http.HttpServletResponse
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 
 @RunWith(SpringRunner::class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = [PepsbookApplication::class])
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc
-//@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
+@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
 class XTest {
@@ -38,6 +38,7 @@ class XTest {
     @Throws(Exception::class)
     fun tst0002_Friendship() {
         with (tao) {
+            //Fill Db wo friendship
             fillDB(friendship = false)
             currName = "Porky"
 
@@ -82,34 +83,26 @@ class XTest {
             fillDB()
         }
     }
-//
-//    @Test
-//    @Throws(Exception::class)
-//    fun tst0004_LoginLogoff() {
-//        with (tao) {
-//            fillDB()
-//            currName = "Porky"
-//
-//            allUsersSimple()
-//            checkUser("porky@pig.com")
-//            checkUser("wrongLogin",sc = HttpServletResponse.SC_UNAUTHORIZED)
-//            getUser()
-//
-//            logOff()
-//            logOff(all = true)
-//            getUser(sc = HttpServletResponse.SC_UNAUTHORIZED)
-//        }
-//    }
 
     @Test
     @Throws(Exception::class)
-    fun tst0000_XXXXXX() {
+    fun tst0004_Answers() {
         with (tao) {
             fillDB()
             currName = "Porky"
-            mockMvc.perform(get("/rest/getUser").with(httpBasic("masha", "child")))
-                    .andExpect(MockMvcResultMatchers.status().isOk)
-                    .andDo { println(it.response.contentAsString) }
+
+            saveMind("Master Mind")
+
+            saveAnswer("MM Answer","Master Mind")
+            checkAllDB()
+
+            saveAnswer("anotherText", "Master Mind", oldText = "MM Answer")
+            checkAllDB()
+
+            removeAnswer("anotherText","Master Mind")
+            checkAllDB()
+
+            fillDB()
         }
     }
 }

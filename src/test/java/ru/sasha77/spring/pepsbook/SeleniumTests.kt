@@ -24,7 +24,7 @@ import kotlin.math.roundToInt
 @AutoConfigureMockMvc
 @TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class ZTest {
+class SeleniumTests {
 
     @LocalServerPort
     private val port: Int = 0
@@ -75,17 +75,50 @@ class ZTest {
         }
 
         assertEquals("Pepsbook",driver.title)
+        driver.get("http://localhost:$port/logout")
+        assertEquals("Pepsbook Login",driver.title)
     }
 
-    @Test fun XXXXXX() {
-        tao.fillDB()
+    @Test fun uiTest002_Answers() {
+        class TheAnswer (val s : String) {
+            private fun findAnswer() = driver.findElements(By.className("answerEntity")).
+                    find {
+                        it.findElement(By.className("answerText")).text == s
+                    }!!
+            val menuLink get() = findAnswer().findElement(By.className("dropdown-toggle"))
+            fun menuItem(x : Int) = findAnswer().findElements(By.className("dropdown-item"))[x]
+        }
+        with(tao) { doMvc = false;fillDB();currName = "Masha"}
         with(driver) {
+            Thread.sleep(5000)
             get("http://localhost:$port")
-            findElement(By.name("username")).sendKeys("porky")
-            findElement(By.name("password")).sendKeys("pig")
+            Thread.sleep(2000)
+            findElement(By.name("username")).sendKeys("masha")
+            findElement(By.name("password")).sendKeys("child")
             findElement(By.id("loginForm")).submit()
-            findElement(By.id("mainMenuOthers")).click()
-            Thread.sleep(10000000)
+            Thread.sleep(2000)
+            //Press Ответить
+            val mindText = findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
+            findElement(By.className("mindEntity")).findElement(By.className("dropdown-toggle")).click()
+            findElement(By.className("mindEntity")).findElements(By.className("dropdown-item"))[0].click()
+            //Type text in mindTextArea
+            findElement(By.id("mindTextArea")).sendKeys("Хохохо")
+            findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click()
+            with(tao) { saveAnswer("Хохохо",mindText);tao.checkDB() }
+            Thread.sleep(1000)
+
+            //Press Редактировать
+            TheAnswer("Хохохо").menuLink.click()
+            TheAnswer("Хохохо").menuItem(0).click()
+            //Type text in mindTextArea
+            findElement(By.id("mindTextArea")).sendKeys(" - ого")
+            findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click()
+            with(tao) { saveAnswer("Хохохо - ого",mindText,"Хохохо");tao.checkDB() }
+            Thread.sleep(1000)
+            //Press удалить
+            TheAnswer("Хохохо - ого").menuLink.click()
+            TheAnswer("Хохохо - ого").menuItem(1).click()
+            with (tao) {removeAnswer("Хохохо - ого",mindText);checkDB()}
         }
     }
 }

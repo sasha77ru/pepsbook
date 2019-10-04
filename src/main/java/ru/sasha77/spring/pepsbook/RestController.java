@@ -17,10 +17,12 @@ import java.security.Principal;
 public class RestController {
     private UserRepository userRepository;
     private MindRepository mindRepository;
+    private AnswerRepository answerRepository;
 
-    RestController(UserRepository userRepository, MindRepository mindRepository) {
+    RestController(UserRepository userRepository, MindRepository mindRepository, AnswerRepository answerRepository) {
         this.userRepository = userRepository;
         this.mindRepository = mindRepository;
+        this.answerRepository = answerRepository;
     }
 
     /**
@@ -110,13 +112,58 @@ public class RestController {
     @Transactional
     @SuppressWarnings("Duplicates")
     public void removeMind(Principal principal,
-                             Integer id,
-                             HttpServletResponse response) throws IOException {
+                           Integer id,
+                           HttpServletResponse response) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
         Mind mind = mindRepository.findById(id).orElse(null);
         if (mind == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}
         if (!mind.getUser().getId().equals(user.getId())) {response.sendError(HttpServletResponse.SC_FORBIDDEN);return;}
         mindRepository.delete(mind);
     }
-}
 
+    /**
+     * Adds mind or update existing (if id isn't null)
+     * @param text New text of mind
+     * @param id If isn't null - id for mind to update
+     * @param response
+     * @throws IOException
+     */
+    @PostMapping(path = "/saveAnswer")
+    @ResponseBody
+    @Transactional
+    @SuppressWarnings("Duplicates")
+    public void saveAnswer(Principal principal,
+                           String text,
+                           Integer id,
+                           @RequestParam Integer parentMind,
+                           HttpServletResponse response) throws IOException {
+        User user = userRepository.findByUsername(principal.getName());
+        Mind mind = mindRepository.findById(parentMind).orElse(null);
+        if (mind == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}
+        Answer answer = (id == null || id == 0) ? new Answer(text,mind,user) : answerRepository.findById(id).orElse(null);
+        if (answer == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}
+        answer.setText(text);
+        if (!answer.getUser().getId().equals(user.getId())) {response.sendError(HttpServletResponse.SC_FORBIDDEN);return;}
+        answerRepository.save(answer);
+    }
+
+    /**
+     * Removes mind from DB
+     * @param id
+     * @param response
+     * @throws IOException
+     */
+    @DeleteMapping(path = "/removeAnswer")
+    @ResponseBody
+    @Transactional
+    @SuppressWarnings("Duplicates")
+    public void removeAnswer(Principal principal,
+                             Integer id,
+                             HttpServletResponse response) throws IOException {
+        User user = userRepository.findByUsername(principal.getName());
+        Answer answer = answerRepository.findById(id).orElse(null);
+        if (answer == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}
+        if (!answer.getUser().getId().equals(user.getId())) {response.sendError(HttpServletResponse.SC_FORBIDDEN);return;}
+        answerRepository.delete(answer);
+    }
+}

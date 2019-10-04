@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <title>Pepsbook</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        body {font-size: xx-large}
+    </style>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -118,35 +122,64 @@
                 .fail(onError)
         }
 
+        //not mine
+        function placeCaretAtEnd(el) {
+            el.focus();
+            if (typeof window.getSelection != "undefined"
+                && typeof document.createRange != "undefined") {
+                var range = document.createRange();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else if (typeof document.body.createTextRange != "undefined") {
+                var textRange = document.body.createTextRange();
+                textRange.moveToElementText(el);
+                textRange.collapse(false);
+                textRange.select();
+            }
+        }
+
         /**
-         * Opens mind editing window and let edit or add new mind
+         * Opens mind/answer editing window and let edit or add new mind
+         * @param moa = 'mind' or 'answer' depending of what we work with
          * @param menuThis Undefined if new mind. Menu element which was clicked. To find mindText and get mind text.
+         * @param parentMind Only for answers
+         * @param startText Text, that will be inserted in the beginning. e.g. "@vasya " to write answers like "@vasya blablabla"
          * @param mindId undefined if new mind
          */
-        function openNewMindWindow(menuThis,mindId) {
+        function openNewMindWindow(moa, menuThis, mindId, parentMind, startText) {
             if (document.getElementById("mindWindow")) return //to not open second window
             let win = document.createElement("div")
-            let text = menuThis ? $(menuThis).closest(".mindEntity").find(".mindText")[0].innerHTML : "" //CRUTCH: text is got from the page
+            let text = startText || ""
+            text += mindId ? $(menuThis).closest("."+moa+"Entity").find("."+moa+"Text")[0].innerHTML : "" //CRUTCH: text is got from the page
             with (win) {
                 setAttribute("id","mindWindow")
                 setAttribute("class","alert alert-dismissible alert-success")
                 innerHTML = '\n' +
                     '<button type="button" class="close" data-dismiss="alert">&times;</button>\n' +
-                    '<label for="mindTextarea">Мысль:</label>' +
-                    '<div contenteditable id="mindTextarea">'+text+'</div>\n' +
-                    '<div id="mindErrSign" style="display: none"></div>' +
-                    '<button type="button" class="btn btn-primary" onclick="saveMind('+mindId+')" style="margin-top: 1em">Опубликовать</button>'
+                    '<label for="mindTextArea">'+(moa == 'mind' ? 'Мысль' : 'Ответ')+':</label>\n' +
+                    '<div contenteditable id="mindTextArea">'+text+'</div>\n' +
+                    '<div id="mindErrSign" style="display: none"></div>\n' +
+                    '<button type="button" class="btn btn-primary" ' +
+                    '  onclick="saveMind(\''+moa+'\','+mindId+(parentMind ? (','+parentMind) : '')+')" ' +
+                    '  style="margin-top: 1em">Опубликовать</button>'
             }
             document.body.append(win)
+            mindTextArea.focus()
+            placeCaretAtEnd(mindTextArea)
         }
 
         /**
-         * On click of "Опубликовать" closes  the mindWindow, posts the mind and renew subMain with minds
+         * On click of "Опубликовать" closes  the mindWindow, posts the mind/answer and renew subMain with minds
+         * @param moa = 'mind' or 'answer' depending of what we work with
          * @param id
+         * @param parentMind Only for answers
          */
-        function saveMind(id) {
+        function saveMind(moa,id,parentMind) {
             /* Length validation */
-            if (mindTextarea.innerText.length > 4) {
+            if (mindTextArea.innerText.length > 4000) {
                 with (mindErrSign) {
                     style.display = "";
                     innerHTML =
@@ -157,7 +190,8 @@
                 }
                 return
             }
-            $.ajax("/rest/saveMind",{data:{text : mindTextarea.innerText, id : id||0},method:"POST"})
+            $.ajax("/rest/save"+moa[0].toUpperCase()+moa.slice(1),
+                    {data:{text : mindTextArea.innerText, id : id||0, parentMind : parentMind},method:"POST"})
                 .done(function (data, status) {
                     onChangeFilter()
                 })
@@ -165,11 +199,12 @@
             mindWindow.remove()
         }
         /**
-         * Removes mind and renew subMain with minds
+         * Removes mind/answer and renew subMain with minds
+         * @param moa = 'mind' or 'answer' depending of what we work with
          * @param id
          */
-        function removeMind(id) {
-            $.ajax("/rest/removeMind",{data:{id : id},method:"DELETE"})
+        function removeMind(moa,id) {
+            $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id},method:"DELETE"})
                 .done (function (data, status) {
                     if (status != "success"||data.search(/^error/)>=0) {onError(data||"bad status="+status);return};
                     onChangeFilter()
@@ -184,7 +219,7 @@
             top:        20px;
             right:      20px;
         }
-        #mindTextarea {
+        #mindTextArea {
             background-color: white;
             min-height: 5em;
             max-height: 30em;
@@ -218,7 +253,7 @@
             <div class="btn-group" role="group">
                 <button id="btnGroupDrop2" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
-                    <a class="dropdown-item" href="javascript:logOff()">Выдти</a>
+                    <a class="dropdown-item" href="javascript:logOff()" id="exitMenuItem">Выдти</a>
                 </div>
             </div>
             <button type="button" class="btn btn-secondary" id="nameField"></button>

@@ -11,9 +11,20 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.util.*
 
-data class TstMind(var text: String,
-              val user: String,
-              val time: Date)
+data class TstMind(
+    var text    : String,
+    val user    : String,
+    val time    : Date,
+    var answers : MutableList<TstAnswer> = mutableListOf()) {
+    fun getAnswerByText (findText : String) = answers.find { it.text == findText } ?: throw IllegalArgumentException("No such TSTANSWER $text")
+    fun addAnswer (text: String,user: String,time: Date) {answers.add(TstAnswer(text,this,user,time))}
+    fun removeAnswer (findText : String) {answers.remove(getAnswerByText(findText))}
+}
+data class TstAnswer(
+    var text : String,
+    val mind : TstMind,
+    val user : String,
+    val time : Date)
 
 //fun fillDBwithSQL () {
 //    val connection = DriverManager.getConnection("jdbc:h2:mem:testo", "sa", "")
@@ -40,16 +51,17 @@ data class TstMind(var text: String,
 @Suppress("MemberVisibilityCanBePrivate")
 @Component
 class TestApplicationObject (val usersRepo: UserRepository,
-                             val mindsRepo: MindRepository) {
-    inner class TstUser(val name: String,
-                  val email: String,
-                  val country: String,
-                  val username : String,
-                  val password : String,
-                  val friendsNames: MutableSet<String> = mutableSetOf(),
-                  val matesNames: MutableSet<String> = mutableSetOf(),
-                  val user : User = User(name, email, country, username, passwordEncoder.encode(password))
-    ) {
+                             val mindsRepo: MindRepository,
+                             val answersRepo: AnswerRepository) {
+    inner class TstUser(
+        val name: String,
+        val email: String,
+        val country: String,
+        val username : String,
+        val password : String,
+        val friendsNames: MutableSet<String> = mutableSetOf(),
+        val matesNames: MutableSet<String> = mutableSetOf(),
+        val user : User = User(name, email, country, username, passwordEncoder.encode(password))) {
         private fun MutableSet<String>.copy() : MutableSet<String> =
                 mutableSetOf<String>().apply {this@copy.forEach { this.add(it) }}
         fun deepCopy() : TstUser =
@@ -62,20 +74,21 @@ class TestApplicationObject (val usersRepo: UserRepository,
     @Autowired
     lateinit var passwordEncoder: PasswordEncoder
 
-    lateinit var tstUsersArray : List<TstUser>
-    lateinit var actualUsersArray : MutableList<TstUser>
-    fun List<TstUser>.getByName(name: String) =
+    var doMvc = true
+    lateinit var tstUsersArray : List<TstUser> // an initial test list
+    lateinit var actualUsersArray : MutableList<TstUser> // actual test list, initially equals to tstUsersArray but can be changed during tests
+    fun List<TstUser>.getByName(name: String) = //fun for tstUsersArray
             find { it.name == name} ?: throw IllegalArgumentException("No such TST_NAME $name")
-    fun List<TstUser>.getByUserName(name: String) =
+    fun List<TstUser>.getByUserName(name: String) = //fun for tstUsersArray
             find { it.username == name} ?: throw IllegalArgumentException("No such TST_USERNAME $name")
-    fun List<TstUser>.deepCopy() =
+    fun List<TstUser>.deepCopy() = //fun for tstUsersArray
             mutableListOf<TstUser>().apply {this@deepCopy.forEach { this.add(it.deepCopy()) }}
 
     lateinit var tstMindsArray : List<TstMind>
     lateinit var actualMindsArray : MutableList<TstMind>
-    fun List<TstMind>.getByText(text: String) =
+    fun List<TstMind>.getByText(text: String) = //fun for tstMindsArray
             find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
-    fun List<TstMind>.copy() =
+    fun List<TstMind>.copy() = //fun for tstMindsArray
             mutableListOf<TstMind>().apply {this@copy.forEach { this.add(it.copy()) }}
 
     private var _currUser : TstUser? = null
@@ -101,25 +114,33 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
         tstUsersArray =
                 listOf(
-                        TstUser("Porky",    "porky@pig.com",    "USA",  "porky", "pig",
-                                if (friendship) mutableSetOf("Pluto","Masha") else mutableSetOf()),
-                        TstUser("Pluto",    "pluto@dog.com",    "USA", "pluto", "dog",
+                        TstUser("Porky", "porky@pig.com", "USA", "porky", "pig",
+                                if (friendship) mutableSetOf("Pluto", "Masha") else mutableSetOf()),
+                        TstUser("Pluto", "pluto@dog.com", "USA", "pluto", "dog",
                                 if (friendship) mutableSetOf("Porky") else mutableSetOf()),
-                        TstUser("Masha",    "masha@child.com",  "Russia", "masha", "child"),
-                        TstUser("Luntik",   "luntik@alien.com", "Russia", "luntik", "alien",
+                        TstUser("Masha", "masha@child.com", "Russia", "masha", "child"),
+                        TstUser("Luntik", "luntik@alien.com", "Russia", "luntik", "alien",
                                 if (friendship) mutableSetOf("Porky") else mutableSetOf())
                 ).apply {
                     //Fill matesNames of TstUser by friendsNames
-                    if (friendship) forEach { user -> user.friendsNames.forEach { friend ->
-                        getByName(friend).matesNames.add(user.user.name) }}
+                    if (friendship) forEach { user ->
+                        user.friendsNames.forEach { friend ->
+                            getByName(friend).matesNames.add(user.user.name)
+                        }
+                    }
                 }
         actualUsersArray = tstUsersArray.deepCopy()
 
         tstMindsArray = listOf(
-                TstMind("Hru-hru","Porky", Date()),
-                TstMind("Gaff-gaff","Pluto",Date()),
-                TstMind("Понятненько","Masha",Date()),
-                TstMind("Я лунная пчела","Luntik",Date())
+                TstMind("Hru-hru", "Porky", Date())
+                        .apply {
+                            answers = mutableListOf(
+                                    TstAnswer("Вы свинья", this, "Masha", Date()),
+                                    TstAnswer("Соласен", this, "Luntik", Date()))
+                        },
+                TstMind("Gaff-gaff", "Pluto", Date()),
+                TstMind("Понятненько", "Masha", Date()),
+                TstMind("Я лунная пчела", "Luntik", Date())
         )
         actualMindsArray = tstMindsArray.copy()
 
@@ -129,8 +150,8 @@ class TestApplicationObject (val usersRepo: UserRepository,
         /*WANTS TEST without schema, but with ddl-auto=create-drop. UNCOMMENT UPPER ROW. But learn cascades first*/
         usersRepo.deleteAll()
 
-        tstUsersArray.forEach {usersRepo.save(it.user)}
-        tstUsersArray.forEach {theUser ->
+        tstUsersArray.forEach { usersRepo.save(it.user) }
+        tstUsersArray.forEach { theUser ->
             //Fill friendship info to DB
             if (friendship) {
                 theUser.friendsNames.map { tstUsersArray.getByName(it) }.forEach { friend ->
@@ -139,8 +160,16 @@ class TestApplicationObject (val usersRepo: UserRepository,
             }
             usersRepo.save(theUser.user)
         }
-        if (minds) tstMindsArray.forEach { mindsRepo.save(Mind(it.text, tstUsersArray.getByName(it.user).user)) }
+        //save minds
+        if (minds) tstMindsArray.forEach { tstMind ->
+            val mind = Mind(tstMind.text, tstUsersArray.getByName(tstMind.user).user)
+                    .apply { answers = tstMind.answers.map { tstAnswer -> //add answers to mind
+                        Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user))} }
+            mindsRepo.save(mind)
+            answersRepo.saveAll(mind.answers)
+        }
     }
+
 
     /**
      * Does checkDB for all users
@@ -151,6 +180,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
      * Performs mvc requests and compare models with actualUsersArray,actualMindsArray
      */
     fun checkDB (currUser: TstUser = this.currUser) {
+        fun Date.round () = Date((this.time/10000+0.5).toLong()*10000)
         mockMvc.perform(MockMvcRequestBuilders.get("/users")
                 .param("subs","")
                 .with(httpBasic(currUser.username, currUser.password)))
@@ -192,9 +222,15 @@ class TestApplicationObject (val usersRepo: UserRepository,
                     .andDo { mvcResult ->
                         @Suppress("UNCHECKED_CAST")
                         Assert.assertEquals("Different lists",
-                                actualMindsArray.sortedBy { it.text }.joinToString("\n") { it.text },
+                                actualMindsArray.sortedBy { it.text }
+                                        .joinToString("\n") {mind ->
+                                            with(mind) {"$text/$user/${time.round()}"} + " : " +
+                                            mind.answers.joinToString(" | ") { with(it) {"$text/$user/${time.round()}"} } }
+                                ,
                                 (mvcResult.modelAndView!!.model["lizt"] as Iterable<Mind>).sortedBy { it.text }
-                                        .joinToString("\n") { it.text }
+                                        .joinToString("\n") {mind ->
+                                            with(mind) {"$text/${user.name}/${time.round()}"} + " : " +
+                                            mind.answers.joinToString(" | ") { with(it) {"$text/${user.name}/${time.round()}"} } }
                         )
                     }
     }
@@ -220,7 +256,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         currUser.friendsNames.add(friendName)
         actualUsersArray.getByName(friendName).matesNames.add(currName)
 
-        mockMvc.perform(MockMvcRequestBuilders.patch("/rest/toFriends")
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/toFriends")
                 .with(httpBasic(currUser.username, currUser.password))
                 .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
@@ -231,7 +267,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         currUser.friendsNames.remove(friendName)
         actualUsersArray.getByName(friendName).matesNames.remove(currName)
 
-        mockMvc.perform(MockMvcRequestBuilders.patch("/rest/fromFriends")
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/fromFriends")
                 .with(httpBasic(currUser.username, currUser.password))
                 .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
@@ -239,7 +275,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
     }
 
     fun saveMind (text : String, oldText : String? = null) {
-        mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveMind")
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveMind")
                 .with(httpBasic(currUser.username, currUser.password))
                 .param("text",text)
                 .apply {
@@ -250,10 +286,34 @@ class TestApplicationObject (val usersRepo: UserRepository,
     }
 
     fun removeMind (oldText : String) {
-        mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMind")
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMind")
                 .with(httpBasic(currUser.username, currUser.password))
                 .param("id",mindsRepo.findLike(oldText).find { true }!!.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
         actualMindsArray.remove(actualMindsArray.getByText(oldText))
+    }
+
+
+    fun saveAnswer (text : String, mindText : String, oldText : String? = null) {
+        val parentMind = mindsRepo.findLike(mindText).find { true }!!
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveAnswer")
+                .with(httpBasic(currUser.username, currUser.password))
+                .param("text",text)
+                .param("parentMind",parentMind.id.toString())
+                .apply {
+                    if (oldText != null) param("id",answersRepo.findByText(oldText).find { true }!!.id.toString())})
+                .andExpect(MockMvcResultMatchers.status().isOk)
+        actualMindsArray.getByText(parentMind.text).apply {
+            if (oldText == null) addAnswer(text,currName, Date())
+            else getAnswerByText(oldText).text = text
+        }
+    }
+
+    fun removeAnswer (oldText : String, mindText : String) {
+        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeAnswer")
+                .with(httpBasic(currUser.username, currUser.password))
+                .param("id",answersRepo.findByText(oldText).find { true }!!.id.toString()))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+        actualMindsArray.getByText(mindText).removeAnswer(oldText)
     }
 }
