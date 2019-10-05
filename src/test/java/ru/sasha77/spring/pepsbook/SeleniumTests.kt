@@ -1,10 +1,7 @@
 package ru.sasha77.spring.pepsbook
 
 import junit.framework.Assert.assertEquals
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.FixMethodOrder
-import org.junit.Test
+import org.junit.*
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.openqa.selenium.By
@@ -46,6 +43,9 @@ class SeleniumTests {
             driver.close()
         }
     }
+
+    @Before
+    fun initTao () {tao.doMvc = false}
 
     @Test fun uiTest001_Registration() {
         tao.fillDB()

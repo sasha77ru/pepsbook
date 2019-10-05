@@ -1,5 +1,6 @@
 package ru.sasha77.spring.pepsbook
 
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,6 +25,9 @@ class XTest {
 
     @Autowired
     lateinit var tao : TestApplicationObject
+
+    @Before
+    fun initTao () {tao.doMvc = true}
 
     @Test
     @Throws(Exception::class)
