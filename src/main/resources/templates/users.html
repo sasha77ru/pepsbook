@@ -24,7 +24,7 @@
                            th:text="${currUser.friends.contains(i) ? 'В друзья' : 'Из друзей'}"></a>
                     </div>
                 </li>
-                <li class="friendship">
+                <li class="friendship" th:if="${currUser.friends.contains(i)||currUser.mates.contains(i)}">
                     <span th:class="badge"
                         th:classappend="${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'badge-success':'badge-primary') : 'badge-secondary'"
                         th:text=       "${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'Взаимный Друг':'ПолуДруг') : 'Почитатель'">
