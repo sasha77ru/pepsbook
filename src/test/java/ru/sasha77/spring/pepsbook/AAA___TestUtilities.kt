@@ -4,6 +4,7 @@ import org.hamcrest.Matchers
 import org.junit.Assert
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
@@ -183,7 +184,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         fun Date.round () = Date((this.time/10000+0.5).toLong()*10000)
         mockMvc.perform(MockMvcRequestBuilders.get("/users")
                 .param("subs","")
-                .with(httpBasic(currUser.username, currUser.password)))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
                     .andDo { mvcResult ->
                         @Suppress("UNCHECKED_CAST")
                         Assert.assertEquals("Different lists",
@@ -194,7 +195,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
                     }
         mockMvc.perform(MockMvcRequestBuilders.get("/friends")
                 .param("subs","")
-                .with(httpBasic(currUser.username, currUser.password)))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
                     .andDo { mvcResult ->
                         @Suppress("UNCHECKED_CAST")
                         Assert.assertEquals("Different lists",
@@ -206,7 +207,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
                         )
                     }
         mockMvc.perform(MockMvcRequestBuilders.get("/mates").param("subs","")
-                .with(httpBasic(currUser.username, currUser.password)))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
                     .andDo { mvcResult ->
                         @Suppress("UNCHECKED_CAST")
                         Assert.assertEquals("Different lists",
@@ -218,7 +219,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
                         )
                     }
         mockMvc.perform(MockMvcRequestBuilders.get("/minds").param("subs","")
-                .with(httpBasic(currUser.username, currUser.password)))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
                     .andDo { mvcResult ->
                         @Suppress("UNCHECKED_CAST")
                         Assert.assertEquals("Different lists",
@@ -237,7 +238,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
     fun getUser (sc: Int = 200) {
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/getUser")
-                .with(httpBasic(currUser.username, currUser.password)))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
     //                .andDo{
     //                    println("!${it.response.contentAsString}!")
     //                }
@@ -257,7 +258,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         actualUsersArray.getByName(friendName).matesNames.add(currName)
 
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/toFriends")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
                     .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
@@ -268,7 +269,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         actualUsersArray.getByName(friendName).matesNames.remove(currName)
 
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/fromFriends")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
                     .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
@@ -276,7 +277,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
     fun saveMind (text : String, oldText : String? = null) {
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveMind")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("text",text)
                 .apply {
                     if (oldText != null) param("id",mindsRepo.findLike(oldText).find { true }!!.id.toString())})
@@ -287,7 +288,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
     fun removeMind (oldText : String) {
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMind")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("id",mindsRepo.findLike(oldText).find { true }!!.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
         actualMindsArray.remove(actualMindsArray.getByText(oldText))
@@ -297,7 +298,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
     fun saveAnswer (text : String, mindText : String, oldText : String? = null) {
         val parentMind = mindsRepo.findLike(mindText).find { true }!!
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveAnswer")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("text",text)
                 .param("parentMind",parentMind.id.toString())
                 .apply {
@@ -311,7 +312,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
     fun removeAnswer (oldText : String, mindText : String) {
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeAnswer")
-                .with(httpBasic(currUser.username, currUser.password))
+                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
                 .param("id",answersRepo.findByText(oldText).find { true }!!.id.toString()))
                 .andExpect(MockMvcResultMatchers.status().isOk)
         actualMindsArray.getByText(mindText).removeAnswer(oldText)

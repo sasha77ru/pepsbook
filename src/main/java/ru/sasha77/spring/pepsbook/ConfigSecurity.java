@@ -68,7 +68,7 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
                 .antMatchers("/rest/**").hasRole("USER")
         .and()
             .formLogin().loginPage("/login")
-        .and()
-            .csrf().disable();
+        /*.and()
+            .csrf().disable()*/;
     }
 }

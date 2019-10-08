@@ -14,7 +14,7 @@
         <div class="card border-primary mb-3" style="max-width: 20rem;">
             <div class="card-header">Новый пользователь</div>
             <div class="card-body">
-                <form action="/register" id="signInForm" method="post" th:object="${userRegister}">
+                <form th:action="@{/register}" id="signInForm" method="post" th:object="${userRegister}">
                     <input class="form-control form-control-lg" type="text" placeholder="Логин" name="username"
                            style="display: block;margin: 1em 0" th:field="*{username}">
                     <div  class="alert alert-dismissible alert-danger"

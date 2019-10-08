@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      lang="ru">
 <head>
     <title>Pepsbook Login</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -8,7 +10,7 @@
 <body>
 <div style="position: absolute; left: 50%; top: 10%;">
     <div style="position: relative; left: -50%;padding: 10px">
-        <form method="POST" action="/login" id="loginForm">
+        <form method="POST" th:action="@{/login}" id="loginForm">
             <h2 class="form-signin-heading" style="text-align: center">Pepsbook</h2>
             <p>
                 <label for="username" class="sr-only">Логин</label>

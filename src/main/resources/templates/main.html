@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <!--suppress ALL -->
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Pepsbook</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <style>
-        body {font-size: xx-large}
-    </style>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    <script>
+    <script th:inline="text">
         var nowInMain = "minds";
         function onError(x) {
             // if (x.status = 401) {document.location.reload(true)}
@@ -21,7 +20,7 @@
         }
         function myOnLoad() {
             //Get user info and write their name in a nameField
-            $.ajax("/rest/getUser", {method:"GET"})
+            $.ajax("/rest/getUser", {data:{_csrf:"[[${_csrf.token}]]"},method:"GET"})
                 .done(function (data, status) {
                     nameField.innerHTML = data.name
                 })
@@ -83,7 +82,7 @@
          * @param all LogOff from all devices
          */
         function logOff(all) {
-            $.ajax("/logout",{method:"POST"})
+            $.ajax("/logout",{data:{_csrf:"[[${_csrf.token}]]"},method:"POST"})
                 .done(function () {document.location.reload(true)})
         }
 
@@ -93,7 +92,7 @@
          * @param friend_id
          */
         function toFriends(container,friend_id) {
-            $.ajax("/rest/toFriends",{data:{friend_id : friend_id},method:"PATCH"})
+            $.ajax("/rest/toFriends",{data:{friend_id : friend_id,_csrf:"[[${_csrf.token}]]"},method:"PATCH"})
                 .done(function (data) {
                     //REST returns "mutual" if they are mutual friends now or "halfFriends" otherwise
                     container.getElementsByClassName("toFriends")[0].style.display = "none"
@@ -111,7 +110,7 @@
          * @param friend_id
          */
         function fromFriends(container,friend_id) {
-            $.ajax("/rest/fromFriends",{data:{friend_id : friend_id},method:"PATCH"})
+            $.ajax("/rest/fromFriends",{data:{friend_id : friend_id,_csrf:"[[${_csrf.token}]]"},method:"PATCH"})
                 .done(function (data) {
                     container.getElementsByClassName("fromFriends")[0].style.display = "none"
                     container.getElementsByClassName("toFriends")[0].style.display = ""
@@ -191,7 +190,8 @@
                 return
             }
             $.ajax("/rest/save"+moa[0].toUpperCase()+moa.slice(1),
-                    {data:{text : mindTextArea.innerText, id : id||0, parentMind : parentMind},method:"POST"})
+                    {data:{text : mindTextArea.innerText, id : id||0, parentMind : parentMind,_csrf:"[[${_csrf.token}]]"},
+                        method:"POST"})
                 .done(function (data, status) {
                     onChangeFilter()
                 })
@@ -204,7 +204,7 @@
          * @param id
          */
         function removeMind(moa,id) {
-            $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id},method:"DELETE"})
+            $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id,_csrf:"[[${_csrf.token}]]"},method:"DELETE"})
                 .done (function (data, status) {
                     if (status != "success"||data.search(/^error/)>=0) {onError(data||"bad status="+status);return};
                     onChangeFilter()
@@ -271,5 +271,7 @@
     </div>
     <div id="subMain" style="width: 95%;margin-left: auto;margin-right: auto;"></div>
 </div>
+<!-- It's for Selenium test, cause dropdown-item isn't clickable in Selenium by no reason -->
+<a id="fakeLogOffButton" href="javascript:logOff()" style="color: white">logOff</a>
 </body>
 </html>

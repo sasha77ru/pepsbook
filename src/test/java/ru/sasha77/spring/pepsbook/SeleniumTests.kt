@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
+import javax.servlet.http.HttpSession
 import kotlin.math.roundToInt
 
 @RunWith(SpringRunner::class)
@@ -58,6 +59,7 @@ class SeleniumTests {
          * Fills registration form
          */
         fun WebDriver.submitForm (username : String, email : String) {
+            assertEquals("Pepsbook registration",driver.title)
             findElement(By.name("username")).apply { clear();sendKeys(username) }
             findElement(By.name("password")).apply { clear();sendKeys("aaa") }
             findElement(By.name("repeatPassword")).apply { clear();sendKeys("aaa") }
@@ -75,7 +77,9 @@ class SeleniumTests {
         }
 
         assertEquals("Pepsbook",driver.title)
-        driver.get("http://localhost:$port/logout")
+        Thread.sleep(500)
+        driver.findElement(By.id("fakeLogOffButton")).click()
+        Thread.sleep(500)
         assertEquals("Pepsbook Login",driver.title)
     }
 
