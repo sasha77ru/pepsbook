@@ -35,5 +35,11 @@ public class Answer {
 		this.mind = mind;
 		this.user = user;
 	}
+public Answer(String text, Mind mind, User user, Date time) {
+		this.text = text;
+		this.mind = mind;
+		this.user = user;
+		this.time = time;
+	}
 }
 

@@ -12,7 +12,9 @@ public interface MindRepository extends CrudRepository<Mind, Integer> {
             " JOIN users u ON m.user_id = u.id" +
             " WHERE m.text LIKE CONCAT('%',:subs,'%')" +
             "    OR u.name LIKE CONCAT('%',:subs,'%')" +
-            "    OR EXISTS(SELECT * FROM answers a WHERE a.mind_id=m.id AND a.text LIKE CONCAT('%',:subs,'%'))"
+            "    OR EXISTS(SELECT * FROM answers a WHERE a.mind_id=m.id AND a.text LIKE CONCAT('%',:subs,'%'))" +
+            " ORDER BY m.time DESC"
             , nativeQuery=true)
     Iterable<Mind> findLike(@Param("subs") String name);
+    Mind findByText(String text);
 }

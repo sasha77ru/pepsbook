@@ -35,6 +35,11 @@ public class Mind {
 		this.text = text;
 		this.user = user;
 	}
+public Mind(String text, User user, Date time) {
+		this.text = text;
+		this.user = user;
+		this.time = time;
+	}
 
 }
 

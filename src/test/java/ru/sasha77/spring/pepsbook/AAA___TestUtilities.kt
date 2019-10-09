@@ -2,15 +2,40 @@ package ru.sasha77.spring.pepsbook
 
 import org.hamcrest.Matchers
 import org.junit.Assert
+import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.WebDriver
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
 import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import java.lang.RuntimeException
+import java.text.SimpleDateFormat
 import java.util.*
+
+enum class For {LOAD,SEE,REPEAT,LONG_LOAD}
+fun pause (x : For) = Thread.sleep(when (x) {
+    For.LOAD -> 150
+    For.LONG_LOAD -> 1000
+    For.SEE -> 0
+    For.REPEAT -> 100})
+fun pause (attempts : Int = 50, f : () -> Boolean) {
+    pause(For.LOAD)
+    repeat(attempts) {
+        if (f()) return
+        pause(For.REPEAT)
+        print(" .")
+    }
+    throw RuntimeException("Waiting unsuccessful")
+}
+
+fun Date.myFormat () = SimpleDateFormat("dd.MM.yy HH:mm").format(this)
 
 data class TstMind(
     var text    : String,
@@ -20,12 +45,15 @@ data class TstMind(
     fun getAnswerByText (findText : String) = answers.find { it.text == findText } ?: throw IllegalArgumentException("No such TSTANSWER $text")
     fun addAnswer (text: String,user: String,time: Date) {answers.add(TstAnswer(text,this,user,time))}
     fun removeAnswer (findText : String) {answers.remove(getAnswerByText(findText))}
+    override fun toString(): String = "$text / $user / ${time.myFormat()} / ${answers.sortedBy { it.time }}"
 }
 data class TstAnswer(
     var text : String,
     val mind : TstMind,
     val user : String,
-    val time : Date)
+    val time : Date) {
+    override fun toString(): String = "$text / ${mind.text} / $user / ${time.myFormat()}"
+}
 
 //fun fillDBwithSQL () {
 //    val connection = DriverManager.getConnection("jdbc:h2:mem:testo", "sa", "")
@@ -76,8 +104,8 @@ class TestApplicationObject (val usersRepo: UserRepository,
     lateinit var passwordEncoder: PasswordEncoder
 
     var doMvc = true
-    lateinit var tstUsersArray : List<TstUser> // an initial test list
-    lateinit var actualUsersArray : MutableList<TstUser> // actual test list, initially equals to tstUsersArray but can be changed during tests
+    var tstUsersArray = emptyList<TstUser>() // an initial test list
+    var actualUsersArray = mutableListOf<TstUser>() // actual test list, initially equals to tstUsersArray but can be changed during tests
     fun List<TstUser>.getByName(name: String) = //fun for tstUsersArray
             find { it.name == name} ?: throw IllegalArgumentException("No such TST_NAME $name")
     fun List<TstUser>.getByUserName(name: String) = //fun for tstUsersArray
@@ -104,7 +132,23 @@ class TestApplicationObject (val usersRepo: UserRepository,
         set(value) {currUser = actualUsersArray.getByUserName(value)}
     val currPassword: String
         get() = currUser.password
+    fun isFriendToCurr (x : TstUser) : Boolean  = currUser.friendsNames.contains(x.name)
+    fun isMateToCurr (x : TstUser) = currUser.matesNames.contains(x.name)
+    fun positive (x : TstUser) = true
 
+
+    /**
+     * Clears DB.
+     */
+    fun clearDB () {
+        //        mindsRepo.deleteAll()
+        /*WANTS TEST without schema, but with ddl-auto=create-drop. UNCOMMENT UPPER ROW. But learn cascades first*/
+        usersRepo.deleteAll()
+        tstUsersArray = listOf()
+        actualUsersArray = mutableListOf()
+        tstMindsArray = listOf()
+        actualMindsArray = mutableListOf()
+    }
 
     /**
      * Clear DB, than fill it with data from tstUsersArray and tstMindsArray.
@@ -112,6 +156,13 @@ class TestApplicationObject (val usersRepo: UserRepository,
      * if friendship==false then friendship information ignored
      */
     fun fillDB (friendship : Boolean = true, minds : Boolean = true) {
+        var lmDate = Date(Date().time-86400000)
+        fun mockDate () : Date {
+            lmDate = Date(lmDate.time+100000)
+            return lmDate
+        }
+
+        clearDB()
 
         tstUsersArray =
                 listOf(
@@ -133,23 +184,19 @@ class TestApplicationObject (val usersRepo: UserRepository,
         actualUsersArray = tstUsersArray.deepCopy()
 
         tstMindsArray = listOf(
-                TstMind("Hru-hru", "Porky", Date())
+                TstMind("Hru-hru", "Porky", mockDate())
                         .apply {
                             answers = mutableListOf(
-                                    TstAnswer("Вы свинья", this, "Masha", Date()),
-                                    TstAnswer("Соласен", this, "Luntik", Date()))
+                                    TstAnswer("Вы свинья", this, "Masha", mockDate()),
+                                    TstAnswer("Соласен", this, "Luntik", mockDate()))
                         },
-                TstMind("Gaff-gaff", "Pluto", Date()),
-                TstMind("Понятненько", "Masha", Date()),
-                TstMind("Я лунная пчела", "Luntik", Date())
+                TstMind("Gaff-gaff", "Pluto", mockDate()),
+                TstMind("Понятненько", "Masha", mockDate()),
+                TstMind("Я лунная пчела", "Luntik", mockDate())
         )
         actualMindsArray = tstMindsArray.copy()
 
 //    if (!friendship) actualUsersArray.forEach { it.friendsNames.removeIf { true };it.matesNames.removeIf { true }}
-
-//        mindsRepo.deleteAll()
-        /*WANTS TEST without schema, but with ddl-auto=create-drop. UNCOMMENT UPPER ROW. But learn cascades first*/
-        usersRepo.deleteAll()
 
         tstUsersArray.forEach { usersRepo.save(it.user) }
         tstUsersArray.forEach { theUser ->
@@ -163,9 +210,9 @@ class TestApplicationObject (val usersRepo: UserRepository,
         }
         //save minds
         if (minds) tstMindsArray.forEach { tstMind ->
-            val mind = Mind(tstMind.text, tstUsersArray.getByName(tstMind.user).user)
+            val mind = Mind(tstMind.text, tstUsersArray.getByName(tstMind.user).user, tstMind.time)
                     .apply { answers = tstMind.answers.map { tstAnswer -> //add answers to mind
-                        Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user))} }
+                        Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user),tstAnswer.time)} }
             mindsRepo.save(mind)
             answersRepo.saveAll(mind.answers)
         }
@@ -302,7 +349,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
                 .param("text",text)
                 .param("parentMind",parentMind.id.toString())
                 .apply {
-                    if (oldText != null) param("id",answersRepo.findByText(oldText).find { true }!!.id.toString())})
+                    if (oldText != null) param("id",answersRepo.findByText(oldText)!!.id.toString())})
                 .andExpect(MockMvcResultMatchers.status().isOk)
         actualMindsArray.getByText(parentMind.text).apply {
             if (oldText == null) addAnswer(text,currName, Date())
@@ -313,8 +360,118 @@ class TestApplicationObject (val usersRepo: UserRepository,
     fun removeAnswer (oldText : String, mindText : String) {
         if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeAnswer")
                 .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("id",answersRepo.findByText(oldText).find { true }!!.id.toString()))
+                .param("id",answersRepo.findByText(oldText)!!.id.toString()))
                 .andExpect(MockMvcResultMatchers.status().isOk)
         actualMindsArray.getByText(mindText).removeAnswer(oldText)
     }
+}
+
+//open class LogAspect {
+//    fun before(returnValue: Any) {
+//        println("value return was $returnValue")
+//    }
+//}
+
+@Component
+class WebApplicationObject (val tao : TestApplicationObject) {
+    fun WebDriver.clickLogo () {
+        findElement(By.className("navbar-brand")).click()
+    }
+    fun WebDriver.clickMainMinds () {
+        findElement(By.id("mainMinds")).click()
+    }
+    fun WebDriver.clickMainUsers () {
+        findElement(By.id("mainUsers")).click()
+    }
+    fun WebDriver.clickMainFriends () {
+        findElement(By.id("mainFriends")).click()
+    }
+    fun WebDriver.clickMainMates () {
+        findElement(By.id("mainMates")).click()
+    }
+    fun WebDriver.clickEditMind (mindText: String) {
+        findElements(By.className("mindEntity"))
+                .find {
+                    it.findElement(By.className("mindText")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("editMind")).click()
+                }
+    }
+    fun WebDriver.clickDelMind (mindText: String) {
+        findElements(By.className("mindEntity"))
+                .find {
+                    it.findElement(By.className("mindText")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("delMind")).click()
+                }
+    }
+    fun WebDriver.clickAnswerMind (mindText: String) {
+        findElements(By.className("mindEntity"))
+                .find {
+                    it.findElement(By.className("mindText")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("answerMind")).click()
+                }
+    }
+    fun WebDriver.clickEditAnswer (mindText: String) {
+        findElements(By.className("answerEntity"))
+                .find {
+                    it.findElement(By.className("answerText")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("editAnswer")).click()
+                }
+    }
+    fun WebDriver.clickDelAnswer (mindText: String) {
+        findElements(By.className("answerEntity"))
+                .find {
+                    it.findElement(By.className("answerText")).text
+                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("delAnswer")).click()
+                }
+    }
+    fun WebDriver.clickAnswerAnswer (mindText: String) {
+        findElements(By.className("answerEntity"))
+                .find {
+                    it.findElement(By.className("answerText")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("answerAnswer")).click()
+                }
+    }
+    fun WebDriver.clickLogout () {
+        (this as JavascriptExecutor).executeScript("logOff();")
+    }
+    fun WebDriver.typeFilter (filterText: String, clear : Boolean = true) {
+        findElement(By.id("mainFilter")).run {
+            if (clear) clear()
+            filterText.forEach { sendKeys(it.toString()) }
+        }
+    }
+    fun WebDriver.clickNewMind () {
+        findElement(By.id("newMind")).click()
+    }
+    fun WebDriver.clickCloseMind () {
+        findElement(By.id("closeMind")).click()
+    }
+    fun WebDriver.typeMindText (mindText: String, clear : Boolean = true) {
+        findElement(By.id("mindTextArea")).run { if (clear) clear();sendKeys(mindText) } }
+    fun WebDriver.submitMind () {
+        findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click() }
 }

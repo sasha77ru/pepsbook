@@ -10,9 +10,9 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="i : ${lizt}">
-        <td th:text="${i.name}"></td>
-        <td th:text="${i.country}"></td>
+    <tr th:each="i : ${lizt}" class="userEntity">
+        <td th:text="${i.name}" class="userName"></td>
+        <td th:text="${i.country}" class="userCountry"></td>
         <td>
             <ul class="nav">
                 <li class="nav-item dropdown">
@@ -20,8 +20,8 @@
                     <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
                         <a class="dropdown-item toFriends"
                            href="javascript:undefined"
-                           th:onclick="@{${currUser.friends.contains(i) ? 'toFriends' : 'fromFriends'}+'(this.parentNode,'+${i.id}+')'}"
-                           th:text="${currUser.friends.contains(i) ? 'В друзья' : 'Из друзей'}"></a>
+                           th:onclick="@{${!currUser.friends.contains(i) ? 'toFriends' : 'fromFriends'}+'(this.parentNode,'+${i.id}+')'}"
+                           th:text="${!currUser.friends.contains(i) ? 'В друзья' : 'Из друзей'}"></a>
                     </div>
                 </li>
                 <li class="friendship" th:if="${currUser.friends.contains(i)||currUser.mates.contains(i)}">

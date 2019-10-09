@@ -30,6 +30,9 @@ class SeleniumTests {
     @Autowired
     lateinit var tao : TestApplicationObject
 
+    @Autowired
+    lateinit var wao : WebApplicationObject
+
     companion object {
         lateinit var driver : WebDriver
 
@@ -63,7 +66,7 @@ class SeleniumTests {
             findElement(By.name("username")).apply { clear();sendKeys(username) }
             findElement(By.name("password")).apply { clear();sendKeys("aaa") }
             findElement(By.name("repeatPassword")).apply { clear();sendKeys("aaa") }
-            findElement(By.name("name")).apply { clear();sendKeys("Lopeh") }
+            findElement(By.name("name")).apply { clear();sendKeys(" Lopeh") }
             findElement(By.name("email")).apply { clear();sendKeys(email) }
             findElement(By.name("country")).apply { clear();sendKeys("USA") }
 
@@ -78,6 +81,7 @@ class SeleniumTests {
 
         assertEquals("Pepsbook",driver.title)
         Thread.sleep(500)
+        //TODO("Get rid of it, use clickLogout")
         driver.findElement(By.id("fakeLogOffButton")).click()
         Thread.sleep(500)
         assertEquals("Pepsbook Login",driver.title)
@@ -90,39 +94,36 @@ class SeleniumTests {
                         it.findElement(By.className("answerText")).text == s
                     }!!
             val menuLink get() = findAnswer().findElement(By.className("dropdown-toggle"))
-            fun menuItem(x : Int) = findAnswer().findElements(By.className("dropdown-item"))[x]
+            fun menuItem(className : String) = findAnswer().findElement(By.className(className))
         }
         with(tao) { doMvc = false;fillDB();currName = "Masha"}
-        with(driver) {
-            Thread.sleep(5000)
-            get("http://localhost:$port")
-            Thread.sleep(2000)
-            findElement(By.name("username")).sendKeys("masha")
-            findElement(By.name("password")).sendKeys("child")
-            findElement(By.id("loginForm")).submit()
-            Thread.sleep(2000)
-            //Press Ответить
-            val mindText = findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
-            findElement(By.className("mindEntity")).findElement(By.className("dropdown-toggle")).click()
-            findElement(By.className("mindEntity")).findElements(By.className("dropdown-item"))[0].click()
-            //Type text in mindTextArea
-            findElement(By.id("mindTextArea")).sendKeys("Хохохо")
-            findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click()
-            with(tao) { saveAnswer("Хохохо",mindText);tao.checkDB() }
-            Thread.sleep(1000)
+        with(wao) {
+            with (driver) {
+                pause(For.LOAD)
+                get("http://localhost:$port")
+                pause(For.LOAD)
+                findElement(By.name("username")).sendKeys("masha")
+                findElement(By.name("password")).sendKeys("child")
+                findElement(By.id("loginForm")).submit()
+                pause(For.LOAD)
 
-            //Press Редактировать
-            TheAnswer("Хохохо").menuLink.click()
-            TheAnswer("Хохохо").menuItem(0).click()
-            //Type text in mindTextArea
-            findElement(By.id("mindTextArea")).sendKeys(" - ого")
-            findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click()
-            with(tao) { saveAnswer("Хохохо - ого",mindText,"Хохохо");tao.checkDB() }
-            Thread.sleep(1000)
-            //Press удалить
-            TheAnswer("Хохохо - ого").menuLink.click()
-            TheAnswer("Хохохо - ого").menuItem(1).click()
-            with (tao) {removeAnswer("Хохохо - ого",mindText);checkDB()}
+                //take first mind and answer it
+                val mindText = findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
+                clickAnswerMind(mindText)
+                typeMindText("Хохохо")
+                submitMind()
+                tao.run { saveAnswer("Хохохо", mindText);tao.checkDB() }
+                pause(For.LOAD)
+
+                clickEditAnswer("Хохохо")
+                typeMindText(" - ого",false)
+                submitMind()
+                tao.run { saveAnswer("Хохохо - ого", mindText, "Хохохо");checkDB() }
+                pause(For.LOAD)
+
+                clickDelAnswer("Хохохо - ого")
+                tao.run { removeAnswer("Хохохо - ого", mindText);checkDB() }
+            }
         }
     }
 }

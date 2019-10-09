@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop">
+    <bean id="logAop" class="ru.sasha77.spring.pepsbook.Dell" />
+    <aop:config>
+        <aop:aspect id="aspects" ref="logAop">
+            <aop:pointcut id="pointCutBefore"
+                          expression="execution(* ru.sasha77.spring.pepsbook.WebApplicationObject+.*(..))" />
+            <aop:before method="beforeAdvice" pointcut-ref="pointCutBefore" />
+        </aop:aspect>
+    </aop:config>
+</beans>

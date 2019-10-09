@@ -18,3 +18,5 @@ public class PepsbookApplication {
 
 // Monkey Test
 // Pagination
+// Labels in registration form
+// Subs in MvcTests

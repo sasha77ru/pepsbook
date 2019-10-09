@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface AnswerRepository extends CrudRepository<Answer, Integer> {
-    Iterable<Answer> findByText(String text);
+    Answer findByText(String text);
 }
