@@ -6,21 +6,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 @Data
 class UserRegister {
 
 	@NotBlank(message = "username не указан")
+	@Pattern(regexp = "^[A-Za-z][-_A-za-z0-9]*$", message = "Неправильные символы в username")
 	@Size(max=100, message = "Слишком длинный username")
 	private String username;
 
 	@NotBlank(message = "Нужен пароль")
+	@Pattern(regexp = "^[A-Za-z][-_A-za-z0-9]*$", message = "Неправильные символы в пароле")
 	@Size(max=100, message = "Слишком длинный пароль")
 	private String password;
 
-	@NotBlank(message = "Нужен пароль")
-	@Size(max=100, message = "Слишком длинный пароль")
 	private String repeatPassword;
 
 	@NotBlank(message = "Имя не указано")
