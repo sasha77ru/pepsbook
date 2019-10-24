@@ -100,12 +100,13 @@
         function toFriends(container,friend_id) {
             $.ajax("/rest/toFriends",{data:{friend_id : friend_id,_csrf:"[[${_csrf.token}]]"},method:"PATCH"})
                 .done(function (data) {
-                    //REST returns "mutual" if they are mutual friends now or "halfFriends" otherwise
-                    container.getElementsByClassName("toFriends")[0].style.display = "none"
-                    container.getElementsByClassName("fromFriends")[0].style.display = ""
-                    container.parentNode.parentNode.getElementsByClassName("friendship")[0].innerHTML =
-                        data=="mutual"?"<span class=\"badge badge-success\">Взаимный Друг</span>":
+                    //REST returns "mate" if they are mutual friends now or "noMate" otherwise
+                    $(container).closest(".userEntity").find(".friendship")[0].innerHTML =
+                        data=="mate"?"<span class=\"badge badge-success\">Взаимный Друг</span>":
                             "<span class=\"badge badge-primary\">ПолуДруг</span>"
+                    $(container).find (".toFriends")[0].style.display = "none"
+                    $(container).find (".fromFriends")[0].style.display = ""
+
                 })
                 .fail(onError)
         }
@@ -118,10 +119,11 @@
         function fromFriends(container,friend_id) {
             $.ajax("/rest/fromFriends",{data:{friend_id : friend_id,_csrf:"[[${_csrf.token}]]"},method:"PATCH"})
                 .done(function (data) {
-                    container.getElementsByClassName("fromFriends")[0].style.display = "none"
-                    container.getElementsByClassName("toFriends")[0].style.display = ""
-                    container.parentNode.parentNode.getElementsByClassName("friendship")[0].innerHTML =
-                        data=="mutual"?"<span class=\"badge badge-secondary\">Почитатель</span>":""
+                    //REST returns "mate" if another is a mate or "noMate" otherwise
+                    $(container).closest(".userEntity").find(".friendship")[0].innerHTML =
+                        data=="mate"?"<span class=\"badge badge-secondary\">Почитатель</span>":""
+                    $(container).find (".toFriends")[0].style.display = ""
+                    $(container).find (".fromFriends")[0].style.display = "none"
                     onChangeFilter();//If a friend not a friend now, we must rid of them
                 })
                 .fail(onError)
@@ -157,6 +159,7 @@
         function openNewMindWindow(moa, menuThis, mindId, parentMind, startText) {
             if (document.getElementById("mindWindow")) return //to not open second window
             let win = document.createElement("div")
+            if (startText=='@') startText += $(menuThis).closest("."+moa+"Entity").find("."+moa+"User")[0].innerHTML+' ' //CRUTCH: user is got from the page
             let text = startText || ""
             text += mindId ? $(menuThis).closest("."+moa+"Entity").find("."+moa+"Text")[0].innerHTML : "" //CRUTCH: text is got from the page
             with (win) {

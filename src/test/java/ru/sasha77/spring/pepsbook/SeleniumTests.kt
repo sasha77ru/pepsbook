@@ -22,7 +22,7 @@ import kotlin.math.roundToInt
 @AutoConfigureMockMvc
 @TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class SeleniumTests {
+class SeleniumTests : ObjWithDriver {
 
     @LocalServerPort
     private val port: Int = 0
@@ -33,18 +33,21 @@ class SeleniumTests {
     @Autowired
     lateinit var wao : WebApplicationObject
 
+    override val driver : WebDriver = driverStatic
+
     companion object {
-        lateinit var driver : WebDriver
+
+        lateinit var driverStatic : WebDriver
 
         @BeforeClass @JvmStatic fun startDriver () {
             System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
-            driver = ChromeDriver(ChromeOptions().apply {
+            driverStatic = ChromeDriver(ChromeOptions().apply {
 //                addArguments("headless")
                 addArguments("window-size=1200x600")
             })
         }
         @AfterClass @JvmStatic fun closeDriver () {
-            driver.close()
+            driverStatic.close()
         }
     }
 
@@ -88,42 +91,32 @@ class SeleniumTests {
     }
 
     @Test fun uiTest002_Answers() {
-        class TheAnswer (val s : String) {
-            private fun findAnswer() = driver.findElements(By.className("answerEntity")).
-                    find {
-                        it.findElement(By.className("answerText")).text == s
-                    }!!
-            val menuLink get() = findAnswer().findElement(By.className("dropdown-toggle"))
-            fun menuItem(className : String) = findAnswer().findElement(By.className(className))
-        }
         with(tao) { doMvc = false;fillDB();currName = "Masha"}
         with(wao) {
-            with (driver) {
-                pause(For.LOAD)
-                get("http://localhost:$port")
-                pause(For.LOAD)
-                findElement(By.name("username")).sendKeys("masha")
-                findElement(By.name("password")).sendKeys("child")
-                findElement(By.id("loginForm")).submit()
-                pause(For.LOAD)
+            pause(For.LOAD)
+            driver.get("http://localhost:$port")
+            pause(For.LOAD)
+            driver.findElement(By.name("username")).sendKeys("masha")
+            driver.findElement(By.name("password")).sendKeys("child")
+            driver.findElement(By.id("loginForm")).submit()
+            pause(For.LOAD)
 
-                //take first mind and answer it
-                val mindText = findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
-                clickAnswerMind(mindText)
-                typeMindText("Хохохо")
-                submitMind()
-                tao.run { saveAnswer("Хохохо", mindText);tao.checkDB() }
-                pause(For.LOAD)
+            //take first mind and answer it
+            val mindText = driver.findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
+            clickAnswerMind(mindText)
+            typeMindText("Хохохо")
+            submitMind()
+            tao.run { saveAnswer("Хохохо", mindText);tao.checkDB() }
+            pause(For.LOAD)
 
-                clickEditAnswer("Хохохо")
-                typeMindText(" - ого",false)
-                submitMind()
-                tao.run { saveAnswer("Хохохо - ого", mindText, "Хохохо");checkDB() }
-                pause(For.LOAD)
+            clickEditAnswer("Хохохо")
+            typeMindText(" - ого",false)
+            submitMind()
+            tao.run { saveAnswer("Хохохо - ого", mindText, "Хохохо");checkDB() }
+            pause(For.LOAD)
 
-                clickDelAnswer("Хохохо - ого")
-                tao.run { removeAnswer("Хохохо - ого", mindText);checkDB() }
-            }
+            clickDelAnswer("Хохохо - ого")
+            tao.run { removeAnswer("Хохохо - ого", mindText);checkDB() }
         }
     }
 }

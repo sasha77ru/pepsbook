@@ -45,6 +45,7 @@ public class RestController {
      * @return "mutual" if they are now mutual friends or "halfFriend" otherwise
      * @throws IOException
      */
+    @SuppressWarnings("Duplicates")
     @PatchMapping(path = "/toFriends")
     @ResponseBody
     @Transactional
@@ -55,7 +56,7 @@ public class RestController {
         if (friend == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return null;}
         user.getFriends().add(friend);
         userRepository.save(user);
-        return (user.getMates().contains(friend))?"mutual":"halfFriend";
+        return (user.getMates().contains(friend))?"mate":"notMate";
     }
 
     /**
@@ -65,6 +66,7 @@ public class RestController {
      * @return "mutual" if they were or "nobody" otherwise
      * @throws IOException
      */
+    @SuppressWarnings("Duplicates")
     @PatchMapping(path = "/fromFriends")
     @ResponseBody
     @Transactional
@@ -75,7 +77,7 @@ public class RestController {
         if (friend == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return null;}
         user.getFriends().remove(friend);
         userRepository.save(user);
-        return (user.getMates().contains(friend))?"mutual":"nobody";
+        return (user.getMates().contains(friend))?"mate":"notMate";
     }
 
     /**

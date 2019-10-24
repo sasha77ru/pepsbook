@@ -21,3 +21,29 @@ spring:
   thymeleaf:
     cache: false
     prefix: file:src/main/resources/templates/
+
+---
+
+spring:
+  profiles: tst
+  datasource:
+    url: jdbc:h2:mem:pepsbook;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate.ddl-auto: none
+    properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
+my:
+  tst:
+    headless: true
+    closeBrowser: true
+    seed: 0
+#logging:
+#  group:
+#    mumu: ru.sasha77.spring.pepsbook.LogAspect
+#  level:
+#    ru.sasha77.spring.pepsbook.LogAspect: trace
+#  pattern.mumu:  "%msg%n"
+
+

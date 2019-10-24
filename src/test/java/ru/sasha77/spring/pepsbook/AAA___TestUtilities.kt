@@ -1,17 +1,18 @@
 package ru.sasha77.spring.pepsbook
 
+import org.aspectj.lang.JoinPoint
 import org.hamcrest.Matchers
 import org.junit.Assert
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ImportResource
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Service
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -21,7 +22,7 @@ import java.util.*
 
 enum class For {LOAD,SEE,REPEAT,LONG_LOAD}
 fun pause (x : For) = Thread.sleep(when (x) {
-    For.LOAD -> 150
+    For.LOAD -> 200
     For.LONG_LOAD -> 1000
     For.SEE -> 0
     For.REPEAT -> 100})
@@ -37,11 +38,18 @@ fun pause (attempts : Int = 50, f : () -> Boolean) {
 
 fun Date.myFormat () = SimpleDateFormat("dd.MM.yy HH:mm").format(this)
 
+interface ObjWithDriver {
+    val driver : WebDriver
+}
+
 data class TstMind(
     var text    : String,
     val user    : String,
     val time    : Date,
     var answers : MutableList<TstAnswer> = mutableListOf()) {
+    init {
+        println("TstMind $text")
+    }
     fun getAnswerByText (findText : String) = answers.find { it.text == findText } ?: throw IllegalArgumentException("No such TSTANSWER $text")
     fun addAnswer (text: String,user: String,time: Date) {answers.add(TstAnswer(text,this,user,time))}
     fun removeAnswer (findText : String) {answers.remove(getAnswerByText(findText))}
@@ -78,7 +86,7 @@ data class TstAnswer(
  * It's possible to check it with checkDB method, that performs mvc get requests and compare states.
  */
 @Suppress("MemberVisibilityCanBePrivate")
-@Component
+@Component("Tao")
 class TestApplicationObject (val usersRepo: UserRepository,
                              val mindsRepo: MindRepository,
                              val answersRepo: AnswerRepository) {
@@ -113,12 +121,9 @@ class TestApplicationObject (val usersRepo: UserRepository,
     fun List<TstUser>.deepCopy() = //fun for tstUsersArray
             mutableListOf<TstUser>().apply {this@deepCopy.forEach { this.add(it.deepCopy()) }}
 
-    lateinit var tstMindsArray : List<TstMind>
-    lateinit var actualMindsArray : MutableList<TstMind>
+    val actualMindsArray = mutableListOf<TstMind>()
     fun List<TstMind>.getByText(text: String) = //fun for tstMindsArray
             find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
-    fun List<TstMind>.copy() = //fun for tstMindsArray
-            mutableListOf<TstMind>().apply {this@copy.forEach { this.add(it.copy()) }}
 
     private var _currUser : TstUser? = null
     var currUser : TstUser
@@ -146,8 +151,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
         usersRepo.deleteAll()
         tstUsersArray = listOf()
         actualUsersArray = mutableListOf()
-        tstMindsArray = listOf()
-        actualMindsArray = mutableListOf()
+        actualMindsArray.clear()
     }
 
     /**
@@ -183,18 +187,17 @@ class TestApplicationObject (val usersRepo: UserRepository,
                 }
         actualUsersArray = tstUsersArray.deepCopy()
 
-        tstMindsArray = listOf(
-                TstMind("Hru-hru", "Porky", mockDate())
-                        .apply {
-                            answers = mutableListOf(
-                                    TstAnswer("Вы свинья", this, "Masha", mockDate()),
-                                    TstAnswer("Соласен", this, "Luntik", mockDate()))
-                        },
-                TstMind("Gaff-gaff", "Pluto", mockDate()),
-                TstMind("Понятненько", "Masha", mockDate()),
-                TstMind("Я лунная пчела", "Luntik", mockDate())
-        )
-        actualMindsArray = tstMindsArray.copy()
+        with (actualMindsArray) {
+            add(TstMind("Hru-hru", "Porky", mockDate())
+                    .apply {
+                        answers = mutableListOf(
+                                TstAnswer("Вы свинья", this, "Masha", mockDate()),
+                                TstAnswer("Соласен", this, "Luntik", mockDate()))
+                    })
+            add(TstMind("Gaff-gaff", "Pluto", mockDate()))
+            add(TstMind("Понятненько", "Masha", mockDate()))
+            add(TstMind("Я лунная пчела", "Luntik", mockDate()))
+        }
 
 //    if (!friendship) actualUsersArray.forEach { it.friendsNames.removeIf { true };it.matesNames.removeIf { true }}
 
@@ -209,7 +212,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
             usersRepo.save(theUser.user)
         }
         //save minds
-        if (minds) tstMindsArray.forEach { tstMind ->
+        if (minds) actualMindsArray.forEach { tstMind ->
             val mind = Mind(tstMind.text, tstUsersArray.getByName(tstMind.user).user, tstMind.time)
                     .apply { answers = tstMind.answers.map { tstAnswer -> //add answers to mind
                         Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user),tstAnswer.time)} }
@@ -366,42 +369,68 @@ class TestApplicationObject (val usersRepo: UserRepository,
     }
 }
 
-//open class LogAspect {
-//    fun before(returnValue: Any) {
-//        println("value return was $returnValue")
-//    }
-//}
+@Component("logAop")
+open class LogAspect {
+    var log = LoggerFactory.getLogger(this::class.java)
+    fun beforeAdvice(joinPoint : JoinPoint) {
+        log.info("> ${joinPoint.signature.name} (${joinPoint.args.drop(1).joinToString(",")})")
+    }
+}
+
 
 @Component
-class WebApplicationObject (val tao : TestApplicationObject) {
-    fun WebDriver.clickLogo () {
-        findElement(By.className("navbar-brand")).click()
+@ImportResource("LogAop.xml")
+open class WebApplicationObject {
+    open fun ObjWithDriver.clickLogo () {
+        driver.findElement(By.className("navbar-brand")).click()
     }
-    fun WebDriver.clickMainMinds () {
-        findElement(By.id("mainMinds")).click()
+    open fun ObjWithDriver.clickMainMinds () {
+        driver.findElement(By.id("mainMinds")).click()
     }
-    fun WebDriver.clickMainUsers () {
-        findElement(By.id("mainUsers")).click()
+    open fun ObjWithDriver.clickMainUsers () {
+        driver.findElement(By.id("mainUsers")).click()
     }
-    fun WebDriver.clickMainFriends () {
-        findElement(By.id("mainFriends")).click()
+    open fun ObjWithDriver.clickMainFriends () {
+        driver.findElement(By.id("mainFriends")).click()
     }
-    fun WebDriver.clickMainMates () {
-        findElement(By.id("mainMates")).click()
+    open fun ObjWithDriver.clickMainMates () {
+        driver.findElement(By.id("mainMates")).click()
     }
-    fun WebDriver.clickEditMind (mindText: String) {
-        findElements(By.className("mindEntity"))
+    open fun ObjWithDriver.clickUserToFriends (userName: String) {
+        driver.findElements(By.className("userEntity"))
                 .find {
-                    it.findElement(By.className("mindText")).text
+                    it.findElement(By.className("userName")).text
                         .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                    userName.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
                 }!!.run {
                     findElement(By.className("dropdown-toggle")).click()
-                    findElement(By.className("editMind")).click()
+                    findElement(By.className("toFriends")).click()
                 }
     }
-    fun WebDriver.clickDelMind (mindText: String) {
-        findElements(By.className("mindEntity"))
+    open fun ObjWithDriver.clickUserFromFriends (userName: String) {
+        driver.findElements(By.className("userEntity"))
+                .find {
+                    it.findElement(By.className("userName")).text
+                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                    userName.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+                    findElement(By.className("dropdown-toggle")).click()
+                    findElement(By.className("fromFriends")).click()
+                }
+    }
+    open fun ObjWithDriver.clickEditMind (mindText: String) {
+        driver.findElements(By.className("mindEntity"))
+                .find {
+                    it.findElement(By.className("mindText")).text
+                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
+                            mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                }!!.run {
+            findElement(By.className("dropdown-toggle")).click()
+            findElement(By.className("editMind")).click()
+        }
+    }
+    open fun ObjWithDriver.clickDelMind (mindText: String) {
+        driver.findElements(By.className("mindEntity"))
                 .find {
                     it.findElement(By.className("mindText")).text
                         .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
@@ -411,8 +440,8 @@ class WebApplicationObject (val tao : TestApplicationObject) {
                     findElement(By.className("delMind")).click()
                 }
     }
-    fun WebDriver.clickAnswerMind (mindText: String) {
-        findElements(By.className("mindEntity"))
+    open fun ObjWithDriver.clickAnswerMind (mindText: String) {
+        driver.findElements(By.className("mindEntity"))
                 .find {
                     it.findElement(By.className("mindText")).text
                         .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
@@ -422,56 +451,57 @@ class WebApplicationObject (val tao : TestApplicationObject) {
                     findElement(By.className("answerMind")).click()
                 }
     }
-    fun WebDriver.clickEditAnswer (mindText: String) {
-        findElements(By.className("answerEntity"))
+    open fun ObjWithDriver.clickEditAnswer (answerText: String) {
+        driver.findElements(By.className("answerEntity"))
                 .find {
                     it.findElement(By.className("answerText")).text
                         .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                    answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
                 }!!.run {
                     findElement(By.className("dropdown-toggle")).click()
                     findElement(By.className("editAnswer")).click()
                 }
     }
-    fun WebDriver.clickDelAnswer (mindText: String) {
-        findElements(By.className("answerEntity"))
+    open fun ObjWithDriver.clickDelAnswer (answerText: String) {
+        driver.findElements(By.className("answerEntity"))
                 .find {
                     it.findElement(By.className("answerText")).text
                             .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                    answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
                 }!!.run {
                     findElement(By.className("dropdown-toggle")).click()
                     findElement(By.className("delAnswer")).click()
                 }
     }
-    fun WebDriver.clickAnswerAnswer (mindText: String) {
-        findElements(By.className("answerEntity"))
+    open fun ObjWithDriver.clickAnswerAnswer (answerText: String) {
+        driver.findElements(By.className("answerEntity"))
                 .find {
                     it.findElement(By.className("answerText")).text
                         .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                    mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                    answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
                 }!!.run {
                     findElement(By.className("dropdown-toggle")).click()
                     findElement(By.className("answerAnswer")).click()
                 }
     }
-    fun WebDriver.clickLogout () {
-        (this as JavascriptExecutor).executeScript("logOff();")
+    open fun ObjWithDriver.clickLogout () {
+        (driver as JavascriptExecutor).executeScript("logOff();")
     }
-    fun WebDriver.typeFilter (filterText: String, clear : Boolean = true) {
-        findElement(By.id("mainFilter")).run {
+    open fun ObjWithDriver.typeFilter (filterText: String, clear : Boolean = true) {
+        driver.findElement(By.id("mainFilter")).run {
             if (clear) clear()
             filterText.forEach { sendKeys(it.toString()) }
         }
     }
-    fun WebDriver.clickNewMind () {
-        findElement(By.id("newMind")).click()
+    open fun ObjWithDriver.clickNewMind () {
+        driver.findElement(By.id("newMind")).click()
     }
-    fun WebDriver.clickCloseMind () {
-        findElement(By.id("closeMind")).click()
+    open fun ObjWithDriver.clickCloseMind () {
+        driver.findElement(By.id("closeMind")).click()
     }
-    fun WebDriver.typeMindText (mindText: String, clear : Boolean = true) {
-        findElement(By.id("mindTextArea")).run { if (clear) clear();sendKeys(mindText) } }
-    fun WebDriver.submitMind () {
-        findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click() }
+    open fun ObjWithDriver.typeMindText (mindText: String, clear : Boolean = true) {
+        driver.findElement(By.id("mindTextArea")).run { if (clear) clear();sendKeys(mindText) }
+    }
+    open fun ObjWithDriver.submitMind () {
+        driver.findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click() }
 }

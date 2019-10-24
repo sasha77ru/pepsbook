@@ -1,0 +1,18 @@
+{
+  "properties": [
+    {
+      "name": "my.tst.headless",
+      "type": "java.lang.Boolean",
+      "description": "Run Chrome in headless mode."
+    },
+    {
+      "name": "my.tst.closeBrowser",
+      "type": "java.lang.Boolean",
+      "description": "Close chrome at the end of test."
+    },
+    {
+      "name": "my.tst.seed",
+      "type": "java.lang.Long",
+      "description": "Testing seed, if it needed. Or 0."
+    }
+  ] }

@@ -33,7 +33,7 @@
                         <a th:if="${j.user.id==currUser.id}" class="dropdown-item ownerMenu delAnswer"
                            th:href="@{'javascript:removeMind(\'answer\','+${j.id}+')'}">Удалить</a>
                         <a class="dropdown-item answerAnswer" href="javascript:undefined"
-                           th:onclick="@{'openNewMindWindow(\'answer\',this,undefined,'+${j.id}+',\'@'+${j.user.name}+'&nbsp;\')'}">
+                           th:onclick="@{'openNewMindWindow(\'answer\',this,undefined,'+${i.id}+',\'@\')'}">
                             Ответить</a>
                     </div>
             </span>

@@ -19,13 +19,18 @@
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>
                     <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">
                         <a class="dropdown-item toFriends"
-                           href="javascript:undefined"
-                           th:onclick="@{${!currUser.friends.contains(i) ? 'toFriends' : 'fromFriends'}+'(this.parentNode,'+${i.id}+')'}"
-                           th:text="${!currUser.friends.contains(i) ? 'В друзья' : 'Из друзей'}"></a>
+                           th:styleappend="${currUser.friends.contains(i)} ? 'display : none' : ''"
+                           th:onclick="@{'toFriends(this.parentNode,'+${i.id}+')'}"
+                           href="javascript:undefined">В друзья</a>
+                        <a class="dropdown-item fromFriends"
+                           th:styleappend="${!currUser.friends.contains(i)} ? 'display : none' : ''"
+                           th:onclick="@{'fromFriends(this.parentNode,'+${i.id}+')'}"
+                           href="javascript:undefined">Из друзей</a>
                     </div>
                 </li>
-                <li class="friendship" th:if="${currUser.friends.contains(i)||currUser.mates.contains(i)}">
-                    <span th:class="badge"
+                <li class="friendship">
+                    <span class="badge"
+                        th:if="${currUser.friends.contains(i)||currUser.mates.contains(i)}"
                         th:classappend="${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'badge-success':'badge-primary') : 'badge-secondary'"
                         th:text=       "${currUser.friends.contains(i)} ? (${currUser.mates.contains(i)}?'Взаимный Друг':'ПолуДруг') : 'Почитатель'">
                     </span>

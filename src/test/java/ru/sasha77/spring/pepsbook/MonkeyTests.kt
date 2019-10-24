@@ -9,22 +9,39 @@ import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.lang.RuntimeException
 import java.lang.StringBuilder
 import kotlin.random.Random
 
+@Component
+@ConfigurationProperties(prefix = "my.tst")
+class TstProps {
+    var headLess : Boolean = false
+    var closeBrowser : Boolean = true
+    var seed : Long = 0
+}
+
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc
-@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
+//@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
+@ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class MonkeyTests {
+class MonkeyTests : ObjWithDriver {
+
+    @Autowired
+    lateinit var tstProps : TstProps
 
     @LocalServerPort
     private val port: Int = 0
@@ -35,34 +52,34 @@ class MonkeyTests {
     @Autowired
     lateinit var wao : WebApplicationObject
 
-    companion object {
-        lateinit var driver : WebDriver
-        lateinit var js : JavascriptExecutor
+    override lateinit var driver : WebDriver
+    lateinit var js : JavascriptExecutor
 
-        @BeforeClass @JvmStatic fun startDriver () {
+    var initialized : Boolean = false
+
+    @Before
+    fun initialize () {
+        if (!initialized) {
             System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
             driver = ChromeDriver(ChromeOptions().apply {
-                addArguments("headless")
+                if (tstProps.headLess) addArguments("headless")
                 addArguments("window-size=1200x600")
             })
             js = driver as JavascriptExecutor
-        }
-        @AfterClass @JvmStatic fun closeDriver () {
-//            driver.close() /moved to monkeyTest001
+            tao.doMvc = false
+            initialized = true
         }
     }
 
-    @Before
-    fun initTao () {tao.doMvc = false}
-
     @Test fun monkeyTest001() {
-        MonkeyTestClass(1921767833437235130).go()
+        if (tstProps.seed != 0L) MonkeyTestClass(tstProps.seed).go()
         for (round in 1..100) MonkeyTestClass(Random.nextLong().also { println("$round ====================== seed = $it") }).go()
-//        MonkeyTestClass(9125321307777107275).go() // on 532 findByText(it) must not be null
-        driver.close()
+        if (tstProps.closeBrowser) driver.close()
     }
 
     inner class MonkeyTestClass (seed : Long) {
+        var log = LoggerFactory.getLogger(this::class.java)
+        fun vlog(s : String) {log.info("$step ! $s")}
         var step = 0
         private var loginPassword : LoginPassword? = null
         private var registerInformation : RegisterInformation? = null
@@ -70,8 +87,10 @@ class MonkeyTests {
         fun changeWhat (x : String) {what = x;filter = ""}
         var filter : String = ""
         var mindWinWhich : String = ""
-        var currMindText : String? = null
-        var currAnswerText : String? = null
+        var currMind : TstMind? = null
+        var currAnswer : TstAnswer? = null
+        var existingUserName = "" // for check existing username via registration
+        var existingEmail = "" // for check existing Email via registration
 
         val randomer = Random(seed)
         fun rand(x : Int = 100) = randomer.nextInt(x)
@@ -90,7 +109,7 @@ class MonkeyTests {
          */
         fun feignString (len : Int = 12) : String = StringBuilder().apply {
             repeat(len/2) { 
-                append((SyLIST+listOf(feignUsername(2,::invalidChar))).random(randomer))
+                append((SyLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
             } }.toString()
                 .let { if (it in usedStrings) feignString(len) else {usedStrings.add(it);it} } //to eliminate dups
         inner class LoginPassword {
@@ -126,14 +145,20 @@ class MonkeyTests {
             var ok : Boolean = true
             val errors = mutableListOf<String>()
             init {
-                val w = 5
-                if (rand()<w) {username = feignUsername(charFrom = ::invalidChar);errors += "usernameErrors"}
-                if (rand()<w) {password = feignUsername(charFrom = ::invalidChar);errors += "passwordErrors";repeatPassword = password}
-                if (rand()<w) {repeatPassword = feignUsername(charFrom = ::invalidChar);errors += "repeatPasswordErrors"}
-                if (rand()<w) {name = feignString(102);errors += "nameErrors"}
-                if (rand()<w) {email = feignUsername(charFrom = ::invalidChar);errors += "emailErrors"}
-                if (rand()<w) {country = feignString(102);errors += "countryErrors"}
+                val w = 3 // Probability of a wrong thing in a field
+                if (rand()<w) {username = feignUsername(charFrom = ::invalidChar);errors += "usernameErrors"} // invalid chars in a username
+                if (rand()<w && existingUserName!="") {username = existingUserName;errors += "usernameErrors"} // existing username
+                if (rand()<w) {password = feignUsername(charFrom = ::invalidChar);errors += "passwordErrors";repeatPassword = password} // invalid chars in a password
+                if (rand()<w) {repeatPassword = feignUsername(charFrom = ::invalidChar);errors += "repeatPasswordErrors"} // password and repeatPassword are different
+                if (rand()<w) {name = feignString(102);errors += "nameErrors"} // name is too long
+                if (rand()<w) {email = feignUsername(charFrom = ::invalidChar);errors += "emailErrors"} //  existing email
+                if (rand()<w && existingEmail!="") {email = existingEmail;errors += "emailErrors"} // invalid chars in an email
+                if (rand()<w) {country = feignString(102);errors += "countryErrors"}  // country is too long
                 ok = errors.size == 0
+                if (ok) {
+                    existingUserName = username
+                    existingEmail = email
+                }
             }
         }
         val visibleMinds
@@ -142,6 +167,10 @@ class MonkeyTests {
                         ||  mind.answers.any { it.text.contains(filter,true) }}.sortedByDescending {it.time}
         val ownersVisibleMinds
             get() = visibleMinds.filter { it.user == tao.currName }
+        val visibleAnswers
+            get() = visibleMinds.flatMap { it.answers }
+        val ownersVisibleAnswers
+            get() = visibleAnswers.filter { it.user == tao.currName }
         val visibleUsers
             get() = tao.actualUsersArray
                     .asSequence()
@@ -161,23 +190,26 @@ class MonkeyTests {
 
         @Suppress("UNCHECKED_CAST")
         fun go () {
-            tao.fillDB()
+            tao.clearDB()
             driver.get("http://localhost:$port")
             var f = loginForm() as? () -> Any
             while (step++ < 100) {
-                print("$step ")
+                if (step >= 101) {
+                    println("JOPA")
+                }
                 f = (f?.invoke() ?: break) as () -> Any
                 pause(For.SEE)
             }
             pause(For.LONG_LOAD)
-            wao.runCatching {driver.clickLogout()}
+            wao.runCatching {clickLogout()}
         }
 
         fun loginForm () : Any? {
-            println("loginForm")
+            vlog("loginForm")
             pause {driver.title == "Pepsbook Login"}
             loginPassword?.run { driver.findElement(By.id("loginErrors")) } // Check the page for error message presence
-            if (rand() > 90 && tao.actualUsersArray.size > 0) {
+            val probabilityOfExistingUserLogin = if (step < 10) 10 else 90
+            if (rand() < probabilityOfExistingUserLogin && tao.actualUsersArray.size > 0) {
                 LoginPassword().run {
                     driver.findElement(By.name("username")).run { clear();sendKeys(login) }
                     driver.findElement(By.name("password")).run { clear();sendKeys(password) }
@@ -195,7 +227,7 @@ class MonkeyTests {
         }
 
         fun registerForm () : Any? {
-            println("registerForm")
+            vlog("registerForm")
             pause {driver.title=="Pepsbook registration"}
             registerInformation?.run { // Check the page for error messages presence
                 registerInformation!!.errors.forEach { driver.findElement(By.id(it)) }
@@ -218,7 +250,7 @@ class MonkeyTests {
         }
 
         fun minds () : Any? {
-            println("minds")
+            vlog("minds filter=$filter")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what == "minds") { // If minds in subMain, check page about minds
@@ -247,7 +279,7 @@ class MonkeyTests {
         }
 
         fun users () : Any? {
-            println("users what=$what")
+            vlog("users what=$what filter=$filter")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
@@ -272,14 +304,14 @@ class MonkeyTests {
         }
 
         fun mindWin () : Any? {
-            println("mindWin which=$mindWinWhich")
-            wao.run {driver.run {
+            vlog("mindWin which=$mindWinWhich")
+            wao.run {
                 if (rand() < 5) { clickCloseMind();return ::minds }
                 if (rand() < 5) {
                     typeMindText(feignString(4002)) //Invalid length
                     submitMind()
                     pause(For.LOAD)
-                    assertEquals(1,findElements(By.id("mindErrSign")).size)
+                    assertEquals(1,driver.findElements(By.id("mindErrSign")).size)
                     return ::mindWin
                 }
                 feignString(rand(400)).let { newText ->
@@ -287,52 +319,78 @@ class MonkeyTests {
                     submitMind()
                     pause(For.LOAD)
                     if (mindWinWhich == "mind") {
-                        if (currMindText != null) {
-                            tao.actualMindsArray.find { it.text == currMindText }!!.text = newText
+                        if (currMind != null) {
+                            currMind!!.text = newText
                         } else tao.actualMindsArray.add(TstMind(newText, tao.currName, tao.mindsRepo.findByText(newText).time))
                     } else {
-                        val currMind = tao.actualMindsArray.find { it.text == currMindText }!!
-                        if (currAnswerText != null) {
-                            currMind.answers.find { it.text == currAnswerText }!!.text = newText
+                        if (currAnswer != null) {
+                            currAnswer!!.text = newText
                         } else {
-                            currMind.answers.add(TstAnswer(newText, currMind, tao.currName, tao.answersRepo.findByText(newText).time))
+                            currMind!!.answers.add(TstAnswer(newText, currMind!!, tao.currName, tao.answersRepo.findByText(newText).time))
                         }
                     }
                     return ::minds
                 }
-            } }
+            }
         }
 
         fun mainPage () : Any? {
-            println("mainPage what=$what")
-            wao.run {driver.run {
+            vlog("mainPage what=$what filter=")
+            wao.run {
+                //caseMatrix contains lambdas to random run. Lambda can be added many times to increase its probability weight
                 val caseMatrix = mutableListOf({ clickLogo();changeWhat("minds");::minds});
-                { clickMainMinds()  ;changeWhat("minds")    ;::minds    }.also { repeat(1)  {_ -> caseMatrix.add(it)} };
-                { clickMainUsers()  ;changeWhat("users")    ;::users    }.also { repeat(3)  {_ -> caseMatrix.add(it)} };
-                { clickMainFriends();changeWhat("friends")  ;::users    }.also { repeat(3)  {_ -> caseMatrix.add(it)} };
-                { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)  {_ -> caseMatrix.add(it)} };
-                { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(3)  {_ -> caseMatrix.add(it)} };
+                { clickMainMinds()  ;changeWhat("minds")    ;::minds    }.also { repeat(16)  {_ -> caseMatrix.add(it)} };
+                { clickMainUsers()  ;changeWhat("users")    ;::users    }.also { repeat(10)  {_ -> caseMatrix.add(it)} };
+                { clickMainFriends();changeWhat("friends")  ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
+                { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
+                { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(if (step < 10) 60 else 10)  {_ -> caseMatrix.add(it)} };
                 if (what == "minds" || what == "users") {
                     { typeFilter(SyLIST.random(randomer).also { filter = it });whatLambda}
-                            .also { repeat(5)  { _ -> caseMatrix.add(it)} } };
-                if (what == "minds" && visibleMinds.isNotEmpty()) {
-                    { currMindText = null;mindWinWhich = "mind"
+                            .also { repeat(5)  { _ -> caseMatrix.add(it)} } }
+                if (what == "minds") {
+                    { currMind = null;mindWinWhich = "mind"
                         clickNewMind();::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} };
-                    { currMindText = visibleMinds.random(randomer).text;currAnswerText = null;mindWinWhich = "answer"
-                        clickAnswerMind(currMindText!!);::mindWin}.also { repeat(10)  { _ -> caseMatrix.add(it)} };
+                }
+                if (what == "minds" && visibleMinds.isNotEmpty()) {
+                    { currMind = null;mindWinWhich = "mind"
+                        clickNewMind();::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
+                    { currMind = visibleMinds.random(randomer);currAnswer = null;mindWinWhich = "answer"
+                        clickAnswerMind(currMind!!.text);::mindWin}.also { repeat(5)  { _ -> caseMatrix.add(it)} };
                     if (ownersVisibleMinds.isNotEmpty()) {
-                        { currMindText = ownersVisibleMinds.random(randomer).text;mindWinWhich = "mind"
-                            clickEditMind(currMindText!!);::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} };
-                        { currMindText = ownersVisibleMinds.random(randomer).text
-                            clickDelMind(currMindText!!)
-                            tao.actualMindsArray.removeAll { it.text == currMindText };::minds }
-                                .also { repeat(10)  { _ -> caseMatrix.add(it)} }
+                        { currMind = ownersVisibleMinds.random(randomer);mindWinWhich = "mind"
+                            clickEditMind(currMind!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
+                        { currMind = ownersVisibleMinds.random(randomer)
+                            clickDelMind(currMind!!.text)
+                            tao.actualMindsArray.remove(currMind!!);::minds }
+                                .also { repeat(3)  { _ -> caseMatrix.add(it)} }
                     }
-                } else {
-                    //TODO("USERS EDITING")
+                    if (visibleAnswers.isNotEmpty()) {
+                        { val clickAnswer = visibleAnswers.random(randomer)
+                            currMind = clickAnswer.mind;currAnswer = null;mindWinWhich = "answer"
+                            clickAnswerAnswer(clickAnswer.text);::mindWin}.also { repeat(3)  { _ -> caseMatrix.add(it)} }
+                        if (ownersVisibleAnswers.isNotEmpty()) {
+                            { currAnswer = ownersVisibleAnswers.random(randomer);mindWinWhich = "answer"
+                                clickEditAnswer(currAnswer!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
+                            { currAnswer = ownersVisibleAnswers.random(randomer)
+                                clickDelAnswer(currAnswer!!.text)
+                                currAnswer!!.mind.answers.removeAll { it.text == currAnswer!!.text };::minds }
+                                    .also { repeat(3)  { _ -> caseMatrix.add(it)} }
+                        }
+                    }
+                }
+                if (what == "users" && visibleUsers.isNotEmpty()) {
+                    { val clickUser = visibleUsers.random(randomer)
+                        if (tao.isFriendToCurr(clickUser)) {
+                            clickUserFromFriends(clickUser.name)
+                            tao.fromFriends(clickUser.name)
+                        } else {
+                            clickUserToFriends(clickUser.name)
+                            tao.toFriends(clickUser.name)
+                        }
+                    ::users}.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }
                 return caseMatrix.random(randomer).invoke()
-            } }
+            }
         }
     }
 }

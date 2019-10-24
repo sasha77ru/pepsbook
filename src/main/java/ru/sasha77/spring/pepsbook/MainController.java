@@ -54,10 +54,10 @@ public class MainController {
 	@PostMapping(path = "/register")
 	public String submitRegistration(@Valid UserRegister form, Errors errors, HttpServletRequest request) {
 		if (userRepository.findByUsername(form.getUsername()) != null) {
-			errors.rejectValue("repeatPassword","","Такой username уже существует");
+			errors.rejectValue("username","","Такой username уже существует");
 		}
 		if (userRepository.findByEmail(form.getEmail()) != null) {
-			errors.rejectValue("repeatPassword","","Такой email уже существует");
+			errors.rejectValue("email","","Такой email уже существует");
 		}
 		if (!form.getPassword().equals(form.getRepeatPassword())) {
 			errors.rejectValue("repeatPassword","","Пароли не совпадают");

@@ -1,7 +1,9 @@
 package ru.sasha77.spring.pepsbook;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ImportResource;
 
 @SpringBootApplication
 public class PepsbookApplication {
@@ -20,3 +22,4 @@ public class PepsbookApplication {
 // Pagination
 // Labels in registration form
 // Subs in MvcTests
+// JS to separate .js file

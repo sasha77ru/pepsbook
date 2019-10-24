@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+<!--    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>-->
+<!--    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />-->
+    <springProfile name="tst">
+        <appender name="simpleConsole" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%msg %n</pattern>
+            </encoder>
+        </appender>
+<!--        <root level="info">-->
+<!--            <appender-ref ref="CONSOLE" />-->
+<!--        </root>-->
+        <logger name="ru.sasha77.spring.pepsbook.LogAspect" additivity="false" level="debug">
+            <appender-ref ref="simpleConsole" />
+        </logger>
+        <logger name="ru.sasha77.spring.pepsbook.MonkeyTests$MonkeyTestClass" additivity="false" level="debug">
+            <appender-ref ref="simpleConsole" />
+        </logger>
+    </springProfile>
+</configuration>
