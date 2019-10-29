@@ -47,9 +47,6 @@ data class TstMind(
     val user    : String,
     val time    : Date,
     var answers : MutableList<TstAnswer> = mutableListOf()) {
-    init {
-        println("TstMind $text")
-    }
     fun getAnswerByText (findText : String) = answers.find { it.text == findText } ?: throw IllegalArgumentException("No such TSTANSWER $text")
     fun addAnswer (text: String,user: String,time: Date) {answers.add(TstAnswer(text,this,user,time))}
     fun removeAnswer (findText : String) {answers.remove(getAnswerByText(findText))}
@@ -122,6 +119,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
             mutableListOf<TstUser>().apply {this@deepCopy.forEach { this.add(it.deepCopy()) }}
 
     val actualMindsArray = mutableListOf<TstMind>()
+    //TODO("Get rid of it")
     fun List<TstMind>.getByText(text: String) = //fun for tstMindsArray
             find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
 
@@ -286,6 +284,40 @@ class TestApplicationObject (val usersRepo: UserRepository,
                     }
     }
 
+    fun getUserByName(name : String) = actualUsersArray.getByName(name)
+    fun getMindByText(text : String) = actualMindsArray.getByText(text)
+    fun getDBMindByText(text : String) = mindsRepo.findLike(text).find { true }!!
+    fun getAnswerByText(text : String,mind : TstMind) = mind.getAnswerByText(text)
+    fun getDBAnswerByText(text : String) = answersRepo.findByText(text)!!
+
+    fun doToFriends (name : String, friendName : String) {
+        actualUsersArray.getByName(name).friendsNames.add(friendName)
+        actualUsersArray.getByName(friendName).matesNames.add(currName)
+    }
+    fun doFromFriends (name : String, friendName : String) {
+        actualUsersArray.getByName(name).friendsNames.remove(friendName)
+        actualUsersArray.getByName(friendName).matesNames.remove(currName)
+    }
+    fun doAddMind (name : String, text: String, date: Date = Date()) {
+        actualMindsArray.add(TstMind(text,name, date))
+    }
+    fun doChangeMind (oldText : String, newText : String) {
+        getMindByText(oldText).text = newText
+    }
+    fun doRemoveMind (mindText : String) {
+        actualMindsArray.remove(getMindByText(mindText))
+    }
+    fun doChangeAnswer (text : String, mindText : String, oldText : String) {
+        getMindByText(mindText).getAnswerByText(oldText).text = text
+    }
+    fun doAddAnswer (name : String, text : String, mindText : String) {
+        getMindByText(mindText).addAnswer(text,name, Date())
+    }
+    fun doRemoveAnswer (answerText : String, mindText: String) {
+        val mind = getMindByText(mindText)
+        mind.answers.remove(mind.getAnswerByText(answerText))
+    }
+
     fun getUser (sc: Int = 200) {
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/getUser")
                 .with(httpBasic(currUser.username, currUser.password)).with(csrf()))
@@ -303,70 +335,6 @@ class TestApplicationObject (val usersRepo: UserRepository,
                     }
     }
 
-    fun toFriends (friendName : String) {
-        currUser.friendsNames.add(friendName)
-        actualUsersArray.getByName(friendName).matesNames.add(currName)
-
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/toFriends")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
-                    .andExpect(MockMvcResultMatchers.status().isOk)
-                    .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
-    }
-
-    fun fromFriends (friendName : String) {
-        currUser.friendsNames.remove(friendName)
-        actualUsersArray.getByName(friendName).matesNames.remove(currName)
-
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.patch("/rest/fromFriends")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("friend_id", actualUsersArray.getByName(friendName).user.id.toString()))
-                    .andExpect(MockMvcResultMatchers.status().isOk)
-                    .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
-    }
-
-    fun saveMind (text : String, oldText : String? = null) {
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveMind")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("text",text)
-                .apply {
-                    if (oldText != null) param("id",mindsRepo.findLike(oldText).find { true }!!.id.toString())})
-                    .andExpect(MockMvcResultMatchers.status().isOk)
-        if(oldText == null) actualMindsArray.add(TstMind(text,currName, Date()))
-        else actualMindsArray.getByText(oldText).text = text
-    }
-
-    fun removeMind (oldText : String) {
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMind")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("id",mindsRepo.findLike(oldText).find { true }!!.id.toString()))
-                    .andExpect(MockMvcResultMatchers.status().isOk)
-        actualMindsArray.remove(actualMindsArray.getByText(oldText))
-    }
-
-
-    fun saveAnswer (text : String, mindText : String, oldText : String? = null) {
-        val parentMind = mindsRepo.findLike(mindText).find { true }!!
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveAnswer")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("text",text)
-                .param("parentMind",parentMind.id.toString())
-                .apply {
-                    if (oldText != null) param("id",answersRepo.findByText(oldText)!!.id.toString())})
-                .andExpect(MockMvcResultMatchers.status().isOk)
-        actualMindsArray.getByText(parentMind.text).apply {
-            if (oldText == null) addAnswer(text,currName, Date())
-            else getAnswerByText(oldText).text = text
-        }
-    }
-
-    fun removeAnswer (oldText : String, mindText : String) {
-        if (doMvc) mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeAnswer")
-                .with(httpBasic(currUser.username, currUser.password)).with(csrf())
-                .param("id",answersRepo.findByText(oldText)!!.id.toString()))
-                .andExpect(MockMvcResultMatchers.status().isOk)
-        actualMindsArray.getByText(mindText).removeAnswer(oldText)
-    }
 }
 
 @Component("logAop")
@@ -377,10 +345,9 @@ open class LogAspect {
     }
 }
 
-
 @Component
 @ImportResource("LogAop.xml")
-open class WebApplicationObject {
+open class Clickers {
     open fun ObjWithDriver.clickLogo () {
         driver.findElement(By.className("navbar-brand")).click()
     }
@@ -504,4 +471,8 @@ open class WebApplicationObject {
     }
     open fun ObjWithDriver.submitMind () {
         driver.findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click() }
+}
+
+class WebApplicationObject (val driver : WebDriver) {
+         
 }

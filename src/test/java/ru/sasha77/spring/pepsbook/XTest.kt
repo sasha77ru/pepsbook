@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
 class XTest {
+    @Autowired
+    lateinit var mvc : MvcMockers
 
     @Autowired
     lateinit var tao : TestApplicationObject
@@ -47,22 +49,22 @@ class XTest {
             currName = "Porky"
 
             //Add couple of friends
-            listOf("Pluto", "Masha").forEach { toFriends(it) }
+            listOf("Pluto", "Masha").forEach { mvc.mvcToFriends(currName,it) }
             checkAllDB()
 
             //Remove first friend
-            fromFriends("Pluto")
+            mvc.mvcFromFriends(currName,"Pluto")
             checkAllDB()
 
             //Remove second friend
-            fromFriends("Masha")
+            mvc.mvcFromFriends(currName,"Masha")
             checkAllDB()
 
             //Make all friendships and check
             actualUsersArray = tstUsersArray.deepCopy()
             actualUsersArray.forEach { user ->
                 currUser = user
-                currUser.friendsNames.forEach { friend -> toFriends(friend) }
+                currUser.friendsNames.forEach { friend -> mvc.mvcToFriends(currName,friend) }
             }
             checkAllDB()
         }
@@ -75,13 +77,13 @@ class XTest {
             fillDB()
             currName = "Porky"
 
-            saveMind("testText")
+            mvc.mvcAddMind(currName,"testText")
             checkAllDB()
 
-            saveMind("anotherText", oldText = "testText")
+            mvc.mvcChangeMind(currName, "anotherText", "testText")
             checkAllDB()
 
-            removeMind("anotherText")
+            mvc.mvcRemoveMind(currName, "anotherText")
             checkAllDB()
 
             fillDB()
@@ -95,15 +97,15 @@ class XTest {
             fillDB()
             currName = "Porky"
 
-            saveMind("Master Mind")
+            mvc.mvcAddMind(currName, "Master Mind")
 
-            saveAnswer("MM Answer","Master Mind")
+            mvc.mvcAddAnswer(currName, "MM Answer","Master Mind")
             checkAllDB()
 
-            saveAnswer("anotherText", "Master Mind", oldText = "MM Answer")
+            mvc.mvcChangeAnswer(currName, "anotherText", "Master Mind","MM Answer")
             checkAllDB()
 
-            removeAnswer("anotherText","Master Mind")
+            mvc.mvcRemoveAnswer(currName, "anotherText", "Master Mind")
             checkAllDB()
 
             fillDB()

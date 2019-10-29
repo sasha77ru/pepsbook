@@ -15,10 +15,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
-import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.lang.RuntimeException
 import java.lang.StringBuilder
@@ -50,7 +48,7 @@ class MonkeyTests : ObjWithDriver {
     lateinit var tao : TestApplicationObject
 
     @Autowired
-    lateinit var wao : WebApplicationObject
+    lateinit var clk : Clickers
 
     override lateinit var driver : WebDriver
     lateinit var js : JavascriptExecutor
@@ -201,7 +199,7 @@ class MonkeyTests : ObjWithDriver {
                 pause(For.SEE)
             }
             pause(For.LONG_LOAD)
-            wao.runCatching {clickLogout()}
+            clk.runCatching {clickLogout()}
         }
 
         fun loginForm () : Any? {
@@ -305,7 +303,7 @@ class MonkeyTests : ObjWithDriver {
 
         fun mindWin () : Any? {
             vlog("mindWin which=$mindWinWhich")
-            wao.run {
+            clk.run {
                 if (rand() < 5) { clickCloseMind();return ::minds }
                 if (rand() < 5) {
                     typeMindText(feignString(4002)) //Invalid length
@@ -336,7 +334,7 @@ class MonkeyTests : ObjWithDriver {
 
         fun mainPage () : Any? {
             vlog("mainPage what=$what filter=")
-            wao.run {
+            clk.run {
                 //caseMatrix contains lambdas to random run. Lambda can be added many times to increase its probability weight
                 val caseMatrix = mutableListOf({ clickLogo();changeWhat("minds");::minds});
                 { clickMainMinds()  ;changeWhat("minds")    ;::minds    }.also { repeat(16)  {_ -> caseMatrix.add(it)} };
@@ -382,10 +380,10 @@ class MonkeyTests : ObjWithDriver {
                     { val clickUser = visibleUsers.random(randomer)
                         if (tao.isFriendToCurr(clickUser)) {
                             clickUserFromFriends(clickUser.name)
-                            tao.fromFriends(clickUser.name)
+                            tao.doToFriends(tao.currUserName,clickUser.name)
                         } else {
                             clickUserToFriends(clickUser.name)
-                            tao.toFriends(clickUser.name)
+                            tao.doToFriends(tao.currUserName,clickUser.name)
                         }
                     ::users}.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }

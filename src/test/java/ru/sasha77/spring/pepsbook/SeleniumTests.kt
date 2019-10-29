@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
-import javax.servlet.http.HttpSession
 import kotlin.math.roundToInt
 
 @RunWith(SpringRunner::class)
@@ -31,7 +30,7 @@ class SeleniumTests : ObjWithDriver {
     lateinit var tao : TestApplicationObject
 
     @Autowired
-    lateinit var wao : WebApplicationObject
+    lateinit var clkDelMEE : Clickers
 
     override val driver : WebDriver = driverStatic
 
@@ -91,8 +90,9 @@ class SeleniumTests : ObjWithDriver {
     }
 
     @Test fun uiTest002_Answers() {
-        with(tao) { doMvc = false;fillDB();currName = "Masha"}
-        with(wao) {
+        tao.fillDB()
+        tao.currName = "Masha"
+        with(clkDelMEE) {
             pause(For.LOAD)
             driver.get("http://localhost:$port")
             pause(For.LOAD)
@@ -106,17 +106,19 @@ class SeleniumTests : ObjWithDriver {
             clickAnswerMind(mindText)
             typeMindText("Хохохо")
             submitMind()
-            tao.run { saveAnswer("Хохохо", mindText);tao.checkDB() }
+            tao.doAddAnswer(tao.currName,"Хохохо", mindText)
+            tao.checkDB()
             pause(For.LOAD)
 
             clickEditAnswer("Хохохо")
             typeMindText(" - ого",false)
             submitMind()
-            tao.run { saveAnswer("Хохохо - ого", mindText, "Хохохо");checkDB() }
+            tao.doChangeAnswer("Хохохо - ого", mindText, "Хохохо")
+            tao.checkDB()
             pause(For.LOAD)
 
             clickDelAnswer("Хохохо - ого")
-            tao.run { removeAnswer("Хохохо - ого", mindText);checkDB() }
+            tao.run { doRemoveAnswer("Хохохо - ого",mindText);checkDB() }
         }
     }
 }

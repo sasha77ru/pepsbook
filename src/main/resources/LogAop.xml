@@ -6,13 +6,13 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd">
 <!--    <bean id="logAop" class="ru.sasha77.spring.pepsbook.Dell" />-->
-<!--    <bean class="ru.sasha77.spring.pepsbook.WebApplicationObject">-->
+<!--    <bean class="ru.sasha77.spring.pepsbook.Clickers">-->
 <!--        <property name="tao" ref="Tao" />-->
 <!--    </bean>-->
     <aop:config>
         <aop:aspect id="aspects" ref="logAop">
             <aop:pointcut id="pointCutBefore"
-                          expression="execution(* ru.sasha77.spring.pepsbook.WebApplicationObject+.*(..))" />
+                          expression="execution(* ru.sasha77.spring.pepsbook.Clickers+.*(..))" />
             <aop:before method="beforeAdvice" pointcut-ref="pointCutBefore" />
         </aop:aspect>
     </aop:config>
