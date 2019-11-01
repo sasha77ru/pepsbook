@@ -1,12 +1,14 @@
 package ru.sasha77.spring.pepsbook
 
 import org.hamcrest.Matchers
+import org.junit.Assert
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import java.util.*
 
 @Component
 class MvcMockers {
@@ -115,5 +117,73 @@ class MvcMockers {
                 .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password)).with(SecurityMockMvcRequestPostProcessors.csrf())
                 .param("id",dbAnswer.id.toString()))
                 .andExpect(MockMvcResultMatchers.status().isOk)
+    }
+
+    /**
+     * Does checkDB for all users
+     */
+    fun checkAllDB () {tao.actualUsersArray.forEach {checkDB(it.name)}}
+    fun checkDB (name: String, subs : String = "") {
+        val currUser = tao.getUserByName(name)
+        mockMvc.perform(MockMvcRequestBuilders.get("/users")
+                .param("subs", subs)
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualUsersArray
+                                    .filter { it.user.id != currUser.user.id }
+                                    .filter { it.name.contains(subs,ignoreCase = true) || it.country.contains(subs,ignoreCase = true) }
+                                    .sortedBy { it.user.name }
+                                    .joinToString("\n") { it.user.name },
+                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
+                    )
+                }
+        mockMvc.perform(MockMvcRequestBuilders.get("/friends")
+                .param("subs", "")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualUsersArray.filter { tstUser ->
+                                tstUser.user.email != currUser.user.email
+                                        && currUser.friendsNames.any { it == tstUser.user.name }
+                            }.sortedBy { it.user.name }.joinToString("\n") { it.user.name },
+                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
+                    )
+                }
+        mockMvc.perform(MockMvcRequestBuilders.get("/mates").param("subs", "")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualUsersArray.filter { tstUser ->
+                                tstUser.user.email != currUser.user.email
+                                        && currUser.matesNames.any { it == tstUser.user.name }
+                            }.sortedBy { it.user.name }.joinToString("\n") { it.user.name },
+                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
+                    )
+                }
+        mockMvc.perform(MockMvcRequestBuilders.get("/minds")
+                .param("subs", subs)
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualMindsArray
+                                    .filter { it.text.contains(subs,true)
+                                            || it.user.contains(subs,true)
+                                            || it.answers.any { answer -> answer.text.contains(subs,true) }}
+                                    .sortedBy { it.text }
+                                    .joinToString("\n") {mind ->
+                                        with(mind) {"$text / $user / ${time.myFormat()}"} + " : " +
+                                                mind.answers.joinToString(" | ") { with(it) {"$text / $user / ${time.myFormat()}"} } }
+                            ,
+                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<Mind>).sortedBy { it.text }
+                                    .joinToString("\n") {mind ->
+                                        with(mind) {"$text / ${user.name} / ${time.myFormat()}"} + " : " +
+                                                mind.answers.joinToString(" | ") { with(it) {"$text / ${user.name} / ${time.myFormat()}"} } }
+                    )
+                }
     }
 }

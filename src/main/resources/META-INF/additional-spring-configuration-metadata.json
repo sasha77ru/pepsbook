@@ -11,8 +11,18 @@
       "description": "Close chrome at the end of test."
     },
     {
-      "name": "my.tst.seed",
+      "name": "my.tst.monkeyTest.seed",
       "type": "java.lang.Long",
-      "description": "Testing seed, if it needed. Or 0."
+      "description": "Seed for MonkeyTest round #0, if it needed. Or 0."
+    },
+    {
+      "name": "my.tst.monkeyTest.rounds",
+      "type": "java.lang.Integer",
+      "description": "How many rounds Monkey Test must pass."
+    },
+    {
+      "name": "my.tst.monkeyTest.steps",
+      "type": "java.lang.Integer",
+      "description": "How many steps in a round."
     }
   ] }

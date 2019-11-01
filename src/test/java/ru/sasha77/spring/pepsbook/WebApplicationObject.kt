@@ -1,92 +1,80 @@
 package ru.sasha77.spring.pepsbook
 
-import org.junit.Assert.*
-import org.junit.*
-import org.junit.runner.RunWith
-import org.junit.runners.MethodSorters
+import org.junit.Assert
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.web.server.LocalServerPort
-import org.springframework.stereotype.Component
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.junit4.SpringRunner
 import java.lang.RuntimeException
 import java.lang.StringBuilder
 import kotlin.random.Random
 
-@Component
-@ConfigurationProperties(prefix = "my.tst")
-class TstProps {
-    var headLess : Boolean = false
-    var closeBrowser : Boolean = true
-    var seed : Long = 0
-}
+class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : ObjWithDriver {
+    val clk = tao.clk
+    override val driver : WebDriver
+    val js : JavascriptExecutor
+    private var _currUser : TestApplicationObject.TstUser? = null
+    var currUser : TestApplicationObject.TstUser
+        get() = _currUser!!
+        set(value) {_currUser = value }
+    var currName: String
+        get() = currUser.name
+        set(value) {currUser = tao.getUserByName(value)}
+    var currUserName: String
+        get() = currUser.username
+        set(value) {currUser = tao.getUserByLogin(value)}
+    val currPassword: String
+        get() = currUser.password
 
-@RunWith(SpringRunner::class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
-@AutoConfigureMockMvc
-//@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
-@ActiveProfiles("dev,tst")
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class MonkeyTests : ObjWithDriver {
+    var loginPassword : MonkeyTestClass.LoginPassword? = null
+    var registerInformation : MonkeyTestClass.RegisterInformation? = null
+    var what : String = ""
+    fun changeWhat (x : String) {what = x;filter = ""}
+    var filter : String = ""
+    var mindWinWhich : String = ""
+    var currMind : TstMind? = null
+    var currAnswer : TstAnswer? = null
 
-    @Autowired
-    lateinit var tstProps : TstProps
-
-    @LocalServerPort
-    private val port: Int = 0
-
-    @Autowired
-    lateinit var tao : TestApplicationObject
-
-    @Autowired
-    lateinit var clk : Clickers
-
-    override lateinit var driver : WebDriver
-    lateinit var js : JavascriptExecutor
-
-    var initialized : Boolean = false
-
-    @Before
-    fun initialize () {
-        if (!initialized) {
-            System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
-            driver = ChromeDriver(ChromeOptions().apply {
-                if (tstProps.headLess) addArguments("headless")
-                addArguments("window-size=1200x600")
-            })
-            js = driver as JavascriptExecutor
-            tao.doMvc = false
-            initialized = true
-        }
+    init {
+        System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
+        driver = ChromeDriver(ChromeOptions().apply {
+            if (tao.tstProps.headLess) addArguments("headless")
+            addArguments("window-size=1200x600")
+        })
+        js = driver
     }
 
-    @Test fun monkeyTest001() {
-        if (tstProps.seed != 0L) MonkeyTestClass(tstProps.seed).go()
-        for (round in 1..100) MonkeyTestClass(Random.nextLong().also { println("$round ====================== seed = $it") }).go()
-        if (tstProps.closeBrowser) driver.close()
-    }
+    fun isFriendToCurr (x : TestApplicationObject.TstUser) = tao.isFriend(currUser,x)
+    fun isMateToCurr (x : TestApplicationObject.TstUser) = tao.isMate(currUser,x)
+    val visibleMinds
+        get() = tao.actualMindsArray.filter { mind ->
+            mind.text.contains(filter,true) || mind.user.contains(filter,true)
+                    ||  mind.answers.any { it.text.contains(filter,true) }}.sortedByDescending {it.time}
+    val ownersVisibleMinds
+        get() = visibleMinds.filter { it.user == currName }
+    val visibleAnswers
+        get() = visibleMinds.flatMap { it.answers }
+    val ownersVisibleAnswers
+        get() = visibleAnswers.filter { it.user == currName }
+    val visibleUsers
+        get() = tao.actualUsersArray
+                .asSequence()
+                .filter { it.username != currUserName }
+                .filter { user -> user.name.contains(filter,true) || user.country.contains(filter,true)}
+                .filter (when (what) {
+                    "users" -> tao::positive
+                    "friends" -> ::isFriendToCurr
+                    "mates" -> ::isMateToCurr
+                    else -> throw RuntimeException("Impossible")
+                })
+                .toList()
 
-    inner class MonkeyTestClass (seed : Long) {
+    inner class MonkeyTestClass (seed : Long, val tstProps: TstProps) {
         var log = LoggerFactory.getLogger(this::class.java)
         fun vlog(s : String) {log.info("$step ! $s")}
         var step = 0
-        private var loginPassword : LoginPassword? = null
-        private var registerInformation : RegisterInformation? = null
-        var what : String = ""
-        fun changeWhat (x : String) {what = x;filter = ""}
-        var filter : String = ""
-        var mindWinWhich : String = ""
-        var currMind : TstMind? = null
-        var currAnswer : TstAnswer? = null
         var existingUserName = "" // for check existing username via registration
         var existingEmail = "" // for check existing Email via registration
 
@@ -98,7 +86,7 @@ class MonkeyTests : ObjWithDriver {
         fun invalidChar () = "`~!@#№$%^&*()+=[]{};:'\"\\|,.<>/? ".random(randomer)
         fun feignUsername (len : Int = 8, charFrom : () -> Char = ::validChar) = String(mutableListOf(validFirstChar()).
                 apply { repeat(len-2) { add(charFrom()) };add(validFirstChar()) }.toCharArray()) //in emails last char also can't be - or _
-//        val SyLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
+        //        val SyLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
 //        val SyLIST = listOf(" а","Ва","ло","Но","uv"," d","W ")
         val SyLIST = listOf(" А","ва","ло","ем","ок"," У","ы ")
         val usedStrings = mutableSetOf<String>() //to eliminate dups
@@ -106,7 +94,7 @@ class MonkeyTests : ObjWithDriver {
          * Feign uniq string (because minds and answers in test must be uniq)
          */
         fun feignString (len : Int = 12) : String = StringBuilder().apply {
-            repeat(len/2) { 
+            repeat(len/2) {
                 append((SyLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
             } }.toString()
                 .let { if (it in usedStrings) feignString(len) else {usedStrings.add(it);it} } //to eliminate dups
@@ -159,27 +147,6 @@ class MonkeyTests : ObjWithDriver {
                 }
             }
         }
-        val visibleMinds
-            get() = tao.actualMindsArray.filter { mind ->
-                mind.text.contains(filter,true) || mind.user.contains(filter,true)
-                        ||  mind.answers.any { it.text.contains(filter,true) }}.sortedByDescending {it.time}
-        val ownersVisibleMinds
-            get() = visibleMinds.filter { it.user == tao.currName }
-        val visibleAnswers
-            get() = visibleMinds.flatMap { it.answers }
-        val ownersVisibleAnswers
-            get() = visibleAnswers.filter { it.user == tao.currName }
-        val visibleUsers
-            get() = tao.actualUsersArray
-                    .asSequence()
-                    .filter { it.username != tao.currUserName }
-                    .filter { user -> user.name.contains(filter,true) || user.country.contains(filter,true)}
-                    .filter (when (what) {
-                        "users" -> tao::positive
-                        "friends" -> tao::isFriendToCurr
-                        "mates" -> tao::isMateToCurr
-                        else -> throw RuntimeException("Impossible")})
-                    .toList()
         val whatLambda get () = when (what) {
             "minds" -> ::minds
             "users","friends","mates" -> ::users
@@ -191,8 +158,8 @@ class MonkeyTests : ObjWithDriver {
             tao.clearDB()
             driver.get("http://localhost:$port")
             var f = loginForm() as? () -> Any
-            while (step++ < 100) {
-                if (step >= 101) {
+            while (step++ < tstProps.monkey.steps) {
+                if (step >= 10001) {
                     println("JOPA")
                 }
                 f = (f?.invoke() ?: break) as () -> Any
@@ -214,7 +181,7 @@ class MonkeyTests : ObjWithDriver {
                     pause(For.SEE)
                     driver.findElement(By.id("loginForm")).submit()
                     return if (ok) {
-                        tao.currUserName = login
+                        currUserName = login
                         ::minds
                     } else ::loginForm
                 }
@@ -241,7 +208,7 @@ class MonkeyTests : ObjWithDriver {
                 driver.findElement(By.id("signInForm")).submit()
                 return if (ok) {
                     tao.actualUsersArray.add(tao.TstUser(name,email,country,username,password))
-                    tao.currUserName = username
+                    currUserName = username
                     ::minds
                 } else ::registerForm
             }
@@ -252,25 +219,25 @@ class MonkeyTests : ObjWithDriver {
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what == "minds") { // If minds in subMain, check page about minds
-                assertEquals("Different Minds",
-                visibleMinds.joinToString("\n") {it.toString()}
-                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                        .replace(Regex("\\[ "),"[")
-                ,
-                driver.findElements(By.className("mindEntity"))
-                        .joinToString("\n") { mindEntity ->
-                            mindEntity.findElement(By.className("mindText")).text +
-                            " / " + mindEntity.findElement(By.className("mindUser")).text +
-                            " / " + mindEntity.findElement(By.className("mindTime")).text +
-                            " / " + mindEntity.findElements(By.className("answerEntity")).map { answerEntity ->
-                                answerEntity.findElement(By.className("answerText")).text +
-                                " / " + mindEntity.findElement(By.className("mindText")).text +
-                                " / " + answerEntity.findElement(By.className("answerUser")).text +
-                                " / " + answerEntity.findElement(By.className("answerTime")).text
-                            }.toString()
-                        }
-                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                        .replace(Regex("\\[ "),"[")
+                Assert.assertEquals("Different Minds",
+                        visibleMinds.joinToString("\n") { it.toString() }
+                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
+                                .replace(Regex("\\[ "), "[")
+                        ,
+                        driver.findElements(By.className("mindEntity"))
+                                .joinToString("\n") { mindEntity ->
+                                    mindEntity.findElement(By.className("mindText")).text +
+                                            " / " + mindEntity.findElement(By.className("mindUser")).text +
+                                            " / " + mindEntity.findElement(By.className("mindTime")).text +
+                                            " / " + mindEntity.findElements(By.className("answerEntity")).map { answerEntity ->
+                                        answerEntity.findElement(By.className("answerText")).text +
+                                                " / " + mindEntity.findElement(By.className("mindText")).text +
+                                                " / " + answerEntity.findElement(By.className("answerUser")).text +
+                                                " / " + answerEntity.findElement(By.className("answerTime")).text
+                                    }.toString()
+                                }
+                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
+                                .replace(Regex("\\[ "), "[")
                 )
             }
             return ::mainPage
@@ -281,21 +248,21 @@ class MonkeyTests : ObjWithDriver {
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
-                assertEquals("Different Users",
-                    visibleUsers
-                        .sortedBy {it.name}
-                        .joinToString("\n") {"${it.name} / ${it.country} / ${tao.isFriendToCurr(it)} / ${tao.isMateToCurr(it)}"}
-                        .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                    ,
-                    driver.findElements(By.className("userEntity"))
-                            .joinToString("\n") { userEntity ->
-                                userEntity.findElement(By.className("userName")).text +
-                                " / " + userEntity.findElement(By.className("userCountry")).text +
-                                " / " + (userEntity.findElements(By.className("badge-success")).size > 0
-                                        || userEntity.findElements(By.className("badge-primary")).size > 0) +
-                                " / " + (userEntity.findElements(By.className("badge-success")).size > 0
-                                        || userEntity.findElements(By.className("badge-secondary")).size > 0)
-                            }.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+                Assert.assertEquals("Different Users",
+                        visibleUsers
+                                .sortedBy { it.name }
+                                .joinToString("\n") { "${it.name} / ${it.country} / ${isFriendToCurr(it)} / ${isMateToCurr(it)}" }
+                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
+                        ,
+                        driver.findElements(By.className("userEntity"))
+                                .joinToString("\n") { userEntity ->
+                                    userEntity.findElement(By.className("userName")).text +
+                                            " / " + userEntity.findElement(By.className("userCountry")).text +
+                                            " / " + (userEntity.findElements(By.className("badge-success")).size > 0
+                                            || userEntity.findElements(By.className("badge-primary")).size > 0) +
+                                            " / " + (userEntity.findElements(By.className("badge-success")).size > 0
+                                            || userEntity.findElements(By.className("badge-secondary")).size > 0)
+                                }.replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
                 )
             }
             return ::mainPage
@@ -309,23 +276,20 @@ class MonkeyTests : ObjWithDriver {
                     typeMindText(feignString(4002)) //Invalid length
                     submitMind()
                     pause(For.LOAD)
-                    assertEquals(1,driver.findElements(By.id("mindErrSign")).size)
+                    Assert.assertEquals(1, driver.findElements(By.id("mindErrSign")).size)
                     return ::mindWin
                 }
                 feignString(rand(400)).let { newText ->
                     typeMindText(newText)
                     submitMind()
                     pause(For.LOAD)
+                    pause(For.LOAD)
                     if (mindWinWhich == "mind") {
-                        if (currMind != null) {
-                            currMind!!.text = newText
-                        } else tao.actualMindsArray.add(TstMind(newText, tao.currName, tao.mindsRepo.findByText(newText).time))
+                        if (currMind != null) tao.doChangeMind(currMind!!.text,newText)
+                        else tao.doAddMind(currName,newText)
                     } else {
-                        if (currAnswer != null) {
-                            currAnswer!!.text = newText
-                        } else {
-                            currMind!!.answers.add(TstAnswer(newText, currMind!!, tao.currName, tao.answersRepo.findByText(newText).time))
-                        }
+                        if (currAnswer != null) tao.doChangeAnswer(newText,currAnswer!!.mind.text,currAnswer!!.text)
+                        else tao.doAddAnswer(currName,newText,currMind!!.text)
                     }
                     return ::minds
                 }
@@ -359,7 +323,7 @@ class MonkeyTests : ObjWithDriver {
                             clickEditMind(currMind!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
                         { currMind = ownersVisibleMinds.random(randomer)
                             clickDelMind(currMind!!.text)
-                            tao.actualMindsArray.remove(currMind!!);::minds }
+                            tao.doRemoveMind(currMind!!.text);::minds }
                                 .also { repeat(3)  { _ -> caseMatrix.add(it)} }
                     }
                     if (visibleAnswers.isNotEmpty()) {
@@ -371,25 +335,24 @@ class MonkeyTests : ObjWithDriver {
                                 clickEditAnswer(currAnswer!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
                             { currAnswer = ownersVisibleAnswers.random(randomer)
                                 clickDelAnswer(currAnswer!!.text)
-                                currAnswer!!.mind.answers.removeAll { it.text == currAnswer!!.text };::minds }
+                                tao.doRemoveAnswer(currAnswer!!.text,currAnswer!!.mind.text);::minds }
                                     .also { repeat(3)  { _ -> caseMatrix.add(it)} }
                         }
                     }
                 }
                 if (what == "users" && visibleUsers.isNotEmpty()) {
                     { val clickUser = visibleUsers.random(randomer)
-                        if (tao.isFriendToCurr(clickUser)) {
+                        if (isFriendToCurr(clickUser)) {
                             clickUserFromFriends(clickUser.name)
-                            tao.doToFriends(tao.currUserName,clickUser.name)
+                            tao.doFromFriends(currName,clickUser.name)
                         } else {
                             clickUserToFriends(clickUser.name)
-                            tao.doToFriends(tao.currUserName,clickUser.name)
+                            tao.doToFriends(currName,clickUser.name)
                         }
-                    ::users}.also { repeat(10)  { _ -> caseMatrix.add(it)} }
+                        ::users}.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }
                 return caseMatrix.random(randomer).invoke()
             }
         }
     }
 }
-

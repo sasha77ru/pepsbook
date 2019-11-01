@@ -1,14 +1,14 @@
 package ru.sasha77.spring.pepsbook
 
-import org.junit.Before
-import org.junit.FixMethodOrder
-import org.junit.Test
+import org.junit.*
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -17,26 +17,34 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
-@AutoConfigureMockMvc
-@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
+@AutoConfigureMockMvc(print = MockMvcPrint.NONE)
+//@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
+@ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
-class XTest {
+class A_BackEndTests {
     @Autowired
     lateinit var mvc : MvcMockers
 
     @Autowired
     lateinit var tao : TestApplicationObject
 
-    @Before
-    fun initTao () {tao.doMvc = true}
+    companion object {
+        @AfterClass
+        @JvmStatic
+        fun afterClass() {
+            Thread.sleep(2000)
+        }
+    }
 
     @Test
     @Throws(Exception::class)
     fun tst0001_MvcControllers() {
         with (tao) {
             fillDB()
-            checkAllDB()
+            mvc.checkAllDB()
+            mvc.checkDB("Masha","ла")
+            mvc.checkDB("Pluto","ash")
         }
     }
 
@@ -46,27 +54,26 @@ class XTest {
         with (tao) {
             //Fill Db wo friendship
             fillDB(friendship = false)
-            currName = "Porky"
+            val currName = "Porky"
 
             //Add couple of friends
             listOf("Pluto", "Masha").forEach { mvc.mvcToFriends(currName,it) }
-            checkAllDB()
+            mvc.checkAllDB()
 
             //Remove first friend
             mvc.mvcFromFriends(currName,"Pluto")
-            checkAllDB()
+            mvc.checkAllDB()
 
             //Remove second friend
             mvc.mvcFromFriends(currName,"Masha")
-            checkAllDB()
+            mvc.checkAllDB()
 
             //Make all friendships and check
-            actualUsersArray = tstUsersArray.deepCopy()
+            fillDB(friendship = false)
             actualUsersArray.forEach { user ->
-                currUser = user
-                currUser.friendsNames.forEach { friend -> mvc.mvcToFriends(currName,friend) }
+                user.friendsNames.forEach { friend -> mvc.mvcToFriends(currName,friend) }
             }
-            checkAllDB()
+            mvc.checkAllDB()
         }
     }
 
@@ -75,16 +82,16 @@ class XTest {
     fun tst0003_Minds() {
         with (tao) {
             fillDB()
-            currName = "Porky"
+            val currName = "Porky"
 
             mvc.mvcAddMind(currName,"testText")
-            checkAllDB()
+            mvc.checkAllDB()
 
             mvc.mvcChangeMind(currName, "anotherText", "testText")
-            checkAllDB()
+            mvc.checkAllDB()
 
             mvc.mvcRemoveMind(currName, "anotherText")
-            checkAllDB()
+            mvc.checkAllDB()
 
             fillDB()
         }
@@ -95,18 +102,18 @@ class XTest {
     fun tst0004_Answers() {
         with (tao) {
             fillDB()
-            currName = "Porky"
+            val currName = "Porky"
 
             mvc.mvcAddMind(currName, "Master Mind")
 
             mvc.mvcAddAnswer(currName, "MM Answer","Master Mind")
-            checkAllDB()
+            mvc.checkAllDB()
 
             mvc.mvcChangeAnswer(currName, "anotherText", "Master Mind","MM Answer")
-            checkAllDB()
+            mvc.checkAllDB()
 
             mvc.mvcRemoveAnswer(currName, "anotherText", "Master Mind")
-            checkAllDB()
+            mvc.checkAllDB()
 
             fillDB()
         }

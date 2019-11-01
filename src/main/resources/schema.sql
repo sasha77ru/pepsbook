@@ -1,3 +1,4 @@
+drop table if exists users;
 create table users
 (
     id int auto_increment
@@ -12,6 +13,7 @@ create table users
         unique (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+drop table if exists friendship;
 create table friendship
 (
     user_id int not null,
@@ -25,6 +27,7 @@ create table friendship
             on update cascade on delete cascade
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+drop table if exists minds;
 create table minds
 (
     id int auto_increment
@@ -37,6 +40,7 @@ create table minds
             on update cascade on delete cascade
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+drop table if exists answers;
 create table answers
 (
     id int auto_increment

@@ -18,6 +18,7 @@ spring:
 
 spring:
   profiles: dev
+  #to not cache thymeleaf pages when dev
   thymeleaf:
     cache: false
     prefix: file:src/main/resources/templates/
@@ -38,12 +39,7 @@ my:
   tst:
     headless: true
     closeBrowser: true
-    seed: 0
-#logging:
-#  group:
-#    mumu: ru.sasha77.spring.pepsbook.LogAspect
-#  level:
-#    ru.sasha77.spring.pepsbook.LogAspect: trace
-#  pattern.mumu:  "%msg%n"
-
-
+    monkey:
+      seed: 0
+      rounds: 10
+      steps:  30
