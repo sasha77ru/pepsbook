@@ -16,5 +16,4 @@ public interface MindRepository extends CrudRepository<Mind, Integer> {
             " ORDER BY m.time DESC"
             , nativeQuery=true)
     Iterable<Mind> findLike(@Param("subs") String name);
-    Mind findByText(String text);
 }

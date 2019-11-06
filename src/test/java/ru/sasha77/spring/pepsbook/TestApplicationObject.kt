@@ -7,16 +7,15 @@ import java.util.*
 
 
 /**
- * The class contains applications proper state in arrays: actualUsersArray,actualMindsArray
- * The class has methods like toFriends, saveMind, etc that change this state and at the same time perform
- * mvc requests to application to make changes in DB. So the information in DB and state arrays should always be the same.
- * It's possible to check it with checkDB method, that performs mvc get requests and compare states.
+ * TAO class represents kind of test DB (see testClasses.svg).
+ * Store its state in arrays: actualUsersArray<[TstUser]>, actualMindsArray<[TstMind]<[TstAnswer]>>
+ * Change state using do... methods
+ * Also has clearDB and fillDB that fills arrays with some test data
  */
-@Suppress("MemberVisibilityCanBePrivate")
 @Component("Tao")
-class TestApplicationObject (val usersRepo: UserRepository,
-                             val mindsRepo: MindRepository,
-                             val answersRepo: AnswerRepository) {
+class TestApplicationObject (private val usersRepo: UserRepository,
+                             private val mindsRepo: MindRepository,
+                             private val answersRepo: AnswerRepository) {
     inner class TstUser(
             val name: String,
             val email: String,
@@ -25,8 +24,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
             val password : String,
             val friendsNames: MutableSet<String> = mutableSetOf(),
             val matesNames: MutableSet<String> = mutableSetOf(),
-            val user : User = User(name, email, country, username, passwordEncoder.encode(password))) {
-    }
+            val user : User = User(name, email, country, username, passwordEncoder.encode(password)))
 
     @Autowired
     lateinit var tstProps: TstProps
@@ -35,32 +33,26 @@ class TestApplicationObject (val usersRepo: UserRepository,
     lateinit var clk : Clickers
 
     @Autowired
+    lateinit var chk : Checkers
+
+    @Autowired
     lateinit var passwordEncoder: PasswordEncoder
 
-    var actualUsersArray = mutableListOf<TstUser>() // actual test list, initially equals to tstUsersArray but can be changed during tests
-    fun List<TstUser>.getByName(name: String) = //fun for tstUsersArray
-            find { it.name == name} ?: throw IllegalArgumentException("No such TST_NAME $name")
-    fun List<TstUser>.getByUserName(name: String) = //fun for tstUsersArray
-            find { it.username == name} ?: throw IllegalArgumentException("No such TST_USERNAME $name")
+    var actualUsersArray = mutableListOf<TstUser>() // DATA STORAGE FOR TESTS
 
-    val actualMindsArray = mutableListOf<TstMind>()
-    //TODO("Get rid of it")
-    fun List<TstMind>.getByText(text: String) = //fun for tstMindsArray
-            find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
+    val actualMindsArray = mutableListOf<TstMind>() // DATA STORAGE FOR TESTS
 
     fun isFriend (currUser : TstUser, x : TstUser) : Boolean  = currUser.friendsNames.contains(x.name)
     fun isMate (currUser : TstUser, x : TstUser) = currUser.matesNames.contains(x.name)
-    fun positive (@Suppress("UNUSED_PARAMETER") x : TstUser) = true
+    fun positive (@Suppress("UNUSED_PARAMETER") x : TstUser) = true //Always returns true. Used for it signature
 
 
     /**
      * Clears DB.
      */
     fun clearDB () {
-        //        mindsRepo.deleteAll()
-        /*WANTS TEST without schema, but with ddl-auto=create-drop. UNCOMMENT UPPER ROW. But learn cascades first*/
         usersRepo.deleteAll()
-        actualUsersArray = mutableListOf()
+        actualUsersArray.clear()
         actualMindsArray.clear()
     }
 
@@ -111,7 +103,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
 //    if (!friendship) actualUsersArray.forEach { it.friendsNames.removeIf { true };it.matesNames.removeIf { true }}
 
-        actualUsersArray.forEach { usersRepo.save(it.user) }
+        actualUsersArray.forEach { usersRepo.save(it.user) } // Save users
         actualUsersArray.forEach { theUser ->
             //Fill friendship info to DB
             if (friendship) {
@@ -133,7 +125,7 @@ class TestApplicationObject (val usersRepo: UserRepository,
 
     fun getUserByName(name : String) = actualUsersArray.find { it.name == name} ?: throw IllegalArgumentException("No such TST_NAME $name")
     fun getUserByLogin(name : String) = actualUsersArray.find { it.username == name} ?: throw IllegalArgumentException("No such TST_USERNAME $name")
-    fun getMindByText(text : String) = actualMindsArray.getByText(text)
+    fun getMindByText(text : String) = actualMindsArray.find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
     fun getDBMindByText(text : String) = mindsRepo.findLike(text).find { true }!!
     fun getDBAnswerByText(text : String) = answersRepo.findByText(text)!!
 

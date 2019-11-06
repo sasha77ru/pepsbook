@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class ConfigSecurity extends WebSecurityConfigurerAdapter {
+    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     @Qualifier("MyUserService")
     UserDetailsService userDetailsService;

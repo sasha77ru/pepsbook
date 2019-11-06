@@ -1,19 +1,16 @@
 package ru.sasha77.spring.pepsbook
 
-import org.junit.*
+import org.junit.AfterClass
+import org.junit.FixMethodOrder
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import javax.servlet.http.HttpServletResponse
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
@@ -22,7 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 @ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
-class A_BackEndTests {
+class ABackEndTests {
     @Autowired
     lateinit var mvc : MvcMockers
 

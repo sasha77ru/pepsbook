@@ -1,6 +1,6 @@
+<!--suppress ALL -->
 <thh xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org">
-
 <div th:each="i : ${lizt}" class="card mb-3 mindEntity"
      th:classappend="${i.user.id==currUser.id} ? 'border-primary' : 'border-light'">
     <div class="card-header">

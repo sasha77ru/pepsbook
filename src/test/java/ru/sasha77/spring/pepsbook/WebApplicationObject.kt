@@ -7,16 +7,24 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.slf4j.LoggerFactory
+import java.lang.Exception
 import java.lang.RuntimeException
 import java.lang.StringBuilder
 import kotlin.random.Random
 
+/**
+ * WAO Class represents one web session for Monkey Test (see testClasses.svg, monkey.svg).
+ * Has its state in set of global variables
+ */
 class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : ObjWithDriver {
-    val clk = tao.clk
+    val clk = tao.clk // get Clickers from TAO
+    val chk = tao.chk // get Checkers from TAO
     override val driver : WebDriver
     val js : JavascriptExecutor
+
+    // One field with several not-null getters and setters
     private var _currUser : TestApplicationObject.TstUser? = null
-    var currUser : TestApplicationObject.TstUser
+    private var currUser : TestApplicationObject.TstUser
         get() = _currUser!!
         set(value) {_currUser = value }
     var currName: String
@@ -25,9 +33,8 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
     var currUserName: String
         get() = currUser.username
         set(value) {currUser = tao.getUserByLogin(value)}
-    val currPassword: String
-        get() = currUser.password
 
+    //WAO state global variables
     var loginPassword : MonkeyTestClass.LoginPassword? = null
     var registerInformation : MonkeyTestClass.RegisterInformation? = null
     var what : String = ""
@@ -71,33 +78,67 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 })
                 .toList()
 
-    inner class MonkeyTestClass (seed : Long, val tstProps: TstProps) {
-        var log = LoggerFactory.getLogger(this::class.java)
-        fun vlog(s : String) {log.info("$step ! $s")}
-        var step = 0
+    /**
+     * Performs one round of Monkey Test with certain seed
+     * @param seed
+     * Invokes lambdas one by one. Every lambda returns next one depend on random and scheme monkey.svg.
+     * State of the process is in global variables of the outer WAO. Lambdas change them.
+     */
+    inner class MonkeyTestClass (private val seed : Long, private val round : Int, private val tstProps: TstProps) {
+        fun go () : Boolean {
+            var ok = true
+            log.info("$round ====================== seed = $seed")
+            tao.clearDB()
+            driver.get("http://localhost:$port")
+            @Suppress("UNCHECKED_CAST") var f = loginForm() as? () -> Any
+            try {
+                while (step++ < tstProps.monkey.steps) {
+                if (step >= 10001) {
+                    println("JOPA")
+                }
+
+                    @Suppress("UNCHECKED_CAST")
+                    f = (f?.invoke() ?: break) as () -> Any
+                    pause(For.SEE)
+                }
+            } catch (e : Exception) {
+                log.info("!!!!!! PROBLEM !!!!!! Round; $round Seed: $seed Step: $step")
+                ok = false
+            }
+            pause(For.LONG_LOAD)
+            clk.runCatching {clickLogout()}
+            return ok
+        }
+        private val log = LoggerFactory.getLogger(this::class.java)!!
+        private var step = 1
+        private fun vlog(s : String) {log.debug("$step ! $s")}
         var existingUserName = "" // for check existing username via registration
         var existingEmail = "" // for check existing Email via registration
 
-        val randomer = Random(seed)
+        val randomer = Random(seed) // MAIN Monkey Test randomer
         fun rand(x : Int = 100) = randomer.nextInt(x)
 
-        fun validFirstChar () = (('a'..'z') + ('A'..'Z')).random(randomer)
-        fun validChar () = (('a'..'z') + ('A'..'Z') + ('0'..'9') + '_' + '-').random(randomer)
+        private fun validFirstChar () = (('a'..'z') + ('A'..'Z')).random(randomer)
+        private fun validChar () = (('a'..'z') + ('A'..'Z') + ('0'..'9') + '_' + '-').random(randomer)
         fun invalidChar () = "`~!@#№$%^&*()+=[]{};:'\"\\|,.<>/? ".random(randomer)
         fun feignUsername (len : Int = 8, charFrom : () -> Char = ::validChar) = String(mutableListOf(validFirstChar()).
                 apply { repeat(len-2) { add(charFrom()) };add(validFirstChar()) }.toCharArray()) //in emails last char also can't be - or _
-        //        val SyLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
-//        val SyLIST = listOf(" а","Ва","ло","Но","uv"," d","W ")
-        val SyLIST = listOf(" А","ва","ло","ем","ок"," У","ы ")
-        val usedStrings = mutableSetOf<String>() //to eliminate dups
+        //        val syLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
+//        val syLIST = listOf(" а","Ва","ло","Но","uv"," d","W ")
+        private val syLIST = listOf(" А","ва","ло","ем","ок"," У","ы ")
+        private val usedStrings = mutableSetOf<String>() //to eliminate dups (uniq because users, minds and answers in test must be uniq)
         /**
-         * Feign uniq string (because minds and answers in test must be uniq)
+         * Feign uniq string (uniq because users, minds and answers in test must be uniq)
          */
         fun feignString (len : Int = 12) : String = StringBuilder().apply {
             repeat(len/2) {
-                append((SyLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
+                append((syLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
             } }.toString()
                 .let { if (it in usedStrings) feignString(len) else {usedStrings.add(it);it} } //to eliminate dups
+
+        /**
+         * LoginPassword entity can be valid or invalid
+         */
         inner class LoginPassword {
             val login : String
             val password : String
@@ -105,8 +146,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             init {
                 val x = rand()
                 when {
-                    (x < 90 && tao.actualUsersArray.size > 0) -> {
-                        // Valid LoginPassword
+                    (x < 90 && tao.actualUsersArray.size > 0) -> { // Valid LoginPassword
                         tao.actualUsersArray.random(randomer).run {
                             this@LoginPassword.login = username
                             this@LoginPassword.password = password
@@ -121,6 +161,10 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 }
             }
         }
+
+        /**
+         * RegisterInformation entity. Can be ok or contain errors
+         */
         inner class RegisterInformation {
             var username : String = feignUsername()
             var password : String = feignUsername()
@@ -147,29 +191,18 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 }
             }
         }
-        val whatLambda get () = when (what) {
+        private val whatLambda get () = when (what) {
             "minds" -> ::minds
             "users","friends","mates" -> ::users
             else ->  throw RuntimeException("Impossible")
         }
 
-        @Suppress("UNCHECKED_CAST")
-        fun go () {
-            tao.clearDB()
-            driver.get("http://localhost:$port")
-            var f = loginForm() as? () -> Any
-            while (step++ < tstProps.monkey.steps) {
-                if (step >= 10001) {
-                    println("JOPA")
-                }
-                f = (f?.invoke() ?: break) as () -> Any
-                pause(For.SEE)
-            }
-            pause(For.LONG_LOAD)
-            clk.runCatching {clickLogout()}
-        }
-
-        fun loginForm () : Any? {
+        /**
+         * Fun tries to login. If LoginPassword isn't ok returns itself, so tries again
+         * But with 10% probability goes to ::registerForm.
+         * At first 10 steps this probability is 90% to gain more users for MonkeyTest round
+         */
+        private fun loginForm () : Any? {
             vlog("loginForm")
             pause {driver.title == "Pepsbook Login"}
             loginPassword?.run { driver.findElement(By.id("loginErrors")) } // Check the page for error message presence
@@ -191,7 +224,14 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             }
         }
 
-        fun registerForm () : Any? {
+        /**
+         * Fun generates RegisterInformation, that can be ok or not, and submit it
+         * if RI is ok
+         * @return ::minds
+         * else
+         * @return ::registerForm (itself) - so tries to register again
+         */
+        private fun registerForm () : Any? {
             vlog("registerForm")
             pause {driver.title=="Pepsbook registration"}
             registerInformation?.run { // Check the page for error messages presence
@@ -214,61 +254,43 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             }
         }
 
-        fun minds () : Any? {
+        /**
+         * Supposed that minds page is active.
+         * Fun checks minds information
+         * @return ::mainPage
+         */
+        private fun minds () : Any? {
             vlog("minds filter=$filter")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what == "minds") { // If minds in subMain, check page about minds
-                Assert.assertEquals("Different Minds",
-                        visibleMinds.joinToString("\n") { it.toString() }
-                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                                .replace(Regex("\\[ "), "[")
-                        ,
-                        driver.findElements(By.className("mindEntity"))
-                                .joinToString("\n") { mindEntity ->
-                                    mindEntity.findElement(By.className("mindText")).text +
-                                            " / " + mindEntity.findElement(By.className("mindUser")).text +
-                                            " / " + mindEntity.findElement(By.className("mindTime")).text +
-                                            " / " + mindEntity.findElements(By.className("answerEntity")).map { answerEntity ->
-                                        answerEntity.findElement(By.className("answerText")).text +
-                                                " / " + mindEntity.findElement(By.className("mindText")).text +
-                                                " / " + answerEntity.findElement(By.className("answerUser")).text +
-                                                " / " + answerEntity.findElement(By.className("answerTime")).text
-                                    }.toString()
-                                }
-                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                                .replace(Regex("\\[ "), "[")
-                )
+                with (chk) {checkMinds()}
             }
             return ::mainPage
         }
 
-        fun users () : Any? {
+        /**
+         * Supposed that some of the users pages ("users","friends","mates") is active.
+         * Fun checks that user information is right and
+         * @return ::mainPage
+         */
+        private fun users () : Any? {
             vlog("users what=$what filter=$filter")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
-                Assert.assertEquals("Different Users",
-                        visibleUsers
-                                .sortedBy { it.name }
-                                .joinToString("\n") { "${it.name} / ${it.country} / ${isFriendToCurr(it)} / ${isMateToCurr(it)}" }
-                                .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                        ,
-                        driver.findElements(By.className("userEntity"))
-                                .joinToString("\n") { userEntity ->
-                                    userEntity.findElement(By.className("userName")).text +
-                                            " / " + userEntity.findElement(By.className("userCountry")).text +
-                                            " / " + (userEntity.findElements(By.className("badge-success")).size > 0
-                                            || userEntity.findElements(By.className("badge-primary")).size > 0) +
-                                            " / " + (userEntity.findElements(By.className("badge-success")).size > 0
-                                            || userEntity.findElements(By.className("badge-secondary")).size > 0)
-                                }.replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                )
+                with (chk) {checkUsers()}
             }
             return ::mainPage
         }
 
-        fun mindWin () : Any? {
+        /**
+         * Supposed that mindWin is opened, fun enters mind or answer and press submit.
+         * But with probability of 5% mindWin will be just closed
+         * Probability of invalid (too long input) also is 5%
+         * @return ::minds
+         */
+        private fun mindWin () : Any? {
             vlog("mindWin which=$mindWinWhich")
             clk.run {
                 if (rand() < 5) { clickCloseMind();return ::minds }
@@ -296,7 +318,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             }
         }
 
-        fun mainPage () : Any? {
+        private fun mainPage () : Any? {
             vlog("mainPage what=$what filter=")
             clk.run {
                 //caseMatrix contains lambdas to random run. Lambda can be added many times to increase its probability weight
@@ -305,19 +327,19 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 { clickMainUsers()  ;changeWhat("users")    ;::users    }.also { repeat(10)  {_ -> caseMatrix.add(it)} };
                 { clickMainFriends();changeWhat("friends")  ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
                 { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
-                { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(if (step < 10) 60 else 10)  {_ -> caseMatrix.add(it)} };
+                { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(if (step < 10) 60 else 10)  {_ -> caseMatrix.add(it)} }
                 if (what == "minds" || what == "users") {
-                    { typeFilter(SyLIST.random(randomer).also { filter = it });whatLambda}
+                    { typeFilter(syLIST.random(randomer).also { filter = it });whatLambda}
                             .also { repeat(5)  { _ -> caseMatrix.add(it)} } }
                 if (what == "minds") {
                     { currMind = null;mindWinWhich = "mind"
-                        clickNewMind();::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} };
+                        clickNewMind();::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }
                 if (what == "minds" && visibleMinds.isNotEmpty()) {
                     { currMind = null;mindWinWhich = "mind"
                         clickNewMind();::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
                     { currMind = visibleMinds.random(randomer);currAnswer = null;mindWinWhich = "answer"
-                        clickAnswerMind(currMind!!.text);::mindWin}.also { repeat(5)  { _ -> caseMatrix.add(it)} };
+                        clickAnswerMind(currMind!!.text);::mindWin}.also { repeat(5)  { _ -> caseMatrix.add(it)} }
                     if (ownersVisibleMinds.isNotEmpty()) {
                         { currMind = ownersVisibleMinds.random(randomer);mindWinWhich = "mind"
                             clickEditMind(currMind!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };

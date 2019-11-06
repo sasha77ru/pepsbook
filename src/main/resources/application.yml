@@ -38,5 +38,6 @@ my:
     closeBrowser: true
     monkey:
       seed: 0
-      rounds: 10
-      steps:  30
+      rounds: 3
+      steps:  100
+      failImmediately: false

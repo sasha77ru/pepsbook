@@ -1,10 +1,8 @@
 package ru.sasha77.spring.pepsbook;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,8 +34,6 @@ public class MainController {
 
 	/**
 	 * Opens main.html
-	 * @param request
-	 * @param response
 	 * @return
 	 */
 	@RequestMapping(path = "/")
@@ -77,9 +73,8 @@ public class MainController {
 
 	/**
 	 * Write html table with users, matching to filter
-	 * @param subs
+	 * @param subs string for filter
 	 * @return
-	 * @throws IOException
 	 */
 	@GetMapping(path="/users")
 	public ModelAndView users (@NotNull Principal principal, String subs) {
@@ -93,11 +88,10 @@ public class MainController {
 
 	/**
 	 * Write html table with friends, matching to filter
-	 * @param subs
 	 * @return
 	 */
 	@GetMapping(path="/friends")
-	public ModelAndView friends (@NotNull Principal principal, String subs) {
+	public ModelAndView friends (@NotNull Principal principal) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
 		mv.setViewName("users");
@@ -108,11 +102,10 @@ public class MainController {
 
 	/**
 	 * Write html table with mates, matching to filter
-	 * @param subs
 	 * @return
 	 */
 	@GetMapping(path="/mates")
-	public ModelAndView mates (@NotNull Principal principal, String subs) {
+	public ModelAndView mates (@NotNull Principal principal) {
 		User user = userRepository.findByUsername(principal.getName());
 		ModelAndView mv = new ModelAndView();
 		mv.setViewName("users");
@@ -123,7 +116,7 @@ public class MainController {
 
 	/**
 	 * Write html table with minds, matching to filter
-	 * @param subs
+	 * @param subs string for filter
 	 * @return ModelAndView
 	 */
 	@GetMapping(path="/minds")

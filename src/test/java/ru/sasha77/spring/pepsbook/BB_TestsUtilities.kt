@@ -1,6 +1,8 @@
 package ru.sasha77.spring.pepsbook
 
 import org.openqa.selenium.WebDriver
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.stereotype.Component
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -11,17 +13,20 @@ fun pause (x : For) = Thread.sleep(when (x) {
     For.LONG_LOAD -> 1000
     For.SEE -> 0
     For.REPEAT -> 100})
-fun pause (attempts : Int = 50, f : () -> Boolean) {
+
+/**
+ * Pause until predicate it truw. Try it every For.REPEAT ms
+ */
+fun pause (attempts : Int = 50, predicate : () -> Boolean) {
     pause(For.LOAD)
     repeat(attempts) {
-        if (f()) return
+        if (predicate()) return
         pause(For.REPEAT)
-        print(" .")
     }
     throw RuntimeException("Waiting unsuccessful")
 }
 
-fun Date.myFormat () = SimpleDateFormat("dd.MM.yy HH:mm").format(this)
+fun Date.myFormat () = SimpleDateFormat("dd.MM.yy HH:mm").format(this)!!
 
 interface ObjWithDriver {
     val driver : WebDriver
@@ -44,6 +49,24 @@ data class TstAnswer(
     val user : String,
     val time : Date) {
     override fun toString(): String = "$text / ${mind.text} / $user / ${time.myFormat()}"
+}
+
+
+/**
+ * Properties holder
+ */
+@Component
+@ConfigurationProperties(prefix = "my.tst")
+class TstProps {
+    var headLess : Boolean = false
+    var closeBrowser : Boolean = true
+    var monkey : MonkeyTestProps = MonkeyTestProps()
+    open class MonkeyTestProps {
+        var seed : Long = 0
+        var rounds : Int = 0
+        var steps : Int = 0
+        var failImmediately : Boolean = true
+    }
 }
 
 //fun fillDBwithSQL () {

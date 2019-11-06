@@ -1,38 +1,36 @@
 package ru.sasha77.spring.pepsbook
 
-import org.junit.*
+import junit.framework.Assert.assertEquals
+import org.junit.Before
+import org.junit.FixMethodOrder
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
-import org.springframework.stereotype.Component
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
+import java.lang.RuntimeException
 import kotlin.random.Random
 
-@Component
-@ConfigurationProperties(prefix = "my.tst")
-class TstProps {
-    var headLess : Boolean = false
-    var closeBrowser : Boolean = true
-    var monkey : MonkeyTestProps = MonkeyTestProps()
-    open class MonkeyTestProps {
-        var seed : Long = 0
-        var rounds : Int = 0
-        var steps : Int = 0
-    }
-}
-
+/**
+ * MONKEY TEST simulates random user clicking ang typing (according to monkey.svg)
+ * changing TAO and comparing results with TAO (see testClasses.svg)
+ * Monkey test runs for my.tst.monkey.rounds times called rounds
+ * Every round consists of my.tst.monkey.steps steps
+ * Every round starts with its own randomer seed. Value of the seed put to a log
+ * If something wrong in a round you can repeat it setting my.tst.monkey.seed properties,
+ * so next time zero round of Monkey Test will repeat problem round
+ */
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc
 //@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class MonkeyTests {
+class BMonkeyTests {
 
     @LocalServerPort
     val port: Int = 0
@@ -43,22 +41,38 @@ class MonkeyTests {
     @Autowired
     lateinit var tao : TestApplicationObject
 
-    lateinit var wao : WebApplicationObject
+    private lateinit var wao : WebApplicationObject
 
-    var initialized : Boolean = false
+    private var initialized : Boolean = false
 
     @Before
     fun initialize () {
         if (!initialized) {
-            wao = WebApplicationObject(this.tao,port)
+            wao = WebApplicationObject(this.tao,port) // Create WAO for Monkey Test
             initialized = true
         }
     }
 
-    @Test fun monkeyTest001() {
-        if (tstProps.monkey.seed != 0L) wao.MonkeyTestClass(tstProps.monkey.seed,tstProps).go()
-        for (round in 1..tstProps.monkey.rounds)
-            wao.MonkeyTestClass(Random.nextLong().also { println("$round ====================== seed = $it") },tstProps).go()
+    /**
+     * Repeat the zero round with certain seed if it exists
+     */
+    @Test fun monkeyTest0Round() {
+        if (tstProps.monkey.seed != 0L) wao.MonkeyTestClass(tstProps.monkey.seed, 0, tstProps).go()
+    }
+
+    /**
+     * Perform random rounds
+     */
+    @Test fun monkeyTestOthers() {
+        val badRoundSeeds = mutableListOf<Long>()
+        for (round in (1 .. tstProps.monkey.rounds)) {
+            val seed = Random.nextLong()
+            if (!wao.MonkeyTestClass(seed, round, tstProps).go()) {
+                if (tstProps.monkey.failImmediately) throw RuntimeException()
+                badRoundSeeds.add(seed)
+            }
+        }
+        assertEquals("!!! SOME SEEDS ARE BAD !!!",listOf<Long>(), badRoundSeeds)
     }
 
     @Test fun xClose () {

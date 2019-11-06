@@ -1,31 +1,37 @@
+@file:Suppress("DEPRECATION")
+
 package ru.sasha77.spring.pepsbook
 
 import junit.framework.Assert.assertEquals
-import org.junit.*
+import org.junit.Before
+import org.junit.FixMethodOrder
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.math.roundToInt
 
+/**
+ * Every method in Selenium Tests click or type something using Clickers
+ * than check result using [MvcMockers] for ALL USERS
+ * than check result using [Checkers] for current user
+ * (see testClasses.svg)
+ */
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 //@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class A_SeleniumTests : ObjWithDriver {
+class ASeleniumTests : ObjWithDriver {
 
     @LocalServerPort
     private val port: Int = 0
@@ -37,20 +43,27 @@ class A_SeleniumTests : ObjWithDriver {
     lateinit var mvc : MvcMockers
 
     @Autowired
-    lateinit var clkDelMEE : Clickers
+    lateinit var clk : Clickers
+
+    @Autowired
+    lateinit var chk : Checkers
+
+    lateinit var wao : WebApplicationObject
 
     override lateinit var driver : WebDriver
 
-    var initialized : Boolean = false
+    private var initialized : Boolean = false
 
     @Before
     fun initialize () {
         if (!initialized) {
-            System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
-            driver = ChromeDriver(ChromeOptions().apply {
-                if (tao.tstProps.headLess) addArguments("headless")
-                addArguments("window-size=1200x600")
-            })
+//            System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
+//            driver = ChromeDriver(ChromeOptions().apply {
+//                if (tao.tstProps.headLess) addArguments("headless")
+//                addArguments("window-size=1200x600")
+//            })
+            wao = WebApplicationObject(tao,port)
+            driver = wao.driver
             initialized = true
         }
     }
@@ -63,6 +76,7 @@ class A_SeleniumTests : ObjWithDriver {
         driver.findElement(By.name("password")).sendKeys(password)
         driver.findElement(By.id("loginForm")).submit()
         pause(For.LOAD)
+        wao.currUserName = login
     }
 
     @Test fun uiTest001_Registration() {
@@ -104,25 +118,31 @@ class A_SeleniumTests : ObjWithDriver {
     @Test fun uiTest002_Friendship () {
         tao.fillDB(friendship = false)
         login("porky","pig")
-        with(clkDelMEE) {
+        with(clk) {
             clickMainUsers()
             mvc.checkAllDB()
+            chk.run { wao.what="users";wao.checkUsers() }
+            //<editor-fold desc="Add users to friends">
             clickUserToFriends("Pluto");tao.doToFriends("Porky","Pluto")
             clickUserToFriends("Luntik");tao.doToFriends("Porky","Luntik")
             clickUserToFriends("Masha");tao.doToFriends("Porky","Masha")
             pause(For.LOAD)
             mvc.checkAllDB()
-
+            chk.run { wao.what="users";wao.checkUsers() }
+            //</editor-fold>
+            //<editor-fold desc="Remove users from friends">
             clickUserFromFriends("Masha");tao.doFromFriends("Porky","Masha")
             pause(For.LOAD)
             mvc.checkAllDB()
+            chk.run { wao.what="users";wao.checkUsers() }
+            //</editor-fold>
         }
     }
 
     @Test fun uiTest003_Minds () {
         tao.fillDB()
         login("masha","child")
-        with(clkDelMEE) {
+        with(clk) {
             clickMainMinds()
             pause(For.LOAD)
             //<editor-fold desc="Not submit a mind">
@@ -131,6 +151,7 @@ class A_SeleniumTests : ObjWithDriver {
             clickCloseMind()
             pause(For.LOAD)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Try to submit wrong long mind (takes a lot of time)">
 //            clickNewMind()
@@ -147,6 +168,7 @@ class A_SeleniumTests : ObjWithDriver {
             tao.doAddMind("Masha","Мысля")
             pause(For.LOAD)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Edit mind">
             clickEditMind("Мысля")
@@ -155,12 +177,14 @@ class A_SeleniumTests : ObjWithDriver {
             tao.doChangeMind("Мысля","Мысля поумнее")
             pause(For.LOAD)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Delete mind">
             clickDelMind("Мысля поумнее")
             tao.doRemoveMind("Мысля поумнее")
             pause(For.LOAD)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
         }
     }
@@ -168,26 +192,33 @@ class A_SeleniumTests : ObjWithDriver {
     @Test fun uiTest004_Answers() {
         tao.fillDB()
         login("masha","child")
-        with(clkDelMEE) {
+        with(clk) {
             //take first mind and answer it
             val mindText = driver.findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
+            //<editor-fold desc="Answer mind">
             clickAnswerMind(mindText)
             typeMindText("Хохохо")
             submitMind()
             tao.doAddAnswer("Masha","Хохохо", mindText)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             pause(For.LOAD)
-
+            //</editor-fold>
+            //<editor-fold desc="Edit answer">
             clickEditAnswer("Хохохо")
             typeMindText(" - ого",false)
             submitMind()
             tao.doChangeAnswer("Хохохо - ого", mindText, "Хохохо")
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
             pause(For.LOAD)
-
+            //</editor-fold>
+            //<editor-fold desc="Delete answer">
             clickDelAnswer("Хохохо - ого")
             tao.doRemoveAnswer("Хохохо - ого",mindText)
             mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
+            //</editor-fold>
         }
     }
 

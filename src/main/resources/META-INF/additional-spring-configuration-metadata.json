@@ -24,5 +24,10 @@
       "name": "my.tst.monkeyTest.steps",
       "type": "java.lang.Integer",
       "description": "How many steps in a round."
+    },
+    {
+      "name": "my.tst.monkey.failImmediately",
+      "type": "java.lang.String",
+      "description": "Whether to stop Monkey Test on first fault."
     }
   ] }

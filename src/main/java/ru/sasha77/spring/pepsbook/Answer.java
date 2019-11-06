@@ -30,7 +30,7 @@ public class Answer {
     @Temporal(TemporalType.TIMESTAMP)
     private Date time = new Date();
 
-	public Answer(String text, Mind mind, User user) {
+	Answer(String text, Mind mind, User user) {
 		this.text = text;
 		this.mind = mind;
 		this.user = user;

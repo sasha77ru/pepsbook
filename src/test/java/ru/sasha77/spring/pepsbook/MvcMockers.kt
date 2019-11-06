@@ -8,8 +8,11 @@ import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import java.util.*
 
+/**
+ * Set of methods that perform MockMvc actions with changing TAO (see testClasses.svg)
+ * and MockMvc checker to compare TAO with result
+ */
 @Component
 class MvcMockers {
     @Autowired
@@ -123,6 +126,10 @@ class MvcMockers {
      * Does checkDB for all users
      */
     fun checkAllDB () {tao.actualUsersArray.forEach {checkDB(it.name)}}
+
+    /**
+     * Performs GET MockMvc and compares result with TAO
+     */
     fun checkDB (name: String, subs : String = "") {
         val currUser = tao.getUserByName(name)
         mockMvc.perform(MockMvcRequestBuilders.get("/users")

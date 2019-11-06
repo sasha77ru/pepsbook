@@ -3,7 +3,7 @@ package ru.sasha77.spring.pepsbook;
 import lombok.Data;
 
 @Data
-public class UserSimple {
+class UserSimple {
     private Integer id;
     private String name;
 	@SuppressWarnings("unused")

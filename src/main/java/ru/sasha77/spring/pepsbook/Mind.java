@@ -31,7 +31,7 @@ public class Mind {
 	@JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
     private User user;
 
-	public Mind(String text, User user) {
+	Mind(String text, User user) {
 		this.text = text;
 		this.user = user;
 	}

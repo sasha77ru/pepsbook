@@ -7,14 +7,21 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.ImportResource
 import org.springframework.stereotype.Component
 
+/**
+ * The aspect launched before Clickers methods
+ */
 @Component("logAop")
 open class LogAspect {
-    var log = LoggerFactory.getLogger(this::class.java)
+    private var log = LoggerFactory.getLogger(this::class.java)!!
+    @Suppress("unused")
     fun beforeAdvice(joinPoint : JoinPoint) {
         log.info("> ${joinPoint.signature.name} (${joinPoint.args.drop(1).joinToString(",")})")
     }
 }
 
+/**
+ * Set of methods that perform browser actions on objects having driver var (see testClasses.svg)
+ */
 @Component
 @ImportResource("LogAop.xml")
 open class Clickers {
