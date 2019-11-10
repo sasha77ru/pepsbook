@@ -1,4 +1,4 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.models;
 
 
 import lombok.*;
@@ -30,12 +30,12 @@ public class Answer {
     @Temporal(TemporalType.TIMESTAMP)
     private Date time = new Date();
 
-	Answer(String text, Mind mind, User user) {
+	public Answer(String text, Mind mind, User user) {
 		this.text = text;
 		this.mind = mind;
 		this.user = user;
 	}
-public Answer(String text, Mind mind, User user, Date time) {
+	public Answer(String text, Mind mind, User user, Date time) {
 		this.text = text;
 		this.mind = mind;
 		this.user = user;

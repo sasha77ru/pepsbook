@@ -1,4 +1,4 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.models;
 
 
 import lombok.*;
@@ -31,11 +31,12 @@ public class Mind {
 	@JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
     private User user;
 
-	Mind(String text, User user) {
+	public Mind(String text, User user) {
 		this.text = text;
 		this.user = user;
 	}
-public Mind(String text, User user, Date time) {
+
+    public Mind(String text, User user, Date time) {
 		this.text = text;
 		this.user = user;
 		this.time = time;

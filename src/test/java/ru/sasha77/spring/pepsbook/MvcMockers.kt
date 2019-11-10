@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import ru.sasha77.spring.pepsbook.models.Mind
+import ru.sasha77.spring.pepsbook.models.User
 
 /**
  * Set of methods that perform MockMvc actions with changing TAO (see testClasses.svg)

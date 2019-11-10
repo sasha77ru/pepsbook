@@ -1,10 +1,11 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.models;
 
 
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.sasha77.spring.pepsbook.webModels.UserSimple;
 
 import javax.persistence.*;
 import java.util.*;
@@ -87,7 +88,7 @@ public class User implements UserDetails {
 		return true;
 	}
 
-	UserSimple getUserSimple () {
+	public UserSimple getUserSimple () {
 		return new UserSimple(id, name, email);
 	}
 

@@ -1,4 +1,4 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -8,12 +8,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+import ru.sasha77.spring.pepsbook.models.User;
+import ru.sasha77.spring.pepsbook.repositories.MindRepository;
+import ru.sasha77.spring.pepsbook.repositories.UserRepository;
+import ru.sasha77.spring.pepsbook.webModels.UserRegister;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.security.Principal;
 import java.util.Comparator;
 import java.util.stream.Collectors;

@@ -1,9 +1,16 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.*;
+import ru.sasha77.spring.pepsbook.models.Answer;
+import ru.sasha77.spring.pepsbook.models.Mind;
+import ru.sasha77.spring.pepsbook.models.User;
+import ru.sasha77.spring.pepsbook.repositories.AnswerRepository;
+import ru.sasha77.spring.pepsbook.repositories.MindRepository;
+import ru.sasha77.spring.pepsbook.repositories.UserRepository;
+import ru.sasha77.spring.pepsbook.webModels.UserSimple;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;

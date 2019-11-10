@@ -1,8 +1,9 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.repositories;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import ru.sasha77.spring.pepsbook.models.Mind;
 
 public interface MindRepository extends CrudRepository<Mind, Integer> {
 //  Old variants wo search in answers

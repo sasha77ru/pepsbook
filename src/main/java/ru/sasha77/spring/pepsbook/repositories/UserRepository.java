@@ -1,8 +1,9 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.repositories;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import ru.sasha77.spring.pepsbook.models.User;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
     //UNUSED. THE SAME LIKE NEXT ONE

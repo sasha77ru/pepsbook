@@ -1,6 +1,5 @@
 package ru.sasha77.spring.pepsbook;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class ConfigSecurity extends WebSecurityConfigurerAdapter {
-    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
-    @Autowired
-    @Qualifier("MyUserService")
-    UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;
+
+    public ConfigSecurity(@Qualifier("MyUserService") UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -65,8 +65,8 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
         .and()
             .authorizeRequests()
                 .antMatchers("/login","/register").access("permitAll")
-                .antMatchers("/**").hasRole("USER")
-                .antMatchers("/rest/**").hasRole("USER")
+                .antMatchers("/**").authenticated()
+                .antMatchers("/rest/**").authenticated()
         .and()
             .formLogin().loginPage("/login")
         /*.and()

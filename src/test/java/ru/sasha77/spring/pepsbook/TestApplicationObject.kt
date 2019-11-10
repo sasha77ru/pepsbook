@@ -3,6 +3,12 @@ package ru.sasha77.spring.pepsbook
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
+import ru.sasha77.spring.pepsbook.models.Answer
+import ru.sasha77.spring.pepsbook.models.Mind
+import ru.sasha77.spring.pepsbook.models.User
+import ru.sasha77.spring.pepsbook.repositories.AnswerRepository
+import ru.sasha77.spring.pepsbook.repositories.MindRepository
+import ru.sasha77.spring.pepsbook.repositories.UserRepository
 import java.util.*
 
 
@@ -117,7 +123,8 @@ class TestApplicationObject (private val usersRepo: UserRepository,
         if (minds) actualMindsArray.forEach { tstMind ->
             val mind = Mind(tstMind.text, getUserByName(tstMind.user).user, tstMind.time)
                     .apply { answers = tstMind.answers.map { tstAnswer -> //add answers to mind
-                        Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user),tstAnswer.time)} }
+                        Answer(tstAnswer.text, this, usersRepo.findByName(tstAnswer.user), tstAnswer.time)
+                    } }
             mindsRepo.save(mind)
             answersRepo.saveAll(mind.answers)
         }

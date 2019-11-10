@@ -1,7 +1,8 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.webModels;
 
 import lombok.Data;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ru.sasha77.spring.pepsbook.models.User;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -9,7 +10,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 @Data
-class UserRegister {
+public class UserRegister {
 
 	@NotBlank(message = "username не указан")
 	@Pattern(regexp = "^[A-Za-z][-_A-za-z0-9]*$", message = "Неправильные символы в username")
@@ -36,7 +37,7 @@ class UserRegister {
 	@Size(max=100, message = "Слишком длинное название страны")
 	private String country;
 
-		User toUser(PasswordEncoder passwordEncoder) {
+		public User toUser(PasswordEncoder passwordEncoder) {
 		return new User(name,email,country,username,passwordEncoder.encode(password));
 	}
 }
