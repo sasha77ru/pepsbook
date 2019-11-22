@@ -19,18 +19,27 @@
 <body>
 <div style="position: absolute; left: 50%; top: 10%;">
     <div style="position: relative; left: -50%;padding: 10px">
-        <form method="POST" th:action="@{/login}" id="loginForm">
+        <form method="POST" th:action="@{/login}" id="loginForm" th:object="${userLogin}">
             <h2 class="form-signin-heading" style="text-align: center">Pepsbook</h2>
-            <div th:if="${param.error}" class="alert alert-dismissible alert-danger" id="loginErrors">
-                Неправильные логин/пароль
-            </div>
             <p>
                 <label for="username" class="sr-only">Логин</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="Логин" required autofocus>
+                <input th:field="*{username}" type="text"
+                       id="username" name="username"
+                       class="form-control" placeholder="Логин" required autofocus>
+                <div class="alert alert-dismissible alert-danger"
+                     id = "usernameErrors"
+                     th:if="${#fields.hasErrors('username')}"
+                     th:errors="*{username}"></div>
             </p>
             <p>
                 <label for="password" class="sr-only">Пароль</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Пароль" required>
+                <input th:field="*{password}" type="password"
+                       id="password" name="password"
+                       class="form-control" placeholder="Пароль" required>
+                <div  class="alert alert-dismissible alert-danger"
+                      id = "passwordErrors"
+                      th:if="${#fields.hasErrors('password')}"
+                      th:errors="*{password}"></div>
             </p>
             <button class="btn btn-lg btn-primary btn-block" type="submit">Войти</button>
         </form>

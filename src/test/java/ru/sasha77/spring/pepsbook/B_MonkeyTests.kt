@@ -68,7 +68,6 @@ class BMonkeyTests {
         for (round in (1 .. tstProps.monkey.rounds)) {
             val seed = Random.nextLong()
             if (!wao.MonkeyTestClass(seed, round, tstProps).go()) {
-                if (tstProps.monkey.failImmediately) throw RuntimeException()
                 badRoundSeeds.add(seed)
             }
         }

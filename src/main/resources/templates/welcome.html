@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      lang="ru">
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+        localStorage.setItem("jwtToken", "[[${jwt}]]");
+        document.location.assign("/");
+    </script>
+</head>
+
+</html>

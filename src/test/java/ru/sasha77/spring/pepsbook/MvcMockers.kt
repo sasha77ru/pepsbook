@@ -16,7 +16,7 @@ import ru.sasha77.spring.pepsbook.models.User
  * and MockMvc checker to compare TAO with result
  */
 @Component
-class MvcMockers {
+open class MvcMockers {
     @Autowired
     lateinit var mockMvc : MockMvc
     @Autowired
@@ -127,7 +127,7 @@ class MvcMockers {
     /**
      * Does checkDB for all users
      */
-    fun checkAllDB () {tao.actualUsersArray.forEach {checkDB(it.name)}}
+    open fun checkAllDB () {tao.actualUsersArray.forEach {checkDB(it.name)}}
 
     /**
      * Performs GET MockMvc and compares result with TAO

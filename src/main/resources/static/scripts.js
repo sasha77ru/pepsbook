@@ -1,20 +1,36 @@
 var nowInMain = "minds";
 
 function onError(x) {
-    alert(x.status);
-    // noinspection JSDeprecatedSymbols
-    document.location.reload(true)
+    if (x.status === 401 || x.status === 403) document.location.assign("/login"); else alert(x.status);
 }
+function getJwtToken() {
+    return localStorage.getItem("jwtToken");
+}
+
+function removeJwtToken() {
+    localStorage.removeItem("jwtToken");
+}
+
+function jwtHeader() {
+    var token = getJwtToken();
+    if (token) {
+        return {"Authorization": "Bearer " + token};
+    } else {
+        return {};
+    }
+}
+
 function myOnLoad() {
     //Get user info and write their name in a nameField
-    $.ajax("/rest/getUser", {data:{_csrf:csrf},method:"GET"})
+    $.ajax("/rest/getUser", {headers:jwtHeader(),method:"GET"})
         .done(function (data) {
-            nameField.innerHTML = data.name
-        });
-    //Write minds in subMain
-    $.ajax("/minds",{method:"GET"})
-        .done(onGotSubMain)
-        .fail(onError)
+            nameField.innerHTML = data.name;
+            //Write minds in subMain
+            $.ajax("/minds",{headers:jwtHeader(),method:"GET"})
+                .done(onGotSubMain)
+                .fail(onError)
+        })
+        .fail(onError);
 }
 /**
  * Magical global variable for testing. Allow QA to know when subMain is loaded
@@ -34,7 +50,7 @@ function onGotSubMain(data) {
  */
 function onChangeFilter() {
     subMainReady = false;
-    $.ajax("/"+nowInMain,{data:{subs : mainFilter.value},method:"GET"})
+    $.ajax("/"+nowInMain,{data:{subs : mainFilter.value},headers:jwtHeader(),method:"GET"})
         .done(onGotSubMain)
         .fail(onError)
 }
@@ -74,8 +90,8 @@ function changeView(newActive,toWhat,filter) {
  * @param all LogOff from all devices
  */
 function logOff(all) {
-    $.ajax("/logout",{data:{_csrf:csrf},method:"POST"})
-        .done(function () {document.location.reload(true)})
+    removeJwtToken();
+    document.location.assign("/login")
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -85,7 +101,7 @@ function logOff(all) {
  * @param friend_id
  */
 function toFriends(container,friend_id) {
-    $.ajax("/rest/toFriends",{data:{friend_id : friend_id,_csrf:csrf},method:"PATCH"})
+    $.ajax("/rest/toFriends",{data:{friend_id : friend_id},headers:jwtHeader(),method:"PATCH"})
         .done(function (data) {
             //REST returns "mate" if they are mutual friends now or "noMate" otherwise
             $(container).closest(".userEntity").find(".friendship")[0].innerHTML =
@@ -105,7 +121,7 @@ function toFriends(container,friend_id) {
  * @param friend_id
  */
 function fromFriends(container,friend_id) {
-    $.ajax("/rest/fromFriends",{data:{friend_id : friend_id,_csrf:csrf},method:"PATCH"})
+    $.ajax("/rest/fromFriends",{data:{friend_id : friend_id},headers:jwtHeader(),method:"PATCH"})
         .done(function (data) {
             //REST returns "mate" if another is a mate or "noMate" otherwise
             $(container).closest(".userEntity").find(".friendship")[0].innerHTML =
@@ -189,8 +205,8 @@ function saveMind(moa,id,parentMind) {
         return
     }
     $.ajax("/rest/save"+moa[0].toUpperCase()+moa.slice(1),
-        {data:{text : mindTextArea.innerText.replace(/\xa0/g," "), id : id||0, parentMind : parentMind,_csrf:csrf},
-            method:"POST"})
+        {data:{text : mindTextArea.innerText.replace(/\xa0/g," "), id : id||0, parentMind : parentMind},
+            headers:jwtHeader(),method:"POST"})
         .done(function () {
             onChangeFilter()
         })
@@ -204,7 +220,7 @@ function saveMind(moa,id,parentMind) {
  * @param id
  */
 function removeMind(moa,id) {
-    $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id,_csrf:csrf},method:"DELETE"})
+    $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id},headers:jwtHeader(),method:"DELETE"})
         .done (function (data, status) {
             if (status !== "success"||data.search(/^error/)>=0) {onError(data||"bad status="+status);return}
             onChangeFilter()

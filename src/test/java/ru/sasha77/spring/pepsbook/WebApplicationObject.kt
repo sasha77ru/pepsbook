@@ -48,7 +48,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
         driver = ChromeDriver(ChromeOptions().apply {
             if (tao.tstProps.headLess) addArguments("headless")
-            addArguments("window-size=1200x600")
+//            addArguments("window-size=1920x600")
         })
         js = driver
     }
@@ -102,6 +102,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                     pause(For.SEE)
                 }
             } catch (e : Exception) {
+                if (tstProps.monkey.failImmediately) throw e
                 log.info("!!!!!! PROBLEM !!!!!! Round; $round Seed: $seed Step: $step")
                 ok = false
             }

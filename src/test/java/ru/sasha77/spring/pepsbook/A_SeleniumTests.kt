@@ -8,6 +8,8 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,8 +41,9 @@ class ASeleniumTests : ObjWithDriver {
     @Autowired
     lateinit var tao : TestApplicationObject
 
-    @Autowired
-    lateinit var mvc : MvcMockers
+    //TODO DEBUG
+    /*@Autowired
+    lateinit*/ var mvc : MvcMockers = mock(MvcMockers::class.java).apply { `when`(checkAllDB()).then { pause(For.LONG_LOAD) } }
 
     @Autowired
     lateinit var clk : Clickers
@@ -57,18 +60,13 @@ class ASeleniumTests : ObjWithDriver {
     @Before
     fun initialize () {
         if (!initialized) {
-//            System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
-//            driver = ChromeDriver(ChromeOptions().apply {
-//                if (tao.tstProps.headLess) addArguments("headless")
-//                addArguments("window-size=1200x600")
-//            })
             wao = WebApplicationObject(tao,port)
             driver = wao.driver
             initialized = true
         }
     }
 
-    private fun login (login : String, password : String) {
+    private fun login (login : String, password : String, doNotSetCurrUser : Boolean = false) {
         pause(For.LOAD)
         driver.get("http://localhost:$port")
         pause(For.LOAD)
@@ -76,7 +74,7 @@ class ASeleniumTests : ObjWithDriver {
         driver.findElement(By.name("password")).sendKeys(password)
         driver.findElement(By.id("loginForm")).submit()
         pause(For.LOAD)
-        wao.currUserName = login
+        if (!doNotSetCurrUser) wao.currUserName = login
     }
 
     @Test fun uiTest001_Registration() {
@@ -104,7 +102,7 @@ class ASeleniumTests : ObjWithDriver {
         with (driver) {
             submitForm("masha","xfvdfv@lkj.com")
             submitForm("loppo","porky@pig.com")
-            submitForm("lopeh" + (Math.random() * 100).roundToInt(),"lopeh" + (Math.random() * 100).roundToInt() + "@gmail.com")
+            submitForm("lopeh","lopeh@gmail.com")
         }
 
         assertEquals("Pepsbook",driver.title)
@@ -113,6 +111,20 @@ class ASeleniumTests : ObjWithDriver {
         driver.findElement(By.id("fakeLogOffButton")).click()
         Thread.sleep(500)
         assertEquals("Pepsbook Login",driver.title)
+
+        login("wrongUserName","wrongUserPass",doNotSetCurrUser = true)
+        Thread.sleep(500)
+        assertEquals("Pepsbook Login",driver.title)
+        assertEquals(1,driver.findElements(By.id("passwordErrors")).size)
+
+        login("masha","wrongUserPass",doNotSetCurrUser = true)
+        Thread.sleep(500)
+        assertEquals("Pepsbook Login",driver.title)
+        assertEquals(1,driver.findElements(By.id("passwordErrors")).size)
+
+        login("lopeh","aaa",doNotSetCurrUser = true)
+        Thread.sleep(500)
+        assertEquals("Pepsbook",driver.title)
     }
 
     @Test fun uiTest002_Friendship () {

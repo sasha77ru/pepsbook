@@ -1,23 +1,33 @@
-package ru.sasha77.spring.pepsbook;
+package ru.sasha77.spring.pepsbook.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.sasha77.spring.pepsbook.security.TokenProvider;
 
-@Configuration
+//@Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class ConfigSecurity extends WebSecurityConfigurerAdapter {
     private UserDetailsService userDetailsService;
+    private TokenProvider tokenProvider;
 
-    public ConfigSecurity(@Qualifier("MyUserService") UserDetailsService userDetailsService) {
+    public ConfigSecurity(
+            @Qualifier("MyUserService") UserDetailsService userDetailsService,
+            TokenProvider tokenProvider
+    ) {
         this.userDetailsService = userDetailsService;
+        this.tokenProvider = tokenProvider;
     }
 
     @Bean
@@ -61,15 +71,22 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .httpBasic()
-        .and()
+//            .httpBasic()
+//        .and()
             .authorizeRequests()
-                .antMatchers("/login","/register").access("permitAll")
-                .antMatchers("/**").authenticated()
                 .antMatchers("/rest/**").authenticated()
+                .antMatchers("/**").access("permitAll")
+//        .and()
+//            .formLogin().loginPage("/login")
         .and()
-            .formLogin().loginPage("/login")
-        /*.and()
-            .csrf().disable()*/;
+            .csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
+            .apply(securityConfigurerAdapter());
+    }
+
+    // TODO: 18.11.2019 Try to include it in place
+    private ConfigJWT securityConfigurerAdapter() {
+        return new ConfigJWT(tokenProvider);
     }
 }

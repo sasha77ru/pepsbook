@@ -10,6 +10,18 @@ spring:
     url: jdbc:mysql://localhost:3306/pepsbook?serverTimezone=Europe/Moscow&useUnicode=yes&characterEncoding=UTF-8
     username: myuser
     password: motamota
+jwt:
+  header: Authorization
+  # This token must be encoded using Base64 with mininum 88 Bits (you can type `echo 'secret-key'|base64` on your command line)
+  base64-secret: and0LWI2NC1zZWNyZXQta2V5LXNlY3JldC1zZWNyZXQtc2VjcmV0LWtleS1rZS1rdS1rdS1rdS1rdS1rdS1rdS1rZS1rZXkK
+  # token is valid 24 hours
+  token-validity-in-seconds: 86400
+  # valid 30 hours
+  token-validity-in-seconds-for-remember-me: 108000
+  route:
+    authentication:
+      path: auth
+      refresh: refresh
 
 ---
 
@@ -34,10 +46,10 @@ spring:
     properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
 my:
   tst:
-    headless: true
+    headless: false
     closeBrowser: true
     monkey:
       seed: 0
       rounds: 3
       steps:  100
-      failImmediately: false
+      failImmediately: true
