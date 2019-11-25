@@ -5,6 +5,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import ru.sasha77.spring.pepsbook.models.Mind;
 
+import java.util.List;
+
 public interface MindRepository extends CrudRepository<Mind, Integer> {
 //  Old variants wo search in answers
 //    @Query(value = "from Mind m inner join fetch m.user u WHERE u.name LIKE %:subs%")
@@ -16,5 +18,5 @@ public interface MindRepository extends CrudRepository<Mind, Integer> {
             "    OR EXISTS(SELECT * FROM answers a WHERE a.mind_id=m.id AND a.text LIKE CONCAT('%',:subs,'%'))" +
             " ORDER BY m.time DESC"
             , nativeQuery=true)
-    Iterable<Mind> findLike(@Param("subs") String name);
+    List<Mind> findLike(@Param("subs") String name);
 }

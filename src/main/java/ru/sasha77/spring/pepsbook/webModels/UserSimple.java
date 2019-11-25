@@ -1,18 +1,18 @@
 package ru.sasha77.spring.pepsbook.webModels;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import ru.sasha77.spring.pepsbook.models.User;
 
 @Data
+@AllArgsConstructor
 public class UserSimple {
     private Integer id;
     private String name;
-	@SuppressWarnings("unused")
-	private String email;
 
-	public UserSimple(Integer id, String name, String email) {
-		this.id = id;
-		this.name = name;
-		this.email = email;
+    public UserSimple(User user) {
+    	this.id = user.getId();
+    	this.name = user.getName();
 	}
 }
 

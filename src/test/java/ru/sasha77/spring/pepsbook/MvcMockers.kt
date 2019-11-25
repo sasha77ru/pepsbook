@@ -1,15 +1,20 @@
 package ru.sasha77.spring.pepsbook
 
 import org.hamcrest.Matchers
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.Authentication
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import ru.sasha77.spring.pepsbook.MyUtilities.myDate
 import ru.sasha77.spring.pepsbook.models.Mind
 import ru.sasha77.spring.pepsbook.models.User
+import ru.sasha77.spring.pepsbook.security.TokenProvider
 
 /**
  * Set of methods that perform MockMvc actions with changing TAO (see testClasses.svg)
@@ -21,16 +26,18 @@ open class MvcMockers {
     lateinit var mockMvc : MockMvc
     @Autowired
     lateinit var tao : TestApplicationObject
+    @Autowired
+    lateinit var tokenProvider: TokenProvider
 
     fun mvcToFriends (name : String, friendName : String) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
         val friend = tao.getUserByName(friendName)
 
         tao.doToFriends(name,friendName)
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/rest/toFriends")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password))
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("friend_id", friend.user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
                     .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
@@ -38,13 +45,13 @@ open class MvcMockers {
 
     fun mvcFromFriends (name : String, friendName : String) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
         val friend = tao.getUserByName(friendName)
 
         tao.doFromFriends(name,friendName)
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/rest/fromFriends")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password))
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("friend_id", friend.user.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
                     .andExpect(MockMvcResultMatchers.content().string(Matchers.not(Matchers.containsString("error"))))
@@ -52,6 +59,7 @@ open class MvcMockers {
 
     fun mvcChangeMind (name : String, text : String, oldText : String?) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
 
         val dbMind = if (oldText == null) {
             tao.doAddMind(name, text)
@@ -62,8 +70,7 @@ open class MvcMockers {
         }
 
         mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveMind")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password))
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("text",text)
                 .apply {
                     if (dbMind != null) param("id",dbMind.id.toString())
@@ -77,19 +84,20 @@ open class MvcMockers {
 
     fun mvcRemoveMind (name : String, oldText : String) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
         val dbMind = tao.getDBMindByText(oldText)
 
         tao.doRemoveMind(oldText)
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMind")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password))
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("id",dbMind.id.toString()))
                     .andExpect(MockMvcResultMatchers.status().isOk)
     }
 
     fun mvcChangeAnswer (name : String, text : String, mindText : String, oldText : String? = null) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
         val parentDBMind = tao.getDBMindByText(mindText)
 
         val answerDB = if (oldText == null) {
@@ -100,8 +108,7 @@ open class MvcMockers {
             tao.getDBAnswerByText(oldText)
         }
         mockMvc.perform(MockMvcRequestBuilders.post("/rest/saveAnswer")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password))
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("text",text)
                 .param("parentMind",parentDBMind.id.toString())
                 .apply {
@@ -114,12 +121,13 @@ open class MvcMockers {
     }
     fun mvcRemoveAnswer (name : String, oldText : String, mindText: String) {
         val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
         val dbAnswer = tao.getDBAnswerByText(oldText)
 
         tao.doRemoveAnswer(oldText,mindText)
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeAnswer")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(user.username, user.password)).with(SecurityMockMvcRequestPostProcessors.csrf())
+                .header("Authorization", "Bearer $token")
                 .param("id",dbAnswer.id.toString()))
                 .andExpect(MockMvcResultMatchers.status().isOk)
     }
@@ -134,65 +142,121 @@ open class MvcMockers {
      */
     fun checkDB (name: String, subs : String = "") {
         val currUser = tao.getUserByName(name)
-        mockMvc.perform(MockMvcRequestBuilders.get("/users")
+        val token = tokenProvider.createTestToken(currUser.username)
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/users")
                 .param("subs", subs)
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andDo { mvcResult ->
-                    @Suppress("UNCHECKED_CAST")
-                    Assert.assertEquals("Different lists",
-                            tao.actualUsersArray
-                                    .filter { it.user.id != currUser.user.id }
-                                    .filter { it.name.contains(subs,ignoreCase = true) || it.country.contains(subs,ignoreCase = true) }
-                                    .sortedBy { it.user.name }
-                                    .joinToString("\n") { it.user.name },
-                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
-                    )
-                }
-        mockMvc.perform(MockMvcRequestBuilders.get("/friends")
+                .header("Authorization", "Bearer $token"))
+                    .andDo { mvcResult ->
+                        @Suppress("UNCHECKED_CAST")
+                        Assert.assertEquals("Different lists",
+                                tao.actualUsersArray
+                                        .filter { it.user.id != currUser.user.id }
+                                        .filter { it.name.contains(subs,ignoreCase = true) || it.country.contains(subs,ignoreCase = true) }
+                                        .sortedBy { it.user.name }
+                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                                JSONArray(mvcResult.response.contentAsString)
+                                        .let {
+                                            // Parse response JSON to compare
+                                            val list = mutableListOf<String>()
+                                            for (i in 0 until it.length()) {
+                                                list.add(JSONObject(it.getString(i)).run {
+                                                    getString("name") + " / " + getString("country")
+                                                })
+                                            }
+                                            list
+                                        }.joinToString("\n")
+                        )
+                    }
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/friends")
                 .param("subs", "")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andDo { mvcResult ->
-                    @Suppress("UNCHECKED_CAST")
-                    Assert.assertEquals("Different lists",
-                            tao.actualUsersArray.filter { tstUser ->
-                                tstUser.user.email != currUser.user.email
-                                        && currUser.friendsNames.any { it == tstUser.user.name }
-                            }.sortedBy { it.user.name }.joinToString("\n") { it.user.name },
-                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
-                    )
-                }
-        mockMvc.perform(MockMvcRequestBuilders.get("/mates").param("subs", "")
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andDo { mvcResult ->
-                    @Suppress("UNCHECKED_CAST")
-                    Assert.assertEquals("Different lists",
-                            tao.actualUsersArray.filter { tstUser ->
-                                tstUser.user.email != currUser.user.email
-                                        && currUser.matesNames.any { it == tstUser.user.name }
-                            }.sortedBy { it.user.name }.joinToString("\n") { it.user.name },
-                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<User>).joinToString("\n") { it.name }
-                    )
-                }
-        mockMvc.perform(MockMvcRequestBuilders.get("/minds")
+                .header("Authorization", "Bearer $token"))
+                    .andDo { mvcResult ->
+                        @Suppress("UNCHECKED_CAST")
+                        Assert.assertEquals("Different lists",
+                                tao.actualUsersArray.filter { tstUser ->
+                                    tstUser.user.email != currUser.user.email
+                                            && currUser.friendsNames.any { it == tstUser.user.name } }
+                                        .sortedBy { it.user.name }
+                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                                JSONArray(mvcResult.response.contentAsString)
+                                        .let {
+                                            // Parse response JSON to compare
+                                            val list = mutableListOf<String>()
+                                            for (i in 0 until it.length()) {
+                                                list.add(JSONObject(it.getString(i)).run {
+                                                    getString("name") + " / " + getString("country")
+                                                })
+                                            }
+                                            list
+                                        }.joinToString("\n")
+                        )
+                    }
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/mates").param("subs", "")
+                .header("Authorization", "Bearer $token"))
+                    .andDo { mvcResult ->
+                        @Suppress("UNCHECKED_CAST")
+                        Assert.assertEquals("Different lists",
+                                tao.actualUsersArray.filter { tstUser ->
+                                    tstUser.user.email != currUser.user.email
+                                            && currUser.matesNames.any { it == tstUser.user.name } }
+                                        .sortedBy { it.user.name }
+                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                                JSONArray(mvcResult.response.contentAsString)
+                                        .let {
+                                            // Parse response JSON to compare
+                                            val list = mutableListOf<String>()
+                                            for (i in 0 until it.length()) {
+                                                list.add(JSONObject(it.getString(i)).run {
+                                                    getString("name") + " / " + getString("country")
+                                                })
+                                            }
+                                            list
+                                        }.joinToString("\n")
+                        )
+                    }
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/minds")
                 .param("subs", subs)
-                .with(SecurityMockMvcRequestPostProcessors.httpBasic(currUser.username, currUser.password)).with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andDo { mvcResult ->
-                    @Suppress("UNCHECKED_CAST")
-                    Assert.assertEquals("Different lists",
+                .header("Authorization", "Bearer $token"))
+                    .andDo { mvcResult ->
+                        @Suppress("UNCHECKED_CAST")
+                        Assert.assertEquals("Different lists",
                             tao.actualMindsArray
-                                    .filter { it.text.contains(subs,true)
-                                            || it.user.contains(subs,true)
-                                            || it.answers.any { answer -> answer.text.contains(subs,true) }}
-                                    .sortedBy { it.text }
-                                    .joinToString("\n") {mind ->
-                                        with(mind) {"$text / $user / ${time.myFormat()}"} + " : " +
-                                                mind.answers.joinToString(" | ") { with(it) {"$text / $user / ${time.myFormat()}"} } }
+                                .filter { it.text.contains(subs,true)
+                                        || it.user.contains(subs,true)
+                                        || it.answers.any { answer -> answer.text.contains(subs,true) }}
+                                .sortedByDescending { it.time }
+                                .joinToString("\n") {mind ->
+                                    with(mind) {"$text / $user / ${myDate(time)}"} + " : " +
+                                            mind.answers.joinToString(" | ") { with(it) {"$text / $user / ${myDate(time)}"} } }
                             ,
-                            (mvcResult.modelAndView!!.model["lizt"] as Iterable<Mind>).sortedBy { it.text }
-                                    .joinToString("\n") {mind ->
-                                        with(mind) {"$text / ${user.name} / ${time.myFormat()}"} + " : " +
-                                                mind.answers.joinToString(" | ") { with(it) {"$text / ${user.name} / ${time.myFormat()}"} } }
-                    )
-                }
+                            JSONArray(mvcResult.response.contentAsString)
+                                .let { response ->
+                                    // Parse response JSON to compare
+                                    val list = mutableListOf<String>()
+                                    for (i in 0 until response.length()) {
+                                        list.add(JSONObject(response.getString(i)).run {
+                                            val answers = JSONArray(getString("answers")).let {
+                                                val answersList = mutableListOf<String>()
+                                                for (j in 0 until it.length()) {
+                                                    answersList.add(JSONObject(it.getString(j)).run {
+                                                        getString("text") + " / " + getString("author") + " / " + getString("time")
+                                                    })
+                                                }
+                                                answersList
+                                            }.joinToString(" | ")
+                                            getString("text") + " / " +
+                                                getString("author") + " / " +
+                                                getString("time") + " : " +
+                                                answers
+                                        })
+                                    }
+                                    list
+                                }.joinToString("\n")
+//                                (mvcResult.modelAndView!!.model["lizt"] as Iterable<Mind>).sortedBy { it.text }
+//                                        .joinToString("\n") {mind ->
+//                                            with(mind) {"$text / ${user.name} / ${myDate(time)}"} + " : " +
+//                                                    mind.answers.joinToString(" | ") { with(it) {"$text / ${user.name} / ${myDate(time)}"} } }
+                        )
+                    }
     }
 }

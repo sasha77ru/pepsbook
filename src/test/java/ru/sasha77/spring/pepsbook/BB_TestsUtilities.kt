@@ -3,6 +3,7 @@ package ru.sasha77.spring.pepsbook
 import org.openqa.selenium.WebDriver
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
+import ru.sasha77.spring.pepsbook.MyUtilities.myDate
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,8 +27,6 @@ fun pause (attempts : Int = 50, predicate : () -> Boolean) {
     throw RuntimeException("Waiting unsuccessful")
 }
 
-fun Date.myFormat () = SimpleDateFormat("dd.MM.yy HH:mm").format(this)!!
-
 interface ObjWithDriver {
     val driver : WebDriver
 }
@@ -41,14 +40,14 @@ data class TstMind(
     fun addAnswer (text: String,user: String,time: Date) {answers.add(TstAnswer(text,this,user,time))}
     fun removeAnswer (findText : String) {answers.remove(getAnswerByText(findText))}
     fun changeAnswer (findText : String, newText : String) {getAnswerByText(findText).text = newText}
-    override fun toString(): String = "$text / $user / ${time.myFormat()} / ${answers.sortedBy { it.time }}"
+    override fun toString(): String = "$text / $user / ${myDate(time)} / ${answers.sortedBy { it.time }}"
 }
 data class TstAnswer(
     var text : String,
     val mind : TstMind,
     val user : String,
     val time : Date) {
-    override fun toString(): String = "$text / ${mind.text} / $user / ${time.myFormat()}"
+    override fun toString(): String = "$text / ${mind.text} / $user / ${myDate(time)}"
 }
 
 

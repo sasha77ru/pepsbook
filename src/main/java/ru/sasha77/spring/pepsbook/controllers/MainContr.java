@@ -1,7 +1,6 @@
 package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -14,42 +13,31 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
-import ru.sasha77.spring.pepsbook.models.User;
-import ru.sasha77.spring.pepsbook.repositories.MindRepository;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
 import ru.sasha77.spring.pepsbook.security.JWTFilter;
 import ru.sasha77.spring.pepsbook.security.TokenProvider;
 import ru.sasha77.spring.pepsbook.webModels.UserLogin;
 import ru.sasha77.spring.pepsbook.webModels.UserRegister;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.security.Principal;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("JavaDoc")
 @Controller
-public class MainController {
+public class MainContr {
 	private final UserRepository userRepository;
-	private final MindRepository mindRepository;
 
 	private final PasswordEncoder passwordEncoder;
 	private final TokenProvider tokenProvider;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-	public MainController(UserRepository userRepository,
-						  MindRepository mindRepository,
-						  PasswordEncoder passwordEncoder,
-						  TokenProvider tokenProvider,
-						  AuthenticationManagerBuilder authenticationManagerBuilder
+	public MainContr(UserRepository userRepository,
+					 PasswordEncoder passwordEncoder,
+					 TokenProvider tokenProvider,
+					 AuthenticationManagerBuilder authenticationManagerBuilder
 						  ) {
 		this.userRepository = userRepository;
-		this.mindRepository = mindRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.tokenProvider = tokenProvider;
 		this.authenticationManagerBuilder = authenticationManagerBuilder;
@@ -84,8 +72,7 @@ public class MainController {
 
 		UsernamePasswordAuthenticationToken authenticationToken =
 				new UsernamePasswordAuthenticationToken(form.getUsername(), form.getPassword());
-
-		Authentication authentication = null;
+		Authentication authentication;
 		try {
 			authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 		} catch (AuthenticationException e) {
@@ -93,11 +80,8 @@ public class MainController {
 			return "login";
 		}
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		String jwt = tokenProvider.createToken(authentication, false/*rememberMe*/);
-
 		response.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
-
 		model.addAttribute("jwt",jwt);
 		return "welcome";
 	}
@@ -128,79 +112,11 @@ public class MainController {
 
 		UsernamePasswordAuthenticationToken authenticationToken =
 				new UsernamePasswordAuthenticationToken(form.getUsername(), form.getPassword());
-
 		Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		String jwt = tokenProvider.createToken(authentication, false/*rememberMe*/);
-
 		response.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
-
-////        securityService.autologin(form.getUsername(), form.getPassword());
-//		try {
-//			request.login(form.getUsername(), form.getPassword());
-//		} catch (ServletException e) {
-//			return "register";
-//		}
 		model.addAttribute("jwt",jwt);
 		return "welcome";
-	}
-
-	/**
-	 * Write html table with users, matching to filter
-	 * @param subs string for filter
-	 * @return
-	 */
-	@GetMapping(path="/users")
-	public ModelAndView users (@NotNull Principal principal, String subs) {
-		User user = userRepository.findByUsername(principal.getName());
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("users");
-		mv.addObject("currUser",user);
-		mv.addObject("lizt", userRepository.findLike(subs!=null?subs:"",user.getId()));
-		return mv;
-	}
-
-	/**
-	 * Write html table with friends, matching to filter
-	 * @return
-	 */
-	@GetMapping(path="/friends")
-	public ModelAndView friends (@NotNull Principal principal) {
-		User user = userRepository.findByUsername(principal.getName());
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("users");
-		mv.addObject("currUser",user);
-		mv.addObject("lizt", user.getFriends().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList()));
-		return mv;
-	}
-
-	/**
-	 * Write html table with mates, matching to filter
-	 * @return
-	 */
-	@GetMapping(path="/mates")
-	public ModelAndView mates (@NotNull Principal principal) {
-		User user = userRepository.findByUsername(principal.getName());
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("users");
-		mv.addObject("currUser",user);
-		mv.addObject("lizt", user.getMates().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList()));
-		return mv;
-	}
-
-	/**
-	 * Write html table with minds, matching to filter
-	 * @param subs string for filter
-	 * @return ModelAndView
-	 */
-	@GetMapping(path="/minds")
-	public ModelAndView minds (@NotNull Principal principal, String subs) {
-		User user = userRepository.findByUsername(principal.getName());
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("minds");
-		mv.addObject("currUser", user);
-		mv.addObject("lizt", mindRepository.findLike(subs==null?"":subs));
-		return mv;
 	}
 }

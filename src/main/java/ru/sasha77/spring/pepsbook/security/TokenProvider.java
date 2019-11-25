@@ -51,8 +51,8 @@ public class TokenProvider implements InitializingBean {
 
    public String createToken(Authentication authentication, boolean rememberMe) {
       String authorities = authentication.getAuthorities().stream()
-         .map(GrantedAuthority::getAuthority)
-         .collect(Collectors.joining(","));
+              .map(GrantedAuthority::getAuthority)
+              .collect(Collectors.joining(","));
 
       long now = (new Date()).getTime();
       Date validity;
@@ -63,11 +63,20 @@ public class TokenProvider implements InitializingBean {
       }
 
       return Jwts.builder()
-         .setSubject(authentication.getName())
-         .claim(AUTHORITIES_KEY, authorities)
-         .signWith(key, SignatureAlgorithm.HS512)
-         .setExpiration(validity)
-         .compact();
+              .setSubject(authentication.getName())
+              .claim(AUTHORITIES_KEY, authorities)
+              .signWith(key, SignatureAlgorithm.HS512)
+              .setExpiration(validity)
+              .compact();
+   }
+
+   public String createTestToken(String login) {
+      return Jwts.builder()
+              .setSubject(login)
+              .claim(AUTHORITIES_KEY, "ROLE_USER")
+              .signWith(key, SignatureAlgorithm.HS512)
+              .setExpiration(new Date((new Date()).getTime() + 86400000))
+              .compact();
    }
 
    public Authentication getAuthentication(String token) {

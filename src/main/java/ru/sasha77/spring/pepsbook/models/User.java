@@ -87,11 +87,5 @@ public class User implements UserDetails {
 	public boolean isCredentialsNonExpired() {
 		return true;
 	}
-
-	public UserSimple getUserSimple () {
-		return new UserSimple(id, name, email);
-	}
-
-
 }
 

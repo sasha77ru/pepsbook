@@ -7,9 +7,6 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.slf4j.LoggerFactory
-import java.lang.Exception
-import java.lang.RuntimeException
-import java.lang.StringBuilder
 import kotlin.random.Random
 
 /**
@@ -48,7 +45,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
         driver = ChromeDriver(ChromeOptions().apply {
             if (tao.tstProps.headLess) addArguments("headless")
-//            addArguments("window-size=1920x600")
+            addArguments("window-size=1200x600")
         })
         js = driver
     }
@@ -101,9 +98,9 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                     f = (f?.invoke() ?: break) as () -> Any
                     pause(For.SEE)
                 }
-            } catch (e : Exception) {
-                if (tstProps.monkey.failImmediately) throw e
+            } catch (e : Throwable) {
                 log.info("!!!!!! PROBLEM !!!!!! Round; $round Seed: $seed Step: $step")
+                if (tstProps.monkey.failImmediately) throw e
                 ok = false
             }
             pause(For.LONG_LOAD)
@@ -305,7 +302,6 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 feignString(rand(400)).let { newText ->
                     typeMindText(newText)
                     submitMind()
-                    pause(For.LOAD)
                     pause(For.LOAD)
                     if (mindWinWhich == "mind") {
                         if (currMind != null) tao.doChangeMind(currMind!!.text,newText)

@@ -46,10 +46,10 @@ spring:
     properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
 my:
   tst:
-    headless: false
+    headless: true
     closeBrowser: true
     monkey:
       seed: 0
-      rounds: 3
+      rounds: 10
       steps:  100
-      failImmediately: true
+      failImmediately: false

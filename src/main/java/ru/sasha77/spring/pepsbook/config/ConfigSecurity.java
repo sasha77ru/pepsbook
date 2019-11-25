@@ -82,11 +82,6 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
             .csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
-            .apply(securityConfigurerAdapter());
-    }
-
-    // TODO: 18.11.2019 Try to include it in place
-    private ConfigJWT securityConfigurerAdapter() {
-        return new ConfigJWT(tokenProvider);
+            .apply(new ConfigJWT(tokenProvider));
     }
 }

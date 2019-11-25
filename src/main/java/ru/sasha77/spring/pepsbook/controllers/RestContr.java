@@ -1,7 +1,6 @@
 package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.*;
 import ru.sasha77.spring.pepsbook.models.Answer;
@@ -10,23 +9,27 @@ import ru.sasha77.spring.pepsbook.models.User;
 import ru.sasha77.spring.pepsbook.repositories.AnswerRepository;
 import ru.sasha77.spring.pepsbook.repositories.MindRepository;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
+import ru.sasha77.spring.pepsbook.webModels.MindsResponse;
 import ru.sasha77.spring.pepsbook.webModels.UserSimple;
+import ru.sasha77.spring.pepsbook.webModels.UsersResponse;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("JavaDoc")
-@Controller
+@RestController
 @RequestMapping(path = "/rest")
 @EnableTransactionManagement
-public class RestController {
+public class RestContr {
     private UserRepository userRepository;
     private MindRepository mindRepository;
     private AnswerRepository answerRepository;
 
-    RestController(UserRepository userRepository, MindRepository mindRepository, AnswerRepository answerRepository) {
+    RestContr(UserRepository userRepository, MindRepository mindRepository, AnswerRepository answerRepository) {
         this.userRepository = userRepository;
         this.mindRepository = mindRepository;
         this.answerRepository = answerRepository;
@@ -38,11 +41,55 @@ public class RestController {
      * @throws IOException
      */
     @GetMapping(path = "/getUser", produces = "application/json")
-    @ResponseBody
-    @Transactional
     public UserSimple getUser(@NotNull Principal principal) {
         User user = userRepository.findByUsername(principal.getName());
-        return user.getUserSimple();
+        return new UserSimple(user);
+    }
+
+    /**
+     * @return Users except current user
+     */
+    @GetMapping(path = "/users", produces = "application/json")
+    public List<UsersResponse> getUsers(@NotNull Principal principal, String subs) {
+        User user = userRepository.findByUsername(principal.getName());
+        return userRepository.findLike(subs!=null?subs:"",user.getId()).stream()
+                .map(it -> new UsersResponse(it,user))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @return Current user's friends
+     */
+    @GetMapping(path = "/friends", produces = "application/json")
+    public List<UsersResponse> getFriends(@NotNull Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        return user.getFriends().stream()
+                .sorted(Comparator.comparing(User::getName))
+                .map(it -> new UsersResponse(it,user))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @return Current user's mates
+     */
+    @GetMapping(path = "/mates", produces = "application/json")
+    public List<UsersResponse> getMates(@NotNull Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        return user.getMates().stream()
+                .sorted(Comparator.comparing(User::getName))
+                .map(it -> new UsersResponse(it,user))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @return All minds
+     */
+    @GetMapping(path = "/minds", produces = "application/json")
+    public List<MindsResponse> getMinds(@NotNull Principal principal, String subs) {
+        User user = userRepository.findByUsername(principal.getName());
+        return mindRepository.findLike(subs==null?"":subs).stream()
+                .map(it -> new MindsResponse(it,user))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -54,8 +101,6 @@ public class RestController {
      */
     @SuppressWarnings("Duplicates")
     @PatchMapping(path = "/toFriends")
-    @ResponseBody
-    @Transactional
     public String toFriends(@NotNull Principal principal, @RequestParam int friend_id,
                             HttpServletResponse response) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
@@ -75,8 +120,6 @@ public class RestController {
      */
     @SuppressWarnings("Duplicates")
     @PatchMapping(path = "/fromFriends")
-    @ResponseBody
-    @Transactional
     public String fromFriends(Principal principal, @RequestParam int friend_id,
                               HttpServletResponse response) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
@@ -95,8 +138,6 @@ public class RestController {
      * @throws IOException
      */
     @PostMapping(path = "/saveMind")
-    @ResponseBody
-    @Transactional
     @SuppressWarnings("Duplicates")
     public void saveMind(Principal principal,
                            String text,
@@ -117,8 +158,6 @@ public class RestController {
      * @throws IOException
      */
     @DeleteMapping(path = "/removeMind")
-    @ResponseBody
-    @Transactional
     @SuppressWarnings("Duplicates")
     public void removeMind(Principal principal,
                            Integer id,
@@ -138,8 +177,6 @@ public class RestController {
      * @throws IOException
      */
     @PostMapping(path = "/saveAnswer")
-    @ResponseBody
-    @Transactional
     @SuppressWarnings("Duplicates")
     public void saveAnswer(Principal principal,
                            String text,
@@ -163,8 +200,6 @@ public class RestController {
      * @throws IOException
      */
     @DeleteMapping(path = "/removeAnswer")
-    @ResponseBody
-    @Transactional
     @SuppressWarnings("Duplicates")
     public void removeAnswer(Principal principal,
                              Integer id,

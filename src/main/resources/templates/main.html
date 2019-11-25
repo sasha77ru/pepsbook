@@ -43,8 +43,8 @@
 
     <div class="collapse navbar-collapse" id="navbarColor01">
         <ul class="navbar-nav mr-auto" id="menuBar">
-            <li class="nav-item active">
-                <a class="nav-link" id="mainMinds" href="javascript:undefined" onclick="changeView(this.parentNode,'minds')">Мысли <span class="sr-only">(current)</span></a>
+            <li class="nav-item">
+                <a class="nav-link" id="mainMinds" href="javascript:undefined" onclick="changeView(this.parentNode,'minds')">Мысли</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="mainUsers" href="javascript:undefined" onclick="changeView(this.parentNode,'users')">Другие</a>
@@ -78,7 +78,5 @@
     </div>
     <div id="subMain" style="width: 95%;margin-left: auto;margin-right: auto;"></div>
 </div>
-<!-- It's for Selenium test, cause dropdown-item isn't clickable in Selenium by no reason -->
-<a id="fakeLogOffButton" href="javascript:logOff()" style="color: white">logOff</a>
 </body>
 </html>

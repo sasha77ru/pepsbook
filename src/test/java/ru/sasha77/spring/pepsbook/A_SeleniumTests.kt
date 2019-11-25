@@ -41,9 +41,8 @@ class ASeleniumTests : ObjWithDriver {
     @Autowired
     lateinit var tao : TestApplicationObject
 
-    //TODO DEBUG
-    /*@Autowired
-    lateinit*/ var mvc : MvcMockers = mock(MvcMockers::class.java).apply { `when`(checkAllDB()).then { pause(For.LONG_LOAD) } }
+    @Autowired
+    lateinit var mvc : MvcMockers/* = mock(MvcMockers::class.java).apply { `when`(checkAllDB()).then { pause(For.LOAD) } }*/
 
     @Autowired
     lateinit var clk : Clickers
@@ -107,8 +106,7 @@ class ASeleniumTests : ObjWithDriver {
 
         assertEquals("Pepsbook",driver.title)
         Thread.sleep(500)
-        //TODO("Get rid of it, use clickLogout")
-        driver.findElement(By.id("fakeLogOffButton")).click()
+        with(clk) {clickLogout()}
         Thread.sleep(500)
         assertEquals("Pepsbook Login",driver.title)
 

@@ -24,13 +24,146 @@ function myOnLoad() {
     //Get user info and write their name in a nameField
     $.ajax("/rest/getUser", {headers:jwtHeader(),method:"GET"})
         .done(function (data) {
-            nameField.innerHTML = data.name;
+            nameField.innerHTML = noTag(data.name);
             //Write minds in subMain
-            $.ajax("/minds",{headers:jwtHeader(),method:"GET"})
-                .done(onGotSubMain)
-                .fail(onError)
+            changeView(mainMinds.parentNode,"minds")
         })
         .fail(onError);
+}
+
+/**
+ * Hides all > and <
+ */
+function noTag (x) {
+    return x.replace(/</g,"&lt;").replace(/>/g,"&gt;")
+}
+
+/**
+ * Puts users page to subMain
+ * @param data JSON from server
+ */
+function displayUsers (data) {
+    /**
+     * @param user
+     * @returns {string} HTML of usersBage depends on it's relation to the current user
+     */
+    function usersBadge (user) {
+        if (user.isFriend || user.isMate) {
+            return '' +
+            '                    <span class="badge '+(user.isFriend ? (user.isMate ? "badge-success":"badge-primary") : "badge-secondary")+'">\n' +
+            '                        '+(user.isFriend ? (user.isMate ? "Взаимный Друг":"ПолуДруг") : "Почитатель")+'\n' +
+            '                    </span>\n'
+        } else return ""
+    }
+    var page = '<table class="table table-hover">\n' +
+        '    <thead>\n' +
+        '    <tr>\n' +
+        '        <th scope="col">Имя</th>\n' +
+        '        <th scope="col">Страна</th>\n' +
+        '        <th scope="col"></th>\n' +
+        '    </tr>\n' +
+        '    </thead>\n' +
+        '    <tbody>\n';
+    $.each(data, function (i,user) {
+        page +=
+            '    <tr class="userEntity">\n' +
+            '        <td class="userName">'+noTag(user.name)+'</td>\n' +
+            '        <td class="userCountry">'+noTag(user.country)+'</td>\n' +
+            '        <td>\n' +
+            '            <ul class="nav">\n' +
+            '                <li class="nav-item dropdown">\n' +
+            '                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>\n' +
+            '                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">\n' +
+            '                        <a class="dropdown-item toFriends"\n' +
+            '                           style="'+(user.isFriend?"display : none":"")+'"\n' +
+            '                           onclick="toFriends(this.parentNode,'+user.id+')"\n' +
+            '                           href="javascript:undefined">В друзья</a>\n' +
+            '                        <a class="dropdown-item fromFriends"\n' +
+            '                           style="'+(!user.isFriend?"display : none":"")+'"\n' +
+            '                           onclick="fromFriends(this.parentNode,'+user.id+')"\n' +
+            '                           href="javascript:undefined">Из друзей</a>\n' +
+            '                    </div>\n' +
+            '                </li>\n' +
+            '                <li class="friendship">\n' +
+            usersBadge(user) +
+            '                </li>\n' +
+            '            </ul>\n' +
+            '        </td>\n' +
+            '    </tr>\n'
+
+
+    });
+    subMain.innerHTML = page +
+        '    </tbody>\n' +
+        '</table>'
+}
+
+/**
+ * Puts minds page to subMain
+ * @param data JSON from server
+ */
+function displayMinds (data) {
+    /**
+     * Returns menu items for mind or answer if the user is their author, otherwise ""
+     * @param moa = "mind" or "answer"
+     * @param x mind or answer object (got from server JSON)
+     * @param answersMindId The mind of the answer if moa = "answer"
+     * @returns {string} HTML of menu items
+     */
+    function authorMenuItems (moa,x,answersMindId) {
+        if (x.isAuthor) {
+            var capita = moa==="mind"?"Mind":"Answer";
+            return '' +
+                '<a class="dropdown-item ownerMenu edit'+capita+'" href="javascript:undefined"' +
+                ' onclick="openNewMindWindow(\''+moa+'\',this,'+x.id+','+answersMindId+')">Редактировать</a>\n' +
+                '<a class="dropdown-item ownerMenu del'+capita+'" href="javascript:undefined"\n' +
+                ' onclick="removeMind(\''+moa+'\','+x.id+')">Удалить</a>\n'
+        } else return ""
+    }
+    function mindsAnswers (mind) {
+        var ret = "";
+        $.each(mind.answers,function (i,answer) {
+            ret += ''+
+            '        <div class="answerEntity" style="margin-left: 2em">\n' +
+            '            <strong class="answerUser" style="margin-right: 1em">'+noTag(answer.author)+'</strong>\n' +
+            '            <span class="answerText">'+noTag(answer.text)+'</span>\n' +
+            '            <em class="answerTime" style="margin-left: 1em">'+answer.time+'</em>\n' +
+            '            <span class="nav-item dropdown" style="display: inline">\n' +
+            '              <a style="display: inline" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>\n' +
+            '                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">\n' +
+            authorMenuItems('answer',answer,mind.id) +
+            '                        <a class="dropdown-item answerAnswer" href="javascript:undefined"\n' +
+            '                           onclick="openNewMindWindow(\'answer\',this,undefined,'+answer.id+',\'@\')">\n' +
+            '                            Ответить</a>\n' +
+            '                    </div>\n' +
+            '            </span>\n' +
+            '        </div>\n'
+        });
+        return ret;
+    }
+    var page = "";
+    $.each(data, function (i,mind) {
+        page +=
+        '<div class="card mb-3 mindEntity ' + (mind.isAuthor?'border-primary':'border-light') + '">\n' +
+        '    <div class="card-header">\n' +
+        '        <span class="mindTime">' + mind.time + '</span>\n' +
+        '        <span class="nav-item dropdown" style="display: inline">\n' +
+        '              <a style="display: inline" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"></a>\n' +
+        '                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">\n' +
+        authorMenuItems('mind',mind,undefined) +
+        '                        <a class="dropdown-item answerMind" href="javascript:undefined"\n' +
+        '                           onclick="openNewMindWindow(\'answer\',this,undefined,'+mind.id+')">Ответить</a>\n' +
+        '                    </div>\n' +
+        '        </span>\n' +
+        '    </div>\n' +
+        '    <div class="card-body">\n' +
+        '        <h4 class="card-title mindUser">'+noTag(mind.author)+'</h4>\n' +
+        '        <p class="card-text mindText">'+noTag(mind.text)+'</p>\n' +
+        mindsAnswers(mind) +
+        '    </div>\n' +
+        '</div>\n'
+    });
+    subMain.innerHTML = page + '<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow(\'mind\')" role="button" style="display: block;width: 40%;margin: 1em auto" id="newMind">Новая мысль</a>'
 }
 /**
  * Magical global variable for testing. Allow QA to know when subMain is loaded
@@ -41,7 +174,9 @@ var subMainReady = false;
  * @param data
  */
 function onGotSubMain(data) {
-    subMain.innerHTML = data||onError({status:"No data"});
+    if (!data) {onError({status:"No data"});return}
+    if (nowInMain === "minds") displayMinds(data);//subMain.innerHTML = JSON.stringify(data);//
+    else displayUsers(data);//subMain.innerHTML = JSON.stringify(data);//
     subMainReady = true
 }
 
@@ -50,7 +185,7 @@ function onGotSubMain(data) {
  */
 function onChangeFilter() {
     subMainReady = false;
-    $.ajax("/"+nowInMain,{data:{subs : mainFilter.value},headers:jwtHeader(),method:"GET"})
+    $.ajax("/rest/"+nowInMain,{data:{subs : mainFilter.value},headers:jwtHeader(),method:"GET"})
         .done(onGotSubMain)
         .fail(onError)
 }
