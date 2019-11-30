@@ -223,6 +223,15 @@ class ASeleniumTests : ObjWithDriver {
             chk.run { wao.what="minds";wao.checkMinds() }
             pause(For.LOAD)
             //</editor-fold>
+            //<editor-fold desc="Answer answer">
+            clickAnswerAnswer("Хохохо - ого")
+            typeMindText("Ответ",false)
+            submitMind()
+            tao.doAddAnswer("Masha","@Masha Ответ", mindText)
+            mvc.checkAllDB()
+            chk.run { wao.what="minds";wao.checkMinds() }
+            pause(For.LOAD)
+            //</editor-fold>
             //<editor-fold desc="Delete answer">
             clickDelAnswer("Хохохо - ого")
             tao.doRemoveAnswer("Хохохо - ого",mindText)

@@ -133,7 +133,7 @@ function displayMinds (data) {
             '                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);">\n' +
             authorMenuItems('answer',answer,mind.id) +
             '                        <a class="dropdown-item answerAnswer" href="javascript:undefined"\n' +
-            '                           onclick="openNewMindWindow(\'answer\',this,undefined,'+answer.id+',\'@\')">\n' +
+            '                           onclick="openNewMindWindow(\'answer\',this,undefined,'+mind.id+',\'@\')">\n' +
             '                            Ответить</a>\n' +
             '                    </div>\n' +
             '            </span>\n' +
@@ -298,7 +298,7 @@ function placeCaretAtEnd(el) {
 function openNewMindWindow(moa, menuThis, mindId, parentMind, startText) {
     if (document.getElementById("mindWindow")) return; //to not open second window
     var win = document.createElement("div");
-    if (startText==='@') startText += $(menuThis).closest("."+moa+"Entity").find("."+moa+"User")[0].innerHTML+' '; //CRUTCH: user is got from the page
+    if (startText==='@') startText += $(menuThis).closest("."+moa+"Entity").find("."+moa+"User")[0].innerHTML+"&nbsp;"; //CRUTCH: user is got from the page
     var text = startText || "";
     text += mindId ? $(menuThis).closest("."+moa+"Entity").find("."+moa+"Text")[0].innerHTML : ""; //CRUTCH: text is got from the page
     // noinspection WithStatementJS
