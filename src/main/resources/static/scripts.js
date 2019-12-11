@@ -1,4 +1,5 @@
 var nowInMain = "minds";
+var mindsPage = 0;
 
 function onError(x) {
     if (x.status === 401 || x.status === 403) document.location.assign("/login"); else alert(x.status);
@@ -141,9 +142,55 @@ function displayMinds (data) {
         });
         return ret;
     }
-    var page = "";
-    $.each(data, function (i,mind) {
-        page +=
+    function paginator () {
+        var out = '' +
+            '<div style="margin: 1em auto">\n' +
+            '  <ul class="pagination">\n' +
+            '    <li class="page-item'+ (data.first?" disabled":"")+'">\n' +
+            '      <a class="page-link" href="javascript:requestSubMain('+(data.number-1)+')">&laquo;</a>\n' +
+            '    </li>\n';
+        for (var page=0;page < data.totalPages;page++) {
+            if (data.number===page) {
+                out += '' +
+                    '    <li class="page-item active">\n' +
+                    '      <a class="page-link" href="javascript:undefined">'+(page+1)+'</a>\n';
+
+            } else {
+                //to do less page buttons
+                if (data.totalPages > PAGINATOR_MAX_SIZE) {
+                    if (page > 0 && page < data.number - PAGINATOR_WIDE+1) {
+                        page = data.number - PAGINATOR_WIDE;
+                        out += '' +
+                            '    <li class="page-item disabled">\n' +
+                            '      <a class="page-link" href="javascript:undefined">...</a>\n';
+                    }
+                    else if (page < data.totalPages - 2 && page > data.number + PAGINATOR_WIDE) {
+                        page = data.totalPages - 1;
+                        out += '' +
+                            '    <li class="page-item disabled">\n' +
+                            '      <a class="page-link" href="javascript:undefined">...</a>\n';
+                    }
+                }
+                out += '' +
+                    '    <li class="page-item">\n' +
+                    '      <a class="page-link" href="javascript:requestSubMain(' + page + ')">' + (page + 1) + '</a>\n';
+
+            }
+        }
+        out += ''+
+            '    <li class="page-item'+ (data.last?" disabled":"")+'">\n' +
+            '      <a class="page-link" href="javascript:requestSubMain('+(data.number+1)+')">&raquo;</a>\n' +
+            '    </li>\n' +
+            '  </ul>\n' +
+            '</div>'
+        return out
+    }
+    //ajax can return not requested page but the last one if requested doesn't exist anymore
+    mindsPage = data.number;
+    var out = "";
+    if (data.totalPages > 1) out+=paginator();
+    $.each(data.content, function (i,mind) {
+        out +=
         '<div class="card mb-3 mindEntity ' + (mind.isAuthor?'border-primary':'border-light') + '">\n' +
         '    <div class="card-header">\n' +
         '        <span class="mindTime">' + mind.time + '</span>\n' +
@@ -163,7 +210,8 @@ function displayMinds (data) {
         '    </div>\n' +
         '</div>\n'
     });
-    subMain.innerHTML = page + '<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow(\'mind\')" role="button" style="display: block;width: 40%;margin: 1em auto" id="newMind">Новая мысль</a>'
+    if (data.totalPages > 1) out+=paginator();
+    subMain.innerHTML = out + '<a class="btn btn-primary btn-lg" href="javascript:openNewMindWindow(\'mind\')" role="button" style="display: block;width: 40%;margin: 1em auto" id="newMind">Новая мысль</a>'
 }
 /**
  * Magical global variable for testing. Allow QA to know when subMain is loaded
@@ -180,14 +228,24 @@ function onGotSubMain(data) {
     subMainReady = true
 }
 
+function requestSubMain (page) {
+    subMainReady = false;
+    var data = {subs : mainFilter.value};
+    if (nowInMain==="minds") {
+        if (page===undefined) page = mindsPage;
+        mindsPage = page;
+        data.page = page;data.size = MINDS_PAGE_SIZE;
+    }
+    $.ajax("/rest/"+nowInMain,{data:data,headers:jwtHeader(),method:"GET"})
+        .done(onGotSubMain)
+        .fail(onError)
+}
+
 /**
  * When filter string is changed, retreives data for subMain
  */
 function onChangeFilter() {
-    subMainReady = false;
-    $.ajax("/rest/"+nowInMain,{data:{subs : mainFilter.value},headers:jwtHeader(),method:"GET"})
-        .done(onGotSubMain)
-        .fail(onError)
+    requestSubMain(0)
 }
 
 /**
@@ -217,7 +275,7 @@ function changeView(newActive,toWhat,filter) {
                 "</div>"
         }
     },1000);
-    onChangeFilter();
+    requestSubMain();
 }
 
 /**
@@ -305,6 +363,7 @@ function openNewMindWindow(moa, menuThis, mindId, parentMind, startText) {
     with (win) {
         setAttribute("id","mindWindow");
         setAttribute("class","alert alert-dismissible alert-success");
+        setAttribute("style","z-index:100");
         innerHTML = '\n' +
             '<button type="button" class="close" data-dismiss="alert" id="closeMind">&times;</button>\n' +
             '<label for="mindTextArea">'+(moa === 'mind' ? 'Мысль' : 'Ответ')+':</label>\n' +
@@ -343,7 +402,7 @@ function saveMind(moa,id,parentMind) {
         {data:{text : mindTextArea.innerText.replace(/\xa0/g," "), id : id||0, parentMind : parentMind},
             headers:jwtHeader(),method:"POST"})
         .done(function () {
-            onChangeFilter()
+            requestSubMain()
         })
         .fail(onError);
     mindWindow.remove()
@@ -358,7 +417,7 @@ function removeMind(moa,id) {
     $.ajax("/rest/remove"+moa[0].toUpperCase()+moa.slice(1),{data:{id : id},headers:jwtHeader(),method:"DELETE"})
         .done (function (data, status) {
             if (status !== "success"||data.search(/^error/)>=0) {onError(data||"bad status="+status);return}
-            onChangeFilter()
+            requestSubMain()
         })
         .fail(onError);
 }

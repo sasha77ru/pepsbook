@@ -1,6 +1,7 @@
 package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -13,6 +14,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
 import ru.sasha77.spring.pepsbook.security.JWTFilter;
 import ru.sasha77.spring.pepsbook.security.TokenProvider;
@@ -31,6 +33,9 @@ public class MainContr {
 	private final PasswordEncoder passwordEncoder;
 	private final TokenProvider tokenProvider;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
+	@Value("${my.mindsPageSize}") Integer mindsPageSize;
+	@Value("${my.paginatorMaxSize}") Integer paginatorMaxSize;
+	@Value("${my.paginatorWide}") Integer paginatorWide;
 
 	public MainContr(UserRepository userRepository,
 					 PasswordEncoder passwordEncoder,
@@ -48,11 +53,16 @@ public class MainContr {
 	 * @return
 	 */
 	@RequestMapping(path = "/")
-	public String index (HttpServletRequest request, @NotNull HttpServletResponse response) {
-		response.addHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
-		return "main.html";
+	public ModelAndView index (HttpServletRequest request, @NotNull HttpServletResponse response) {
+//		response.addHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+//		return new ModelAndView("main.html","scripts","/scripts.js"
+//				+"?r="+((int) (Math.random() * 1000000 + 1)));
+		ModelAndView mnv =  new ModelAndView("main.html");
+		mnv.addObject("mindsPageSize",mindsPageSize);
+		mnv.addObject("paginatorMaxSize",paginatorMaxSize);
+		mnv.addObject("paginatorWide",paginatorWide);
+		return mnv;
 	}
-
 
 	@GetMapping(path = "/login")
 	public String loginForm(UserLogin form) {

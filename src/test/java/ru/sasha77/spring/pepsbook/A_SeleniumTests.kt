@@ -8,8 +8,6 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import kotlin.math.roundToInt
 
 /**
  * Every method in Selenium Tests click or type something using Clickers
@@ -150,52 +147,67 @@ class ASeleniumTests : ObjWithDriver {
     }
 
     @Test fun uiTest003_Minds () {
+        //Works only with my.mindsPageSize: 2 !!!!!!!!!!!!!
         tao.fillDB()
-        login("masha","child")
+        login("porky","pig")
         with(clk) {
-            clickMainMinds()
-            pause(For.LOAD)
             //<editor-fold desc="Not submit a mind">
             clickNewMind()
             typeMindText("Мысля")
-            clickCloseMind()
-            pause(For.LOAD)
+            clickCloseMind();pause(For.LOAD)
             mvc.checkAllDB()
             chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Try to submit wrong long mind (takes a lot of time)">
 //            clickNewMind()
 //            repeat(401) { typeMindText("123456789 ", clear = false) }
-//            submitMind()
-//            pause(For.LOAD)
+//            submitMind();pause(For.LOAD)
 //            mvc.checkAllDB()
 //            clickCloseMind()
             //</editor-fold>
             //<editor-fold desc="Submit mind">
             clickNewMind()
             typeMindText("Мысля")
-            submitMind()
-            tao.doAddMind("Masha","Мысля")
-            pause(For.LOAD)
+            submitMind();pause(For.LOAD)
+            tao.doAddMind("Porky","Мысля")
             mvc.checkAllDB()
-            chk.run { wao.what="minds";wao.checkMinds() }
+            clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
+            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
+            clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Edit mind">
             clickEditMind("Мысля")
             typeMindText(" поумнее",clear = false)
-            submitMind()
+            submitMind();pause(For.LOAD)
             tao.doChangeMind("Мысля","Мысля поумнее")
-            pause(For.LOAD)
             mvc.checkAllDB()
-            chk.run { wao.what="minds";wao.checkMinds() }
+            clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
+            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
+            clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Delete mind">
-            clickDelMind("Мысля поумнее")
-            tao.doRemoveMind("Мысля поумнее")
+            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
+            clickDelMind("Hru-hru")
+            tao.doRemoveMind("Hru-hru")
             pause(For.LOAD)
+            chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
             mvc.checkAllDB()
+            //</editor-fold>
+            //<editor-fold desc="Pagination">
+            clickPaginator(1);pause(For.LOAD)
+            wao.mindsPage = 1
+            chk.run { wao.what="minds";wao.checkMinds() }
+            clickPaginator(0);pause(For.LOAD)
+            wao.mindsPage = 0
+            chk.run { wao.what="minds";wao.checkMinds() }
+            clickPaginator(-2);pause(For.LOAD)
+            wao.mindsPage = 1
+            chk.run { wao.what="minds";wao.checkMinds() }
+            clickPaginator(-1);pause(For.LOAD)
+            wao.mindsPage = 0
             chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
+
         }
     }
 

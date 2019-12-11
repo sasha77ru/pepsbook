@@ -27,6 +27,13 @@ public class MindsResponse {
 			this.time = myDate(answer.getTime());
 			this.isAuthor = answer.getUser() == currUser;
 		}
+		AnswersResponse (Answer answer, String currUserLogin) {
+			this.id = answer.getId();
+			this.text = answer.getText();
+			this.author = answer.getUser().getName();
+			this.time = myDate(answer.getTime());
+			this.isAuthor = answer.getUser().getUsername().equals(currUserLogin);
+		}
 	}
     private Integer id;
     private String text;
@@ -43,6 +50,16 @@ public class MindsResponse {
 		this.isAuthor = mind.getUser() == currUser;
 		this.answers = mind.getAnswers().stream()
 				.map(it -> new AnswersResponse(it,currUser))
+				.collect(Collectors.toList());
+	}
+	public MindsResponse (Mind mind, String currUserLogin) {
+		this.id = mind.getId();
+		this.text = mind.getText();
+		this.author = mind.getUser().getName();
+		this.time = myDate(mind.getTime());
+		this.isAuthor = mind.getUser().getUsername().equals(currUserLogin);
+		this.answers = mind.getAnswers().stream()
+				.map(it -> new AnswersResponse(it,currUserLogin))
 				.collect(Collectors.toList());
 	}
 }

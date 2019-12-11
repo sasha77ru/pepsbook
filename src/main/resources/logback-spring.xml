@@ -15,7 +15,7 @@
         <logger name="ru.sasha77.spring.pepsbook.LogAspect" additivity="false" level="debug">
             <appender-ref ref="simpleConsole" />
         </logger>
-        <logger name="ru.sasha77.spring.pepsbook.WebApplicationObject$MonkeyTestClass" additivity="false" level="debug">
+        <logger name="ru.sasha77.spring.pepsbook.WebApplicationObject" additivity="false" level="debug">
             <appender-ref ref="simpleConsole" />
         </logger>
     </springProfile>

@@ -53,29 +53,21 @@ class BMonkeyTests {
         }
     }
 
-    /**
-     * Repeat the zero round with certain seed if it exists
-     */
-    @Test fun monkeyTest0Round() {
-        if (tstProps.monkey.seed != 0L) wao.MonkeyTestClass(tstProps.monkey.seed, 0, tstProps).go()
-    }
+    @Test fun monkeyTest() {
+        //Zero round if seed is defined
+        if (tstProps.monkey.seed != 0L)
+            wao.MonkeyTestClass(tstProps.monkey.seed, 0, tstProps.monkey.steps, true).go()
 
-    /**
-     * Perform random rounds
-     */
-    @Test fun monkeyTestOthers() {
+        //Random-seed rounds
         val badRoundSeeds = mutableListOf<Long>()
         for (round in (1 .. tstProps.monkey.rounds)) {
             val seed = Random.nextLong()
-            if (!wao.MonkeyTestClass(seed, round, tstProps).go()) {
+            if (!wao.MonkeyTestClass(seed, round, tstProps.monkey.steps, tstProps.monkey.failImmediately).go()) {
                 badRoundSeeds.add(seed)
             }
         }
-        assertEquals("!!! SOME SEEDS ARE BAD !!!",listOf<Long>(), badRoundSeeds)
-    }
-
-    @Test fun xClose () {
         if (tao.tstProps.closeBrowser) wao.driver.close()
+        assertEquals("!!! SOME SEEDS ARE BAD !!!",listOf<Long>(), badRoundSeeds)
     }
 }
 

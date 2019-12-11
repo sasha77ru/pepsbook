@@ -40,11 +40,13 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
     var mindWinWhich : String = ""
     var currMind : TstMind? = null
     var currAnswer : TstAnswer? = null
+    var mindsPage : Int = 0
 
     init {
         System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe")
         driver = ChromeDriver(ChromeOptions().apply {
             if (tao.tstProps.headLess) addArguments("headless")
+            addArguments("start-maximized")
             addArguments("window-size=1200x600")
         })
         js = driver
@@ -52,10 +54,16 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
 
     fun isFriendToCurr (x : TestApplicationObject.TstUser) = tao.isFriend(currUser,x)
     fun isMateToCurr (x : TestApplicationObject.TstUser) = tao.isMate(currUser,x)
-    val visibleMinds
+    private val visibleUnpagedMinds
         get() = tao.actualMindsArray.filter { mind ->
             mind.text.contains(filter,true) || mind.user.contains(filter,true)
-                    ||  mind.answers.any { it.text.contains(filter,true) }}.sortedByDescending {it.time}
+                    ||  mind.answers.any { it.text.contains(filter,true) }}
+                .sortedByDescending {it.time}
+    val numberOfMindsPages
+        get() = ((visibleUnpagedMinds.size-0.1) / tao.MINDS_PAGE_SIZE).toInt() + 1
+    val visibleMinds
+            get() = visibleUnpagedMinds
+                .run { subList(mindsPage*tao.MINDS_PAGE_SIZE,minOf((mindsPage+1)*tao.MINDS_PAGE_SIZE,size)) }
     val ownersVisibleMinds
         get() = visibleMinds.filter { it.user == currName }
     val visibleAnswers
@@ -76,22 +84,34 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 .toList()
 
     /**
+     * Set defaults on enter the site
+     */
+    fun onEnterSite () {
+        mindsPage = 0
+    }
+    private val log = LoggerFactory.getLogger(this::class.java)!!
+    fun vlog (s : String) {log.debug(s)}
+    /**
      * Performs one round of Monkey Test with certain seed
      * @param seed
      * Invokes lambdas one by one. Every lambda returns next one depend on random and scheme monkey.svg.
      * State of the process is in global variables of the outer WAO. Lambdas change them.
      */
-    inner class MonkeyTestClass (private val seed : Long, private val round : Int, private val tstProps: TstProps) {
+    inner class MonkeyTestClass (private val seed : Long,
+                                 private val round : Int,
+                                 private val steps : Int,
+                                 private val failImmediately : Boolean) {
         fun go () : Boolean {
             var ok = true
             log.info("$round ====================== seed = $seed")
             tao.clearDB()
             driver.get("http://localhost:$port")
-            @Suppress("UNCHECKED_CAST") var f = loginForm() as? () -> Any
+            @Suppress("UNCHECKED_CAST")
+            var f = loginForm() as? () -> Any
             try {
-                while (step++ < tstProps.monkey.steps) {
-                if (step >= 10001) {
-                    println("JOPA")
+                while (step++ < steps) {
+                if (step >= 10000) {
+                    println("JOPA") // place for a breakpoint on certain step
                 }
 
                     @Suppress("UNCHECKED_CAST")
@@ -100,16 +120,15 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 }
             } catch (e : Throwable) {
                 log.info("!!!!!! PROBLEM !!!!!! Round; $round Seed: $seed Step: $step")
-                if (tstProps.monkey.failImmediately) throw e
+                if (failImmediately) throw e
                 ok = false
             }
             pause(For.LONG_LOAD)
             clk.runCatching {clickLogout()}
             return ok
         }
-        private val log = LoggerFactory.getLogger(this::class.java)!!
         private var step = 1
-        private fun vlog(s : String) {log.debug("$step ! $s")}
+        private fun stepVlog(s : String) {vlog("$step ! $s")}
         var existingUserName = "" // for check existing username via registration
         var existingEmail = "" // for check existing Email via registration
 
@@ -201,10 +220,11 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * At first 10 steps this probability is 90% to gain more users for MonkeyTest round
          */
         private fun loginForm () : Any? {
-            vlog("loginForm")
+            stepVlog("loginForm")
             pause {driver.title == "Pepsbook Login"}
+            onEnterSite()
             loginPassword?.run { driver.findElement(By.id("loginErrors")) } // Check the page for error message presence
-            val probabilityOfExistingUserLogin = if (step < 10) 10 else 90
+            val probabilityOfExistingUserLogin = if (step < 20) 10 else 90
             if (rand() < probabilityOfExistingUserLogin && tao.actualUsersArray.size > 0) {
                 LoginPassword().run {
                     driver.findElement(By.name("username")).run { clear();sendKeys(login) }
@@ -230,8 +250,9 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::registerForm (itself) - so tries to register again
          */
         private fun registerForm () : Any? {
-            vlog("registerForm")
+            stepVlog("registerForm")
             pause {driver.title=="Pepsbook registration"}
+            onEnterSite()
             registerInformation?.run { // Check the page for error messages presence
                 registerInformation!!.errors.forEach { driver.findElement(By.id(it)) }
             }
@@ -258,7 +279,9 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::mainPage
          */
         private fun minds () : Any? {
-            vlog("minds filter=$filter")
+            stepVlog("minds filter=$filter mindsPage=$mindsPage")
+            //if mindsPage doesn't exist anymore (e.g. deleted last mind) it should be the last one
+            if (mindsPage != 0 && numberOfMindsPages <= mindsPage) mindsPage = numberOfMindsPages - 1
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what == "minds") { // If minds in subMain, check page about minds
@@ -273,7 +296,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::mainPage
          */
         private fun users () : Any? {
-            vlog("users what=$what filter=$filter")
+            stepVlog("users what=$what filter=$filter")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
@@ -289,10 +312,10 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::minds
          */
         private fun mindWin () : Any? {
-            vlog("mindWin which=$mindWinWhich")
+            stepVlog("mindWin which=$mindWinWhich")
             clk.run {
                 if (rand() < 5) { clickCloseMind();return ::minds }
-                if (rand() < 5) {
+                if (rand() < 2) {
                     typeMindText(feignString(4002)) //Invalid length
                     submitMind()
                     pause(For.LOAD)
@@ -315,26 +338,30 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             }
         }
 
+        private fun checkEmptyPage () {
+            if (numberOfMindsPages <= mindsPage) mindsPage = numberOfMindsPages - 1
+        }
+
+
         private fun mainPage () : Any? {
-            vlog("mainPage what=$what filter=")
+            stepVlog("mainPage what=$what filter=")
             clk.run {
                 //caseMatrix contains lambdas to random run. Lambda can be added many times to increase its probability weight
-                val caseMatrix = mutableListOf({ clickLogo();changeWhat("minds");::minds});
+                val caseMatrix = mutableListOf({ clickLogo();changeWhat("minds");onEnterSite();::minds});
                 { clickMainMinds()  ;changeWhat("minds")    ;::minds    }.also { repeat(16)  {_ -> caseMatrix.add(it)} };
                 { clickMainUsers()  ;changeWhat("users")    ;::users    }.also { repeat(10)  {_ -> caseMatrix.add(it)} };
                 { clickMainFriends();changeWhat("friends")  ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
                 { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
                 { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(if (step < 10) 60 else 10)  {_ -> caseMatrix.add(it)} }
                 if (what == "minds" || what == "users") {
-                    { typeFilter(syLIST.random(randomer).also { filter = it });whatLambda}
+                    { typeFilter(syLIST.random(randomer).also { filter = it })
+                        if (what == "minds") mindsPage=0;whatLambda}
                             .also { repeat(5)  { _ -> caseMatrix.add(it)} } }
                 if (what == "minds") {
                     { currMind = null;mindWinWhich = "mind"
                         clickNewMind();::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }
                 if (what == "minds" && visibleMinds.isNotEmpty()) {
-                    { currMind = null;mindWinWhich = "mind"
-                        clickNewMind();::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
                     { currMind = visibleMinds.random(randomer);currAnswer = null;mindWinWhich = "answer"
                         clickAnswerMind(currMind!!.text);::mindWin}.also { repeat(5)  { _ -> caseMatrix.add(it)} }
                     if (ownersVisibleMinds.isNotEmpty()) {
@@ -342,7 +369,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                             clickEditMind(currMind!!.text);::mindWin }.also { repeat(3)  { _ -> caseMatrix.add(it)} };
                         { currMind = ownersVisibleMinds.random(randomer)
                             clickDelMind(currMind!!.text)
-                            tao.doRemoveMind(currMind!!.text);::minds }
+                            tao.doRemoveMind(currMind!!.text);checkEmptyPage();::minds }
                                 .also { repeat(3)  { _ -> caseMatrix.add(it)} }
                     }
                     if (visibleAnswers.isNotEmpty()) {
@@ -358,6 +385,28 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                                     .also { repeat(3)  { _ -> caseMatrix.add(it)} }
                         }
                     }
+                    //<editor-fold desc="Pagination">
+                    if (numberOfMindsPages > 1) {
+                        { currMind = null;mindWinWhich = "mind"
+                            if (numberOfMindsPages > tao.PAGINATOR_MAX_SIZE)
+                                // boiled mode of paginator. we test only pressings to prev,first,last,next
+                                when (val r = rand(4)-3) {
+                                     0 -> {mindsPage=0;clickPaginator(r)}
+                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r)}
+                                    -2 -> if (mindsPage < numberOfMindsPages - 1) {mindsPage++;clickPaginator(r)}
+                                    -3 -> {mindsPage = numberOfMindsPages - 1;clickPaginator(r)}
+                                }
+                            else
+                                // not-boiled mode of paginator (when number of pages < PAGINATOR_MAX_SIZE)
+                                when (val r = rand(numberOfMindsPages+2)-2) {
+                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r)}
+                                    -2 -> if (mindsPage < numberOfMindsPages-1) {mindsPage++;clickPaginator(r)}
+                                    else -> {mindsPage = r;clickPaginator(r)}
+                                }
+                            ::minds }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
+                    }
+                    //</editor-fold>
+
                 }
                 if (what == "users" && visibleUsers.isNotEmpty()) {
                     { val clickUser = visibleUsers.random(randomer)

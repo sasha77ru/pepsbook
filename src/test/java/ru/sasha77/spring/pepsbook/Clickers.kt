@@ -6,6 +6,7 @@ import org.openqa.selenium.JavascriptExecutor
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.ImportResource
 import org.springframework.stereotype.Component
+import java.lang.IllegalArgumentException
 
 /**
  * The aspect launched before Clickers methods
@@ -148,4 +149,15 @@ open class Clickers {
     }
     open fun ObjWithDriver.submitMind () {
         driver.findElement(By.id("mindWindow")).findElement(By.className("btn-primary")).click() }
+    open fun ObjWithDriver.clickPaginator (page : Int) {
+        //If page == -1 - click on Prev. If page == -2 - click on next. If -3 - click on last
+        val pages = driver.findElement(By.className("pagination")).findElements(By.className("page-link"))
+        if (page >= pages.size || page < -3) throw IllegalArgumentException("No such page $page")
+        pages[when (page) {
+            -1 -> 0
+            -2 -> pages.size - 1
+            -3 -> pages.size - 2
+            else -> page+1
+        }].click()
+    }
 }

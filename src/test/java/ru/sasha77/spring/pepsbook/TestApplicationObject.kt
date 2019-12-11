@@ -1,6 +1,7 @@
 package ru.sasha77.spring.pepsbook
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import ru.sasha77.spring.pepsbook.models.Answer
@@ -43,6 +44,10 @@ class TestApplicationObject (private val usersRepo: UserRepository,
 
     @Autowired
     lateinit var passwordEncoder: PasswordEncoder
+
+    @Value("\${my.mindsPageSize}") var MINDS_PAGE_SIZE : Int = 0
+    @Value("\${my.paginatorMaxSize}") var PAGINATOR_MAX_SIZE : Int = 0
+    @Value("\${my.paginatorWide}") var PAGINATOR_WIDE : Int = 0
 
     var actualUsersArray = mutableListOf<TstUser>() // DATA STORAGE FOR TESTS
 
@@ -133,7 +138,7 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     fun getUserByName(name : String) = actualUsersArray.find { it.name == name} ?: throw IllegalArgumentException("No such TST_NAME $name")
     fun getUserByLogin(name : String) = actualUsersArray.find { it.username == name} ?: throw IllegalArgumentException("No such TST_USERNAME $name")
     fun getMindByText(text : String) = actualMindsArray.find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
-    fun getDBMindByText(text : String) = mindsRepo.findLike(text).find { true }!!
+    fun getDBMindByText(text : String): Mind = mindsRepo.findByTextContaining(text)
     fun getDBAnswerByText(text : String) = answersRepo.findByText(text)!!
 
     fun doToFriends (name : String, friendName : String) {

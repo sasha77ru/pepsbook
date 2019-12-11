@@ -29,5 +29,20 @@
       "name": "my.tst.monkey.failImmediately",
       "type": "java.lang.String",
       "description": "Whether to stop Monkey Test on first fault."
+    },
+    {
+      "name": "my.mindsPageSize",
+      "type": "java.lang.String",
+      "description": "Page size for paginator in minds list."
+    },
+    {
+      "name": "my.paginatorMaxSize",
+      "type": "java.lang.String",
+      "description": "Max width of paginator before we start to boil it down."
+    },
+    {
+      "name": "my.paginatorWide",
+      "type": "java.lang.String",
+      "description": "How many prev and next page buttons should be shown for boiled paginator."
     }
   ] }

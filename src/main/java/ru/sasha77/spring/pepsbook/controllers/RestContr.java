@@ -1,6 +1,10 @@
 package ru.sasha77.spring.pepsbook.controllers;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.*;
 import ru.sasha77.spring.pepsbook.models.Answer;
@@ -9,6 +13,7 @@ import ru.sasha77.spring.pepsbook.models.User;
 import ru.sasha77.spring.pepsbook.repositories.AnswerRepository;
 import ru.sasha77.spring.pepsbook.repositories.MindRepository;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
+import ru.sasha77.spring.pepsbook.services.MindsService;
 import ru.sasha77.spring.pepsbook.webModels.MindsResponse;
 import ru.sasha77.spring.pepsbook.webModels.UserSimple;
 import ru.sasha77.spring.pepsbook.webModels.UsersResponse;
@@ -28,11 +33,16 @@ public class RestContr {
     private UserRepository userRepository;
     private MindRepository mindRepository;
     private AnswerRepository answerRepository;
+    private MindsService mindsService;
 
-    RestContr(UserRepository userRepository, MindRepository mindRepository, AnswerRepository answerRepository) {
+    RestContr(UserRepository userRepository,
+              MindRepository mindRepository,
+              AnswerRepository answerRepository,
+              MindsService mindsService) {
         this.userRepository = userRepository;
         this.mindRepository = mindRepository;
         this.answerRepository = answerRepository;
+        this.mindsService = mindsService;
     }
 
     /**
@@ -82,14 +92,15 @@ public class RestContr {
     }
 
     /**
-     * @return All minds
+     * @return Page of minds
      */
     @GetMapping(path = "/minds", produces = "application/json")
-    public List<MindsResponse> getMinds(@NotNull Principal principal, String subs) {
-        User user = userRepository.findByUsername(principal.getName());
-        return mindRepository.findLike(subs==null?"":subs).stream()
-                .map(it -> new MindsResponse(it,user))
-                .collect(Collectors.toList());
+    public Page<MindsResponse> getMinds(@NotNull Authentication authentication, String subs, Integer page, Integer size) {
+        Page<Mind> pagePage = mindsService.loadMinds(subs,page,size);
+        //if such page doesn't exist anymore, return last page
+        if (page != null && page != 0 && pagePage.getTotalPages() <= page)
+            pagePage =  mindsService.loadMinds(subs,pagePage.getTotalPages()-1,size);
+        return pagePage.map(it -> new MindsResponse(it,authentication.getName()));
     }
 
     /**

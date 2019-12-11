@@ -5,15 +5,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.Authentication
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import ru.sasha77.spring.pepsbook.MyUtilities.myDate
-import ru.sasha77.spring.pepsbook.models.Mind
-import ru.sasha77.spring.pepsbook.models.User
 import ru.sasha77.spring.pepsbook.security.TokenProvider
 
 /**
@@ -214,49 +210,59 @@ open class MvcMockers {
                                         }.joinToString("\n")
                         )
                     }
+        checkMinds(name, subs, token = token)
+    }
+    fun checkMinds (name: String,
+                    subs: String,
+                    page: Int? = null,
+                    size: Int? = null,
+                    token: String = tokenProvider.createTestToken(tao.getUserByName(name).username),
+                    deceivePage : Int? = page /*to try to get page that doesn't exist*/) {
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/minds")
                 .param("subs", subs)
+                .apply {
+                    if (page!=null) param("page",deceivePage.toString())
+                    if (size!=null) param("size",size.toString()) }
                 .header("Authorization", "Bearer $token"))
-                    .andDo { mvcResult ->
-                        @Suppress("UNCHECKED_CAST")
-                        Assert.assertEquals("Different lists",
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
                             tao.actualMindsArray
-                                .filter { it.text.contains(subs,true)
-                                        || it.user.contains(subs,true)
-                                        || it.answers.any { answer -> answer.text.contains(subs,true) }}
-                                .sortedByDescending { it.time }
-                                .joinToString("\n") {mind ->
-                                    with(mind) {"$text / $user / ${myDate(time)}"} + " : " +
-                                            mind.answers.joinToString(" | ") { with(it) {"$text / $user / ${myDate(time)}"} } }
+                                    .filter { it.text.contains(subs,true)
+                                            || it.user.contains(subs,true)
+                                            || it.answers.any { answer -> answer.text.contains(subs,true) }}
+                                    .sortedByDescending { it.time }
+                                    .let { if (page == null || size == null)
+                                        it else it.subList(page*size, minOf((page+1) *size,it.size))}
+                                    .joinToString("\n") {mind ->
+                                        with(mind) {"$text / $user / ${myDate(time)}"} + " : " +
+                                                mind.answers.joinToString(" | ") {
+                                                    with(it) {"$text / $user / ${myDate(time)}"} } }
                             ,
-                            JSONArray(mvcResult.response.contentAsString)
-                                .let { response ->
-                                    // Parse response JSON to compare
-                                    val list = mutableListOf<String>()
-                                    for (i in 0 until response.length()) {
-                                        list.add(JSONObject(response.getString(i)).run {
-                                            val answers = JSONArray(getString("answers")).let {
-                                                val answersList = mutableListOf<String>()
-                                                for (j in 0 until it.length()) {
-                                                    answersList.add(JSONObject(it.getString(j)).run {
-                                                        getString("text") + " / " + getString("author") + " / " + getString("time")
-                                                    })
-                                                }
-                                                answersList
-                                            }.joinToString(" | ")
-                                            getString("text") + " / " +
-                                                getString("author") + " / " +
-                                                getString("time") + " : " +
-                                                answers
-                                        })
-                                    }
-                                    list
-                                }.joinToString("\n")
-//                                (mvcResult.modelAndView!!.model["lizt"] as Iterable<Mind>).sortedBy { it.text }
-//                                        .joinToString("\n") {mind ->
-//                                            with(mind) {"$text / ${user.name} / ${myDate(time)}"} + " : " +
-//                                                    mind.answers.joinToString(" | ") { with(it) {"$text / ${user.name} / ${myDate(time)}"} } }
-                        )
-                    }
+                            JSONObject(mvcResult.response.contentAsString).getJSONArray("content")
+                                    .let { response ->
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until response.length()) {
+                                            list.add(JSONObject(response.getString(i)).run {
+                                                val answers = JSONArray(getString("answers")).let {
+                                                    val answersList = mutableListOf<String>()
+                                                    for (j in 0 until it.length()) {
+                                                        answersList.add(JSONObject(it.getString(j)).run {
+                                                            getString("text") + " / " + getString("author") + " / " + getString("time")
+                                                        })
+                                                    }
+                                                    answersList
+                                                }.joinToString(" | ")
+                                                getString("text") + " / " +
+                                                        getString("author") + " / " +
+                                                        getString("time") + " : " +
+                                                        answers
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
     }
 }

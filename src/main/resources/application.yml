@@ -22,16 +22,20 @@ jwt:
     authentication:
       path: auth
       refresh: refresh
-
+my:
+  mindsPageSize: 10
+  paginatorMaxSize: 12
+  paginatorWide: 3
 ---
 
 spring:
   profiles: dev
-  #to not cache thymeleaf pages when dev
+#to not cache thymeleaf pages when dev
   thymeleaf:
     cache: false
     prefix: file:src/main/resources/templates/
-
+  resources:
+    static-locations: file:src/main/resources/static
 ---
 
 spring:
@@ -45,11 +49,14 @@ spring:
     hibernate.ddl-auto: none
     properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
 my:
+  mindsPageSize: 2
+  paginatorMaxSize: 8
+  paginatorWide: 1
   tst:
-    headless: true
+    headless: false
     closeBrowser: true
     monkey:
       seed: 0
-      rounds: 5
+      rounds: 3
       steps:  100
-      failImmediately: false
+      failImmediately: true

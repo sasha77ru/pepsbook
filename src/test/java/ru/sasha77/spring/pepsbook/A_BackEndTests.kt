@@ -6,6 +6,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
@@ -20,17 +21,15 @@ import org.springframework.test.context.junit4.SpringRunner
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
 class ABackEndTests {
-    @Autowired
-    lateinit var mvc : MvcMockers
-
-    @Autowired
-    lateinit var tao : TestApplicationObject
+    @Autowired lateinit var mvc : MvcMockers
+    @Autowired lateinit var tao : TestApplicationObject
+    @Value("\${my.mindsPageSize}") var mindsPageSize : Int = 0
 
     companion object {
         @AfterClass
         @JvmStatic
         fun afterClass() {
-            Thread.sleep(2000)
+            Thread.sleep(1000)
         }
     }
 
@@ -89,8 +88,11 @@ class ABackEndTests {
 
             mvc.mvcRemoveMind(currName, "anotherText")
             mvc.checkAllDB()
+            mvc.checkMinds(currName, "", page = 1, size = MINDS_PAGE_SIZE)
 
-            fillDB()
+            mvc.checkMinds(currName, "h")
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE)
+            mvc.checkMinds(currName, "", page = 1, deceivePage = 2, size = MINDS_PAGE_SIZE)
         }
     }
 
