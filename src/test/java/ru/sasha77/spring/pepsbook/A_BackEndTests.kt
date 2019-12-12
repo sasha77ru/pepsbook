@@ -5,6 +5,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -91,8 +92,17 @@ class ABackEndTests {
             mvc.checkMinds(currName, "", page = 1, size = MINDS_PAGE_SIZE)
 
             mvc.checkMinds(currName, "h")
-            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE)
             mvc.checkMinds(currName, "", page = 1, deceivePage = 2, size = MINDS_PAGE_SIZE)
+
+            val log = LoggerFactory.getLogger(ABackEndTests::class.java)!!.also { it.debug("========") }
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
+            mvc.checkMinds(currName, "", page = 0, size = MINDS_PAGE_SIZE, log = log)
         }
     }
 

@@ -4,6 +4,7 @@ import org.hamcrest.Matchers
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
@@ -217,7 +218,9 @@ open class MvcMockers {
                     page: Int? = null,
                     size: Int? = null,
                     token: String = tokenProvider.createTestToken(tao.getUserByName(name).username),
-                    deceivePage : Int? = page /*to try to get page that doesn't exist*/) {
+                    deceivePage : Int? = page /*to try to get page that doesn't exist*/,
+                    log : org.slf4j.Logger? = null) {
+        val timeBefore = System.currentTimeMillis()
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/minds")
                 .param("subs", subs)
                 .apply {
@@ -225,6 +228,7 @@ open class MvcMockers {
                     if (size!=null) param("size",size.toString()) }
                 .header("Authorization", "Bearer $token"))
                 .andDo { mvcResult ->
+                    log?.debug("${System.currentTimeMillis()-timeBefore}")
                     @Suppress("UNCHECKED_CAST")
                     Assert.assertEquals("Different lists",
                             tao.actualMindsArray
