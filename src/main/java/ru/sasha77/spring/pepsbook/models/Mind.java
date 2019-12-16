@@ -4,6 +4,7 @@ package ru.sasha77.spring.pepsbook.models;
 import lombok.*;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.*;
 
 @Data
@@ -11,7 +12,7 @@ import java.util.*;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name="minds")
-public class Mind {
+public class Mind implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @EqualsAndHashCode.Include

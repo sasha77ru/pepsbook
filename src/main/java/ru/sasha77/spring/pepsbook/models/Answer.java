@@ -4,6 +4,7 @@ package ru.sasha77.spring.pepsbook.models;
 import lombok.*;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
@@ -11,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name="answers")
-public class Answer {
+public class Answer implements Serializable {
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy=GenerationType.IDENTITY)

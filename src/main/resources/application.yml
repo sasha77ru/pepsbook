@@ -10,6 +10,12 @@ spring:
     url: jdbc:mysql://localhost:3306/pepsbook?serverTimezone=Europe/Moscow&useUnicode=yes&characterEncoding=UTF-8
     username: myuser
     password: motamota
+  cache:
+    type: redis
+    redis:
+      key-prefix: "pb-cache::"
+      time-to-live: 86400000
+
 jwt:
   header: Authorization
   # This token must be encoded using Base64 with mininum 88 Bits (you can type `echo 'secret-key'|base64` on your command line)
@@ -36,6 +42,9 @@ spring:
     prefix: file:src/main/resources/templates/
   resources:
     static-locations: file:src/main/resources/static
+  redis:
+    host: 192.168.1.105
+
 ---
 
 spring:
