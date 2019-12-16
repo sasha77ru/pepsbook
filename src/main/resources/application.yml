@@ -53,7 +53,7 @@ my:
   paginatorMaxSize: 8
   paginatorWide: 1
   tst:
-    headless: false
+    headless: true
     closeBrowser: true
     monkey:
       seed: 0

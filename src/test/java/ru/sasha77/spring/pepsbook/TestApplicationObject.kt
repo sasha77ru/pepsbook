@@ -2,14 +2,17 @@ package ru.sasha77.spring.pepsbook
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
+import ru.sasha77.spring.pepsbook.TestApplicationObject.TstUser
 import ru.sasha77.spring.pepsbook.models.Answer
 import ru.sasha77.spring.pepsbook.models.Mind
 import ru.sasha77.spring.pepsbook.models.User
 import ru.sasha77.spring.pepsbook.repositories.AnswerRepository
 import ru.sasha77.spring.pepsbook.repositories.MindRepository
 import ru.sasha77.spring.pepsbook.repositories.UserRepository
+import ru.sasha77.spring.pepsbook.services.UserService
 import java.util.*
 
 
@@ -37,6 +40,9 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     lateinit var tstProps: TstProps
 
     @Autowired
+    lateinit var userService: UserService
+
+    @Autowired
     lateinit var clk : Clickers
 
     @Autowired
@@ -62,7 +68,7 @@ class TestApplicationObject (private val usersRepo: UserRepository,
      * Clears DB.
      */
     fun clearDB () {
-        usersRepo.deleteAll()
+        userService.deleteAll()
         actualUsersArray.clear()
         actualMindsArray.clear()
     }
