@@ -146,12 +146,13 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         private val usedStrings = mutableSetOf<String>() //to eliminate dups (uniq because users, minds and answers in test must be uniq)
         /**
          * Feign uniq string (uniq because users, minds and answers in test must be uniq)
+         * of APPROXIMATELY (may be a little bit longer) len length
          */
         fun feignString (len : Int = 12) : String = StringBuilder().apply {
             repeat(len/2) {
                 append((syLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
             } }.toString()
-                .let { if (it in usedStrings) feignString(len) else {usedStrings.add(it);it} } //to eliminate dups
+                .let { if (it in usedStrings) feignString(len+2) else {usedStrings.add(it);it} } //to eliminate dups
 
         /**
          * LoginPassword entity can be valid or invalid
@@ -224,7 +225,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             pause {driver.title == "Pepsbook Login"}
             onEnterSite()
             loginPassword?.run { driver.findElement(By.id("loginErrors")) } // Check the page for error message presence
-            val probabilityOfExistingUserLogin = if (step < 20) 10 else 90
+            val probabilityOfExistingUserLogin = if (step < 10) 10 else 90
             if (rand() < probabilityOfExistingUserLogin && tao.actualUsersArray.size > 0) {
                 LoginPassword().run {
                     driver.findElement(By.name("username")).run { clear();sendKeys(login) }

@@ -44,5 +44,10 @@
       "name": "my.paginatorWide",
       "type": "java.lang.String",
       "description": "How many prev and next page buttons should be shown for boiled paginator."
+    },
+    {
+      "name": "my.time2RetryUseRedis",
+      "type": "java.lang.String",
+      "description": "Time in millis when retry to use Redis."
     }
   ] }
