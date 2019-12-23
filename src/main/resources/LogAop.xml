@@ -15,5 +15,10 @@
                           expression="execution(* ru.sasha77.spring.pepsbook.Clickers+.*(..))" />
             <aop:before method="beforeAdvice" pointcut-ref="pointCutBefore" />
         </aop:aspect>
+        <aop:aspect id="aspect2" ref="restPerformanceAop">
+            <aop:pointcut id="pointCutAround"
+                          expression="execution(* ru.sasha77.spring.pepsbook.controllers.RestContr+.*(..))" />
+            <aop:around method="performanceAdvice" pointcut-ref="pointCutAround" />
+        </aop:aspect>
     </aop:config>
 </beans>

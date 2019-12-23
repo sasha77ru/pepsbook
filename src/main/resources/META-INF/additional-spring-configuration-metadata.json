@@ -11,9 +11,9 @@
       "description": "Close chrome at the end of test."
     },
     {
-      "name": "my.tst.monkeyTest.seed",
-      "type": "java.lang.Long",
-      "description": "Seed for MonkeyTest round #0, if it needed. Or 0."
+      "name": "my.tst.monkeyTest.seeds",
+      "type": "java.lang.String",
+      "description": "Seeds for MonkeyTest round #0, if it needed. Or 0."
     },
     {
       "name": "my.tst.monkeyTest.rounds",

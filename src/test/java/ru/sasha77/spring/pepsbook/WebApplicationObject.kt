@@ -7,6 +7,7 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.slf4j.LoggerFactory
+import java.lang.Exception
 import kotlin.random.Random
 
 /**
@@ -101,8 +102,8 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                                  private val round : Int,
                                  private val steps : Int,
                                  private val failImmediately : Boolean) {
-        fun go () : Boolean {
-            var ok = true
+        fun go () : Triple<Long,Int,Throwable>? {
+            var exception : Triple<Long,Int,Throwable>? = null
             log.info("$round ====================== seed = $seed")
             tao.clearDB()
             driver.get("http://localhost:$port")
@@ -121,11 +122,13 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             } catch (e : Throwable) {
                 log.info("!!!!!! PROBLEM !!!!!! Round; $round Seed: $seed Step: $step")
                 if (failImmediately) throw e
-                ok = false
+                exception = Triple(seed,step,e)
+            } finally {
+                log.info("Seed $seed getMinds PERFORMANCE: "+tao.performanceCounter.getAndReset("getMinds").toString())
             }
             pause(For.LONG_LOAD)
             clk.runCatching {clickLogout()}
-            return ok
+            return exception
         }
         private var step = 1
         private fun stepVlog(s : String) {vlog("$step ! $s")}

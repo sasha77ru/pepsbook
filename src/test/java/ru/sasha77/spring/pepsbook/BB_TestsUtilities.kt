@@ -1,11 +1,13 @@
 package ru.sasha77.spring.pepsbook
 
+import org.aspectj.lang.ProceedingJoinPoint
 import org.openqa.selenium.WebDriver
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 import ru.sasha77.spring.pepsbook.MyUtilities.myDate
 import java.lang.RuntimeException
-import java.text.SimpleDateFormat
 import java.util.*
 
 enum class For {LOAD,SEE,REPEAT,LONG_LOAD}
@@ -61,10 +63,39 @@ class TstProps {
     var closeBrowser : Boolean = true
     var monkey : MonkeyTestProps = MonkeyTestProps()
     open class MonkeyTestProps {
-        var seed : Long = 0
+        var seeds : String = ""
         var rounds : Int = 0
         var steps : Int = 0
         var failImmediately : Boolean = true
+    }
+}
+
+/**
+ * Story in map numbers of performance measurements and their sums
+ */
+@Component
+open class PerformanceCounter {
+    class Meas {var num = 0; var sum = 0L; override fun toString () = "sum : $sum, avg : ${sum/num}"}
+    var m = mutableMapOf<String,Meas>()
+    fun addValue (name : String, value : Long) {m.getOrPut(name,::Meas).apply { num++; sum+=value }}
+    fun getAndReset (name : String) = m[name].also { m = mutableMapOf() }
+    fun getAllAndReset () = m.also { m = mutableMapOf() }
+}
+
+/**
+ * The aspect launched around Rest Controllers
+ */
+@Component("restPerformanceAop")
+open class RestPerformanceAspect {
+    @Autowired lateinit var performanceCounter : PerformanceCounter
+    private var log = LoggerFactory.getLogger(this::class.java)!!
+    @Suppress("unused")
+    fun performanceAdvice(joinPoint : ProceedingJoinPoint): Any? {
+        val beforeTime = System.nanoTime()
+        val result = joinPoint.proceed(joinPoint.args)
+        performanceCounter.addValue(joinPoint.signature.name,System.nanoTime() - beforeTime)
+//        log.info("${System.nanoTime() - beforeTime} < ${joinPoint.signature.name} (${joinPoint.args.drop(1).joinToString(",")})")
+        return result
     }
 }
 

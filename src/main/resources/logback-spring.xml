@@ -21,5 +21,8 @@
         <logger name="ru.sasha77.spring.pepsbook.ABackEndTests" additivity="false" level="debug">
             <appender-ref ref="simpleConsole" />
         </logger>
+        <logger name="ru.sasha77.spring.pepsbook.RestPerformanceAspect" additivity="false" level="debug">
+            <appender-ref ref="simpleConsole" />
+        </logger>
     </springProfile>
 </configuration>

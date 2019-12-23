@@ -49,6 +49,9 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     lateinit var chk : Checkers
 
     @Autowired
+    lateinit var performanceCounter : PerformanceCounter
+
+    @Autowired
     lateinit var passwordEncoder: PasswordEncoder
 
     @Value("\${my.mindsPageSize}") var MINDS_PAGE_SIZE : Int = 0

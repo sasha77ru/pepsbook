@@ -71,7 +71,8 @@ my:
     headless: true
     closeBrowser: true
     monkey:
-      seed: 0
-      rounds: 3
-      steps:  100
-      failImmediately: true
+      seeds: 0
+      #1,1,1,2,2,2,3,3,3
+      rounds: 10
+      steps:  300
+      failImmediately: false

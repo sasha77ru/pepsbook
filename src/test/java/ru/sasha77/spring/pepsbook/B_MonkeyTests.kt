@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import java.lang.RuntimeException
 import kotlin.random.Random
 
 /**
@@ -55,19 +54,36 @@ class BMonkeyTests {
 
     @Test fun monkeyTest() {
         //Zero round if seed is defined
-        if (tstProps.monkey.seed != 0L)
-            wao.MonkeyTestClass(tstProps.monkey.seed, 0, tstProps.monkey.steps, true).go()
-
+        tstProps.monkey.seeds.replace(" ","").split(',').forEach {
+            if (it.toLong() != 0L)
+                wao.MonkeyTestClass(it.toLong(), 0, tstProps.monkey.steps, true).go()
+        }
         //Random-seed rounds
-        val badRoundSeeds = mutableListOf<Long>()
+        val badRoundSeeds = mutableListOf<Triple<Long,Int,Throwable>>()
+        val phantomBugs = mutableListOf<Long>() //number of phantom bugs. That happens only once on the certain seed
         for (round in (1 .. tstProps.monkey.rounds)) {
             val seed = Random.nextLong()
-            if (!wao.MonkeyTestClass(seed, round, tstProps.monkey.steps, tstProps.monkey.failImmediately).go()) {
-                badRoundSeeds.add(seed)
+            var attempt = 1
+            //repeat bad seed twice. If second attempt is also bad. Add to badRoundSeeds. Otherwise it's a phantom Bug
+            while (true) {
+                val e : Triple<Long,Int,Throwable> =
+                        wao.MonkeyTestClass(seed, round, tstProps.monkey.steps, tstProps.monkey.failImmediately).go()
+                        ?: break
+                if (attempt++ > 1 ) {
+                    badRoundSeeds.add(e)
+                    phantomBugs.remove(seed)
+                    break
+                } else phantomBugs.add(seed)
             }
         }
         if (tao.tstProps.closeBrowser) wao.driver.close()
-        assertEquals("!!! SOME SEEDS ARE BAD !!!",listOf<Long>(), badRoundSeeds)
+        if (phantomBugs.isNotEmpty()) println("PHANTOM BUGS on seeds: $phantomBugs")
+        badRoundSeeds.forEach {
+            println("Problem on Seed ${it.first} Step ${it.second}")
+            it.third.printStackTrace()
+        }
+        println("Seeds: ${badRoundSeeds.map{it.first}}")
+        assertEquals("!!! SOME SEEDS ARE BAD !!!","[]", badRoundSeeds)
     }
 }
 
