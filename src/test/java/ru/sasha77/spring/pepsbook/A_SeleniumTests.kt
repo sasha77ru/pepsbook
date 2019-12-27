@@ -28,7 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 //@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
-@ActiveProfiles("dev,tst")
+@ActiveProfiles("dev,tst,tst-simple")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class ASeleniumTests : ObjWithDriver {
 

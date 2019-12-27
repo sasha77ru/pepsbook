@@ -12,9 +12,11 @@ import ru.sasha77.spring.pepsbook.repositories.UserRepository;
 @Service("MyUserService")
 public class UserService implements UserDetailsService {
     private UserRepository userRepo;
+    private MindService mindService;
     @Autowired
-    public UserService(UserRepository userRepo) {
+    public UserService(UserRepository userRepo, MindService mindService) {
         this.userRepo = userRepo;
+        this.mindService = mindService;
     }
     @Override
     public UserDetails loadUserByUsername(String username)
@@ -27,5 +29,6 @@ public class UserService implements UserDetailsService {
     @CacheEvict(value = "minds",allEntries=true)
     public void deleteAll() {
         userRepo.deleteAll();
+        mindService.clearCache();
     }
 }

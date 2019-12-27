@@ -49,5 +49,46 @@
       "name": "my.time2RetryUseRedis",
       "type": "java.lang.String",
       "description": "Time in millis when retry to use Redis."
+    },
+    {
+      "name": "my.tst.monkey.feignDB.enabled",
+      "type": "java.lang.String",
+      "description": "before every round fill DB with feign data.",
+      "values": [
+        {
+          "value": "yes"
+        },
+        {
+          "value": "no"
+        },
+        {
+          "value": "random"
+        }
+      ]
+    },
+    {
+      "name": "my.tst.monkey.feignDB.users",
+      "type": "java.lang.Integer",
+      "description": "Number of users to feign."
+    },
+    {
+      "name": "my.tst.monkey.feignDB.max-friends",
+      "type": "java.lang.Integer",
+      "description": "Max number of friends per user."
+    },
+    {
+      "name": "my.tst.monkey.feignDB.minds",
+      "type": "java.lang.Integer",
+      "description": "Number of minds to feign."
+    },
+    {
+      "name": "my.tst.monkey.feignDB.answers",
+      "type": "java.lang.Integer",
+      "description": "Number of answers to feign."
+    },
+    {
+      "name": "my.tst.strict",
+      "type": "java.lang.Boolean",
+      "description": "Strict check: Compare times of minds and answers."
     }
   ] }

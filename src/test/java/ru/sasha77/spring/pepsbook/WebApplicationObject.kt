@@ -7,7 +7,6 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.slf4j.LoggerFactory
-import java.lang.Exception
 import kotlin.random.Random
 
 /**
@@ -101,11 +100,18 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
     inner class MonkeyTestClass (private val seed : Long,
                                  private val round : Int,
                                  private val steps : Int,
-                                 private val failImmediately : Boolean) {
+                                 private val failImmediately : Boolean) : FeignMixin() {
+        override val randomer = Random(seed) // MAIN Monkey Test randomer
+        override val usedStrings = mutableSetOf<String>()
+
         fun go () : Triple<Long,Int,Throwable>? {
             var exception : Triple<Long,Int,Throwable>? = null
             log.info("$round ====================== seed = $seed")
-            tao.clearDB()
+            if (tao.tstProps.monkey.feignDB.enabled=="yes"
+                    || tao.tstProps.monkey.feignDB.enabled=="random" && rand(2)==1) {
+                vlog("FILL DB WITH DATA")
+                tao.fillDB(randomer = randomer, usedStrings = usedStrings)
+            } else tao.clearDB() // filled or empty DB at seed's start
             driver.get("http://localhost:$port")
             @Suppress("UNCHECKED_CAST")
             var f = loginForm() as? () -> Any
@@ -113,6 +119,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 while (step++ < steps) {
                 if (step >= 10000) {
                     println("JOPA") // place for a breakpoint on certain step
+//                    Thread.sleep(10000)
                 }
 
                     @Suppress("UNCHECKED_CAST")
@@ -134,28 +141,6 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         private fun stepVlog(s : String) {vlog("$step ! $s")}
         var existingUserName = "" // for check existing username via registration
         var existingEmail = "" // for check existing Email via registration
-
-        val randomer = Random(seed) // MAIN Monkey Test randomer
-        fun rand(x : Int = 100) = randomer.nextInt(x)
-
-        private fun validFirstChar () = (('a'..'z') + ('A'..'Z')).random(randomer)
-        private fun validChar () = (('a'..'z') + ('A'..'Z') + ('0'..'9') + '_' + '-').random(randomer)
-        fun invalidChar () = "`~!@#№$%^&*()+=[]{};:'\"\\|,.<>/? ".random(randomer)
-        fun feignUsername (len : Int = 8, charFrom : () -> Char = ::validChar) = String(mutableListOf(validFirstChar()).
-                apply { repeat(len-2) { add(charFrom()) };add(validFirstChar()) }.toCharArray()) //in emails last char also can't be - or _
-        //        val syLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
-//        val syLIST = listOf(" а","Ва","ло","Но","uv"," d","W ")
-        private val syLIST = listOf(" А","ва","ло","ем","ок"," У","ы ")
-        private val usedStrings = mutableSetOf<String>() //to eliminate dups (uniq because users, minds and answers in test must be uniq)
-        /**
-         * Feign uniq string (uniq because users, minds and answers in test must be uniq)
-         * of APPROXIMATELY (may be a little bit longer) len length
-         */
-        fun feignString (len : Int = 12) : String = StringBuilder().apply {
-            repeat(len/2) {
-                append((syLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
-            } }.toString()
-                .let { if (it in usedStrings) feignString(len+2) else {usedStrings.add(it);it} } //to eliminate dups
 
         /**
          * LoginPassword entity can be valid or invalid
@@ -269,6 +254,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 driver.findElement(By.name("country")).run { clear();sendKeys(country) }
                 pause(For.SEE)
                 driver.findElement(By.id("signInForm")).submit()
+//                vlog ("Entered: username = $username password = $password repeatPassword=$repeatPassword name=$name email=$email country=$country")
                 return if (ok) {
                     tao.actualUsersArray.add(tao.TstUser(name,email,country,username,password))
                     currUserName = username
@@ -283,7 +269,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::mainPage
          */
         private fun minds () : Any? {
-            stepVlog("minds filter=$filter mindsPage=$mindsPage")
+            stepVlog("minds filter=$filter mindsPage=$mindsPage currUser={${currUser.name}}")
             //if mindsPage doesn't exist anymore (e.g. deleted last mind) it should be the last one
             if (mindsPage != 0 && numberOfMindsPages <= mindsPage) mindsPage = numberOfMindsPages - 1
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
@@ -300,7 +286,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
          * @return ::mainPage
          */
         private fun users () : Any? {
-            stepVlog("users what=$what filter=$filter")
+            stepVlog("users what=$what filter=$filter currUser=${currUser.name}")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
             what = js.executeScript("return nowInMain;") as String
             if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
@@ -322,14 +308,12 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 if (rand() < 2) {
                     typeMindText(feignString(4002)) //Invalid length
                     submitMind()
-                    pause(For.LOAD)
                     Assert.assertEquals(1, driver.findElements(By.id("mindErrSign")).size)
                     return ::mindWin
                 }
                 feignString(rand(400)).let { newText ->
                     typeMindText(newText)
                     submitMind()
-                    pause(For.LOAD)
                     if (mindWinWhich == "mind") {
                         if (currMind != null) tao.doChangeMind(currMind!!.text,newText)
                         else tao.doAddMind(currName,newText)
@@ -392,6 +376,8 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                     //<editor-fold desc="Pagination">
                     if (numberOfMindsPages > 1) {
                         { currMind = null;mindWinWhich = "mind"
+                            pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
+                            what = js.executeScript("return nowInMain;") as String
                             if (numberOfMindsPages > tao.PAGINATOR_MAX_SIZE)
                                 // boiled mode of paginator. we test only pressings to prev,first,last,next
                                 when (val r = rand(4)-3) {
@@ -410,7 +396,6 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                             ::minds }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                     }
                     //</editor-fold>
-
                 }
                 if (what == "users" && visibleUsers.isNotEmpty()) {
                     { val clickUser = visibleUsers.random(randomer)

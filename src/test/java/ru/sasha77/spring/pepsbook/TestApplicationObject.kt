@@ -14,6 +14,7 @@ import ru.sasha77.spring.pepsbook.repositories.MindRepository
 import ru.sasha77.spring.pepsbook.repositories.UserRepository
 import ru.sasha77.spring.pepsbook.services.UserService
 import java.util.*
+import kotlin.random.Random
 
 
 /**
@@ -79,27 +80,86 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     /**
      * Clear DB, than fill it with data from tstUsersArray and tstMindsArray.
      * Than does actualUsersArray = tstUsersArray, actualMindsArray = tstMindsArray
+     * if randomer is null DB will be filled with constants
+     * if randomer (and usedStrings) isn't null DB will be filled with feign data
      * if friendship==false then friendship information ignored
      */
-    fun fillDB (friendship : Boolean = true, minds : Boolean = true) {
-        var lmDate = Date(Date().time-86400000)
+    fun fillDB (friendship : Boolean = true, minds : Boolean = true, randomer : Random? = null, usedStrings : MutableSet<String>? = null) {
+        var lmDate = Date(Date().time-86400_0000_000)
         fun mockDate () : Date {
-            lmDate = Date(lmDate.time+100000)
+            lmDate = Date(lmDate.time+100_000)
             return lmDate
         }
 
         clearDB()
 
-        actualUsersArray =
-                mutableListOf(
-                        TstUser("Porky", "porky@pig.com", "USA", "porky", "pig",
-                                if (friendship) mutableSetOf("Pluto", "Masha") else mutableSetOf()),
-                        TstUser("Pluto", "pluto@dog.com", "USA", "pluto", "dog",
-                                if (friendship) mutableSetOf("Porky") else mutableSetOf()),
-                        TstUser("Masha", "masha@child.com", "Russia", "masha", "child"),
-                        TstUser("Luntik", "luntik@alien.com", "Russia", "luntik", "alien",
-                                if (friendship) mutableSetOf("Porky") else mutableSetOf())
-                )
+        if (randomer!=null) {
+            with (object : FeignMixin() { // attach rand and feign funs from the mixin
+                override val randomer : Random = randomer
+                override val usedStrings : MutableSet<String> = usedStrings!!
+            }) {
+                // feign users
+                actualUsersArray = (0..tstProps.monkey.feignDB.users).map {
+                    TstUser(feignString(rand(2, 30)),
+                            "${feignUsername()}@${feignUsername()}.${feignUsername(3)}",
+                            feignString(rand(3,20)),
+                            feignUsername(rand(2, 12)),
+                            feignUsername(rand(8, 12)),
+                            mutableSetOf())
+                }.toMutableList()
+                println(actualUsersArray.map { "${it.name}\t${it.username}\t${it.email}" }.joinToString("\n"))
+                // make random friendship bw users
+                if (friendship) {
+                    actualUsersArray.forEach { user ->
+                        repeat (randZero(tstProps.monkey.feignDB.maxFriends)) {
+                            var name : String
+                            do {
+                                name = actualUsersArray.random(randomer).name
+                            } while (name == user.name)
+                            user.friendsNames.add(name)
+                        }
+                    }
+                }
+                // fill minds DB
+                if (minds) {
+                    repeat (tstProps.monkey.feignDB.minds) {
+                        actualMindsArray.add(
+                            TstMind(feignString(400),actualUsersArray.random(randomer).name,mockDate())
+                        )
+                    }
+                    repeat (randZero(tstProps.monkey.feignDB.answers)) {
+                        actualMindsArray.random(randomer).run {
+                            answers.add(TstAnswer(feignString(400), this,
+                                actualUsersArray.random(randomer).name, mockDate()))
+                        }
+                    }
+                }
+            }
+        } else {
+            actualUsersArray =
+                    mutableListOf(
+                            TstUser("Porky", "porky@pig.com", "USA", "porky", "pig",
+                                    if (friendship) mutableSetOf("Pluto", "Masha") else mutableSetOf()),
+                            TstUser("Pluto", "pluto@dog.com", "USA", "pluto", "dog",
+                                    if (friendship) mutableSetOf("Porky") else mutableSetOf()),
+                            TstUser("Masha", "masha@child.com", "Russia", "masha", "child"),
+                            TstUser("Luntik", "luntik@alien.com", "Russia", "luntik", "alien",
+                                    if (friendship) mutableSetOf("Porky") else mutableSetOf())
+                    )
+
+            actualMindsArray.run {
+                add(TstMind("Hru-hru", "Porky", mockDate())
+                        .apply {
+                            answers = mutableListOf(
+                                    TstAnswer("Вы свинья", this, "Masha", mockDate()),
+                                    TstAnswer("Соласен", this, "Luntik", mockDate()))
+                        })
+                add(TstMind("Gaff-gaff", "Pluto", mockDate()))
+                add(TstMind("Понятненько", "Masha", mockDate()))
+                add(TstMind("Я лунная пчела", "Luntik", mockDate()))
+            }
+        }
+
         actualUsersArray.apply {
             //Fill matesNames of TstUser by friendsNames
             if (friendship) forEach { user ->
@@ -107,18 +167,6 @@ class TestApplicationObject (private val usersRepo: UserRepository,
                     getUserByName(friend).matesNames.add(user.user.name)
                 }
             }
-        }
-
-        with (actualMindsArray) {
-            add(TstMind("Hru-hru", "Porky", mockDate())
-                    .apply {
-                        answers = mutableListOf(
-                                TstAnswer("Вы свинья", this, "Masha", mockDate()),
-                                TstAnswer("Соласен", this, "Luntik", mockDate()))
-                    })
-            add(TstMind("Gaff-gaff", "Pluto", mockDate()))
-            add(TstMind("Понятненько", "Masha", mockDate()))
-            add(TstMind("Я лунная пчела", "Luntik", mockDate()))
         }
 
 //    if (!friendship) actualUsersArray.forEach { it.friendsNames.removeIf { true };it.matesNames.removeIf { true }}

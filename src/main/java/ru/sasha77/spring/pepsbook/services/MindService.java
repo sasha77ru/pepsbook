@@ -84,4 +84,8 @@ public class MindService {
     public void deleteAnswer(Answer answer) {
         answerRepository.delete(answer);
     }
+
+    @CacheEvict(value = "minds",allEntries=true)
+    public void clearCache() {
+    }
 }

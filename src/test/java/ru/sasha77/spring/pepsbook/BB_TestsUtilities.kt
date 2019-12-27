@@ -61,8 +61,16 @@ data class TstAnswer(
 class TstProps {
     var headLess : Boolean = false
     var closeBrowser : Boolean = true
-    var monkey : MonkeyTestProps = MonkeyTestProps()
+    var monkey = MonkeyTestProps()
     open class MonkeyTestProps {
+        open class FeignDB {
+            var enabled = "no"
+            var users = 30
+            var maxFriends = 10
+            var minds = 200
+            var answers = 300
+        }
+        var feignDB = FeignDB()
         var seeds : String = ""
         var rounds : Int = 0
         var steps : Int = 0
@@ -71,7 +79,7 @@ class TstProps {
 }
 
 /**
- * Story in map numbers of performance measurements and their sums
+ * Story in map numbers of performance measurements and their sums. Can return num and sum (so avg) of all added values
  */
 @Component
 open class PerformanceCounter {
@@ -83,7 +91,7 @@ open class PerformanceCounter {
 }
 
 /**
- * The aspect launched around Rest Controllers
+ * The aspect launched around Rest Controllers to collect performance statistics
  */
 @Component("restPerformanceAop")
 open class RestPerformanceAspect {
@@ -97,6 +105,53 @@ open class RestPerformanceAspect {
 //        log.info("${System.nanoTime() - beforeTime} < ${joinPoint.signature.name} (${joinPoint.args.drop(1).joinToString(",")})")
         return result
     }
+}
+
+/**
+ * A mixin that allow to get random and geign strings by given randomer and history of used feign strings (for their uniq)
+ */
+abstract class FeignMixin {
+    abstract val randomer : kotlin.random.Random
+    abstract val usedStrings : MutableSet<String> //to eliminate dups (uniq because users, minds and answers in test must be uniq)
+
+    fun rand(x : Int = 100) = randomer.nextInt(x)
+    /**
+     * Returns random Int by randomer
+     * @param from inclusive
+     * @param to inclusive
+     * */
+    fun rand(from : Int,to : Int) = randomer.nextInt(to - from + 1) + from
+    /**
+     * Returns random Int by randomer. The probability of 0 could be set
+     * @param max inclusive
+     * @param zeroProbability in percents (default 30%)
+     * */
+    fun randZero(max : Int,zeroProbability : Int = 30) : Int {
+        val addon = max/100*zeroProbability
+        val result = randomer.nextInt(max+1+addon)-addon
+        return if (result < 0) 0 else result
+    }
+    private fun validFirstChar () = (('a'..'z') + ('A'..'Z')).random(randomer)
+    private fun validChar () = (('a'..'z') + ('A'..'Z') + ('0'..'9') + '_' + '-').random(randomer)
+    fun invalidChar () = "`~!@#№$%^&*()+=[]{};:'\"\\|,.<>/? ".random(randomer)
+    /**
+     * Feign uniq username (uniq because users and their emails in test must be uniq)
+     */
+    fun feignUsername (len : Int = 8, charFrom : () -> Char = ::validChar) : String = String(mutableListOf(validFirstChar()).
+            apply { repeat(len-2) { add(charFrom()) };add(validFirstChar()) }.toCharArray()) //in emails last char also can't be - or _
+            .let { if (it in usedStrings) feignUsername(len,charFrom) else {usedStrings.add(it);it} } //to eliminate dups
+//        val syLIST = listOf(" а","Ва","ло","Но","uv"," d"," W")
+//        val syLIST = listOf(" а","Ва","ло","Но","uv"," d","W ")
+    val syLIST = listOf(" А","ва","ло","ем","ок"," У","ы ")
+    /**
+     * Feign uniq string (uniq because minds and answers in test must be uniq)
+     * of APPROXIMATELY (may be a little bit longer) len length
+     */
+    fun feignString (len : Int = 12) : String = StringBuilder().apply {
+        repeat(len/2) {
+            append((syLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
+        } }.toString()
+            .let { if (it in usedStrings) feignString(len+2) else {usedStrings.add(it);it} } //to eliminate dups
 }
 
 //fun fillDBwithSQL () {

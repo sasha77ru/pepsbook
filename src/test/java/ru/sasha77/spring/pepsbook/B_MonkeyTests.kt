@@ -8,6 +8,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
@@ -25,7 +26,7 @@ import kotlin.random.Random
  */
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 //@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
 @ActiveProfiles("dev,tst")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -83,7 +84,7 @@ class BMonkeyTests {
             it.third.printStackTrace()
         }
         println("Seeds: ${badRoundSeeds.map{it.first}}")
-        assertEquals("!!! SOME SEEDS ARE BAD !!!","[]", badRoundSeeds)
+        assertEquals("!!! SOME SEEDS ARE BAD !!!",mutableListOf<Triple<Long,Int,Throwable>>(), badRoundSeeds)
     }
 }
 

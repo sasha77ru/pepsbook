@@ -5,6 +5,7 @@ import org.junit.Assert
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.ImportResource
 import org.springframework.stereotype.Component
 
@@ -13,9 +14,15 @@ import org.springframework.stereotype.Component
  */
 @Component
 open class Checkers {
+    @Value("\${my.tst.strict}") var STRICT = true
     open fun WebApplicationObject.checkMinds() {
         Assert.assertEquals("Different Minds",
-                visibleMinds.joinToString("\n") { it.toString() }
+                visibleMinds.joinToString ("\n") { mind ->
+                    "${mind.text} / ${mind.user} / ${if (STRICT) MyUtilities.myDate(mind.time) else ""} / ${
+                    mind.answers.sortedBy { it.time }.map {answer -> 
+                        "${answer.text} / ${mind.text} / ${answer.user} / ${if (STRICT) MyUtilities.myDate(answer.time) else ""}"}
+                    }"
+                }
                         .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
                         .replace(Regex("\\[ "), "[")
                 ,
@@ -23,12 +30,12 @@ open class Checkers {
                         .joinToString("\n") { mindEntity ->
                             mindEntity.findElement(By.className("mindText")).text +
                                     " / " + mindEntity.findElement(By.className("mindUser")).text +
-                                    " / " + mindEntity.findElement(By.className("mindTime")).text +
+                                    " / " + if (STRICT) mindEntity.findElement(By.className("mindTime")).text else "" +
                                     " / " + mindEntity.findElements(By.className("answerEntity")).map { answerEntity ->
                                 answerEntity.findElement(By.className("answerText")).text +
                                         " / " + mindEntity.findElement(By.className("mindText")).text +
                                         " / " + answerEntity.findElement(By.className("answerUser")).text +
-                                        " / " + answerEntity.findElement(By.className("answerTime")).text
+                                        " / " + if (STRICT) answerEntity.findElement(By.className("answerTime")).text else ""
                             }.toString()
                         }
                         .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")

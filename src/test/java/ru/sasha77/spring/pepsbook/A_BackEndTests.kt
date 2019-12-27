@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint
 import org.springframework.boot.test.context.SpringBootTest
@@ -18,13 +17,12 @@ import org.springframework.test.context.junit4.SpringRunner
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [PepsbookApplication::class])
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 //@TestPropertySource(locations = ["classpath:application-integrationtest.properties"])
-@ActiveProfiles("dev,tst")
+@ActiveProfiles("dev,tst,tst-simple")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
 class ABackEndTests {
     @Autowired lateinit var mvc : MvcMockers
     @Autowired lateinit var tao : TestApplicationObject
-    @Value("\${my.mindsPageSize}") var mindsPageSize : Int = 0
 
     companion object {
         @AfterClass

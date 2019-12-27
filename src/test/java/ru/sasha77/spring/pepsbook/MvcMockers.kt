@@ -140,78 +140,84 @@ open class MvcMockers {
     fun checkDB (name: String, subs : String = "") {
         val currUser = tao.getUserByName(name)
         val token = tokenProvider.createTestToken(currUser.username)
+        checkUsers(name, subs, token = token)
+        checkMinds(name, subs, token = token)
+    }
+    fun checkUsers (name: String,
+                    subs: String = "",
+                    token: String = tokenProvider.createTestToken(tao.getUserByName(name).username)) {
+        val currUser = tao.getUserByName(name)
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/users")
                 .param("subs", subs)
                 .header("Authorization", "Bearer $token"))
-                    .andDo { mvcResult ->
-                        @Suppress("UNCHECKED_CAST")
-                        Assert.assertEquals("Different lists",
-                                tao.actualUsersArray
-                                        .filter { it.user.id != currUser.user.id }
-                                        .filter { it.name.contains(subs,ignoreCase = true) || it.country.contains(subs,ignoreCase = true) }
-                                        .sortedBy { it.user.name }
-                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
-                                JSONArray(mvcResult.response.contentAsString)
-                                        .let {
-                                            // Parse response JSON to compare
-                                            val list = mutableListOf<String>()
-                                            for (i in 0 until it.length()) {
-                                                list.add(JSONObject(it.getString(i)).run {
-                                                    getString("name") + " / " + getString("country")
-                                                })
-                                            }
-                                            list
-                                        }.joinToString("\n")
-                        )
-                    }
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different users",
+                            tao.actualUsersArray
+                                    .filter { it.user.username != currUser.user.username }
+                                    .filter { it.name.contains(subs,ignoreCase = true) || it.country.contains(subs,ignoreCase = true) }
+                                    .sortedBy { it.user.name }
+                                    .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                            JSONArray(mvcResult.response.contentAsString)
+                                    .let {
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until it.length()) {
+                                            list.add(JSONObject(it.getString(i)).run {
+                                                getString("name") + " / " + getString("country")
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/friends")
                 .param("subs", "")
                 .header("Authorization", "Bearer $token"))
-                    .andDo { mvcResult ->
-                        @Suppress("UNCHECKED_CAST")
-                        Assert.assertEquals("Different lists",
-                                tao.actualUsersArray.filter { tstUser ->
-                                    tstUser.user.email != currUser.user.email
-                                            && currUser.friendsNames.any { it == tstUser.user.name } }
-                                        .sortedBy { it.user.name }
-                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
-                                JSONArray(mvcResult.response.contentAsString)
-                                        .let {
-                                            // Parse response JSON to compare
-                                            val list = mutableListOf<String>()
-                                            for (i in 0 until it.length()) {
-                                                list.add(JSONObject(it.getString(i)).run {
-                                                    getString("name") + " / " + getString("country")
-                                                })
-                                            }
-                                            list
-                                        }.joinToString("\n")
-                        )
-                    }
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different friends",
+                            tao.actualUsersArray.filter { tstUser ->
+                                tstUser.user.username != currUser.user.username
+                                        && currUser.friendsNames.any { it == tstUser.user.name } }
+                                    .sortedBy { it.user.name }
+                                    .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                            JSONArray(mvcResult.response.contentAsString)
+                                    .let {
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until it.length()) {
+                                            list.add(JSONObject(it.getString(i)).run {
+                                                getString("name") + " / " + getString("country")
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/mates").param("subs", "")
                 .header("Authorization", "Bearer $token"))
-                    .andDo { mvcResult ->
-                        @Suppress("UNCHECKED_CAST")
-                        Assert.assertEquals("Different lists",
-                                tao.actualUsersArray.filter { tstUser ->
-                                    tstUser.user.email != currUser.user.email
-                                            && currUser.matesNames.any { it == tstUser.user.name } }
-                                        .sortedBy { it.user.name }
-                                        .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
-                                JSONArray(mvcResult.response.contentAsString)
-                                        .let {
-                                            // Parse response JSON to compare
-                                            val list = mutableListOf<String>()
-                                            for (i in 0 until it.length()) {
-                                                list.add(JSONObject(it.getString(i)).run {
-                                                    getString("name") + " / " + getString("country")
-                                                })
-                                            }
-                                            list
-                                        }.joinToString("\n")
-                        )
-                    }
-        checkMinds(name, subs, token = token)
+                .andDo { mvcResult ->
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different mates",
+                            tao.actualUsersArray.filter { tstUser ->
+                                tstUser.user.username != currUser.user.username
+                                        && currUser.matesNames.any { it == tstUser.user.name } }
+                                    .sortedBy { it.user.name }
+                                    .joinToString("\n") { "${it.user.name} / ${it.user.country}" },
+                            JSONArray(mvcResult.response.contentAsString)
+                                    .let {
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until it.length()) {
+                                            list.add(JSONObject(it.getString(i)).run {
+                                                getString("name") + " / " + getString("country")
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
     }
     fun checkMinds (name: String,
                     subs: String,

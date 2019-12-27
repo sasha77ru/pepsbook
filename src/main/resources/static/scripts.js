@@ -274,7 +274,7 @@ function changeView(newActive,toWhat,filter) {
                 "  <div class=\"progress-bar progress-bar-striped progress-bar-animated\" role=\"progressbar\" aria-valuenow=\"75\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width: 75%\"></div>\n" +
                 "</div>"
         }
-    },1000);
+    },3000);
     requestSubMain();
 }
 
@@ -398,6 +398,7 @@ function saveMind(moa,id,parentMind) {
         }
         return
     }
+    subMainReady = false;
     $.ajax("/rest/save"+moa[0].toUpperCase()+moa.slice(1),
         {data:{text : mindTextArea.innerText.replace(/\xa0/g," "), id : id||0, parentMind : parentMind},
             headers:jwtHeader(),method:"POST"})

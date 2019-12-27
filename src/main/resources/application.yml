@@ -54,6 +54,15 @@ spring:
 ---
 
 spring:
+  profiles: tst-simple
+my:
+  mindsPageSize: 2
+  paginatorMaxSize: 8
+  paginatorWide: 1
+
+---
+
+spring:
   profiles: tst
   datasource:
     url: jdbc:h2:mem:pepsbook;DB_CLOSE_ON_EXIT=FALSE
@@ -64,15 +73,20 @@ spring:
     hibernate.ddl-auto: none
     properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
 my:
-  mindsPageSize: 2
-  paginatorMaxSize: 8
-  paginatorWide: 1
   tst:
+    strict: false
     headless: true
     closeBrowser: true
     monkey:
+      feignDB:
+        enabled: random
+        users: 30
+        max-friends: 10
+        minds: 200
+        answers: 5
+
       seeds: 0
       #1,1,1,2,2,2,3,3,3
-      rounds: 10
+      rounds: 20
       steps:  300
       failImmediately: false
