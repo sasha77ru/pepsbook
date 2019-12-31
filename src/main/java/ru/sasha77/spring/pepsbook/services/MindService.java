@@ -42,7 +42,8 @@ public class MindService {
     }
 
     private void tryToCache() {
-        if (!toCache && ((new Date()).getTime() - redisLostDate.getTime()) > time2RetryUseRedis ) toCache = true;
+        if (toCache) return;
+        if (((new Date()).getTime() - redisLostDate.getTime()) > time2RetryUseRedis ) toCache = true;
         try {
             cacheManager.getCache("minds").clear();
         } catch (Exception e) {

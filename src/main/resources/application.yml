@@ -87,6 +87,6 @@ my:
 
       seeds: 0
       #1,1,1,2,2,2,3,3,3
-      rounds: 20
-      steps:  300
+      rounds: 10
+      steps:  100
       failImmediately: false
