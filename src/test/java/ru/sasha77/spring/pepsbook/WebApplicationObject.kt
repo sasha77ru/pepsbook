@@ -54,11 +54,14 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
 
     fun isFriendToCurr (x : TestApplicationObject.TstUser) = tao.isFriend(currUser,x)
     fun isMateToCurr (x : TestApplicationObject.TstUser) = tao.isMate(currUser,x)
+
     private val visibleUnpagedMinds
         get() = tao.actualMindsArray.filter { mind ->
-            mind.text.contains(filter,true) || mind.user.contains(filter,true)
-                    ||  mind.answers.any { it.text.contains(filter,true) }}
-                .sortedByDescending {it.time}
+            (currUser.friendsNames.contains(mind.user) || mind.user == currName) &&
+                    (mind.text.contains(filter,true)
+                    || mind.user.contains(filter,true)
+                    ||  mind.answers.any { it.text.contains(filter,true) })
+        }.sortedByDescending {it.time}
     val numberOfMindsPages
         get() = ((visibleUnpagedMinds.size-0.1) / tao.MINDS_PAGE_SIZE).toInt() + 1
     val visibleMinds
@@ -108,7 +111,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             var exception : Triple<Long,Int,Throwable>? = null
             log.info("$round ====================== seed = $seed")
             if (tao.tstProps.monkey.feignDB.enabled=="yes"
-                    || tao.tstProps.monkey.feignDB.enabled=="random" && rand(2)==1) {
+                    || tao.tstProps.monkey.feignDB.enabled=="random" && rand(5)==0) {
                 vlog("FILL DB WITH DATA")
                 tao.fillDB(randomer = randomer, usedStrings = usedStrings)
             } else tao.clearDB() // filled or empty DB at seed's start

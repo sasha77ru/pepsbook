@@ -10,6 +10,7 @@ import ru.sasha77.spring.pepsbook.models.Mind;
 import ru.sasha77.spring.pepsbook.models.User;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
 import ru.sasha77.spring.pepsbook.services.MindService;
+import ru.sasha77.spring.pepsbook.services.UserService;
 import ru.sasha77.spring.pepsbook.webModels.MindsResponse;
 import ru.sasha77.spring.pepsbook.webModels.UserSimple;
 import ru.sasha77.spring.pepsbook.webModels.UsersResponse;
@@ -27,11 +28,14 @@ import java.util.stream.Collectors;
 @EnableTransactionManagement
 public class RestContr {
     private UserRepository userRepository;
+    private UserService userService;
     private MindService mindService;
 
     RestContr(UserRepository userRepository,
+              UserService userService,
               MindService mindService) {
         this.userRepository = userRepository;
+        this.userService = userService;
         this.mindService = mindService;
     }
 
@@ -86,10 +90,11 @@ public class RestContr {
      */
     @GetMapping(path = "/minds", produces = "application/json")
     public Page<MindsResponse> getMinds(@NotNull Authentication authentication, String subs, Integer page, Integer size) {
-        Page<Mind> pagePage = mindService.loadMinds(subs,page,size);
+        User user = userRepository.findByUsername(authentication.getName());
+        Page<Mind> pagePage = mindService.loadMinds(subs,user,page,size);
         //if such page doesn't exist anymore, return last page
         if (page != null && page != 0 && pagePage.getTotalPages() <= page)
-            pagePage =  mindService.loadMinds(subs,pagePage.getTotalPages()-1,size);
+            pagePage =  mindService.loadMinds(subs,user,pagePage.getTotalPages()-1,size);
         return pagePage.map(it -> new MindsResponse(it,authentication.getName()));
     }
 
@@ -107,8 +112,7 @@ public class RestContr {
         User user = userRepository.findByUsername(principal.getName());
         User friend = userRepository.findById(friend_id).orElse(null);
         if (friend == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return null;}
-        user.getFriends().add(friend);
-        userRepository.save(user);
+        userService.toFriends(user,friend);
         return (user.getMates().contains(friend))?"mate":"notMate";
     }
 
@@ -126,8 +130,7 @@ public class RestContr {
         User user = userRepository.findByUsername(principal.getName());
         User friend = userRepository.findById(friend_id).orElse(null);
         if (friend == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return null;}
-        user.getFriends().remove(friend);
-        userRepository.save(user);
+        userService.fromFriends(user,friend);
         return (user.getMates().contains(friend))?"mate":"notMate";
     }
 

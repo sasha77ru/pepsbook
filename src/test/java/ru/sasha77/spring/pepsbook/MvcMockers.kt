@@ -226,6 +226,7 @@ open class MvcMockers {
                     token: String = tokenProvider.createTestToken(tao.getUserByName(name).username),
                     deceivePage : Int? = page /*to try to get page that doesn't exist*/,
                     log : org.slf4j.Logger? = null) {
+        val currUser = tao.getUserByName(name)
         val timeBefore = System.currentTimeMillis()
         mockMvc.perform(MockMvcRequestBuilders.get("/rest/minds")
                 .param("subs", subs)
@@ -238,9 +239,11 @@ open class MvcMockers {
                     @Suppress("UNCHECKED_CAST")
                     Assert.assertEquals("Different lists",
                             tao.actualMindsArray
-                                    .filter { it.text.contains(subs,true)
+                                    .filter { (currUser.friendsNames.contains(it.user) || it.user == currUser.name) &&
+                                        (it.text.contains(subs,true)
                                             || it.user.contains(subs,true)
-                                            || it.answers.any { answer -> answer.text.contains(subs,true) }}
+                                            || it.answers.any { answer -> answer.text.contains(subs,true) }
+                                            ) }
                                     .sortedByDescending { it.time }
                                     .let { if (page == null || size == null)
                                         it else it.subList(page*size, minOf((page+1) *size,it.size))}

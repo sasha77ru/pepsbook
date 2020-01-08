@@ -26,7 +26,18 @@ public class UserService implements UserDetailsService {
         throw new UsernameNotFoundException("User '" + username + "' not found");
     }
 
-    @CacheEvict(value = "minds",allEntries=true)
+    public void toFriends (User user, User friend) {
+        user.getFriends().add(friend);
+        userRepo.save(user);
+        mindService.clearCache(user);
+    }
+
+    public void fromFriends (User user, User friend) {
+        user.getFriends().remove(friend);
+        userRepo.save(user);
+        mindService.clearCache(user);
+    }
+
     public void deleteAll() {
         userRepo.deleteAll();
         mindService.clearCache();

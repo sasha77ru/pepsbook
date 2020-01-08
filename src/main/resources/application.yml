@@ -19,6 +19,8 @@ spring:
     redis:
       #otherwise reconnect doesnt't work
       cleanup-cron: "*/1 * * * * *"
+  redis:
+    host: localhost
 jwt:
   header: Authorization
   # This token must be encoded using Base64 with mininum 88 Bits (you can type `echo 'secret-key'|base64` on your command line)
@@ -86,7 +88,7 @@ my:
         answers: 5
 
       seeds: 0
-      #1,1,1,2,2,2,3,3,3
-      rounds: 10
-      steps:  100
+      #2,2,2,3,3,3
+      rounds: 5
+      steps:  300
       failImmediately: false

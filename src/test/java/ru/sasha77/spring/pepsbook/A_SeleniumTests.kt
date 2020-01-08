@@ -172,7 +172,6 @@ class ASeleniumTests : ObjWithDriver {
             tao.doAddMind("Porky","Мысля")
             mvc.checkAllDB()
             clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
-            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
             clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Edit mind">
@@ -182,11 +181,10 @@ class ASeleniumTests : ObjWithDriver {
             tao.doChangeMind("Мысля","Мысля поумнее")
             mvc.checkAllDB()
             clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
-            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
             clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
             //<editor-fold desc="Delete mind">
-            clickPaginator(2);pause(For.LOAD);chk.run { wao.mindsPage = 2;wao.what="minds";wao.checkMinds() }
+            clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
             clickDelMind("Hru-hru")
             tao.doRemoveMind("Hru-hru")
             pause(For.LOAD)

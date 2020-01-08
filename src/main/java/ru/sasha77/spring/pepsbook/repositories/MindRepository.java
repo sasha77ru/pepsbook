@@ -15,12 +15,15 @@ public interface MindRepository extends PagingAndSortingRepository<Mind, Integer
 //    @Query(value = "from #{#entityName} m where m.text LIKE %:subs% OR m.user.name LIKE %:subs% order by m.time desc")
     @Query(value = "SELECT * FROM minds m" +
             " JOIN users u ON m.user_id = u.id" +
-            " WHERE m.text LIKE CONCAT('%',:subs,'%')" +
+            " WHERE (EXISTS(SELECT * FROM friendship f WHERE f.user_id = :user_id AND f.friend_id = u.id)" +
+            "    OR m.user_id = :user_id" +
+            " ) AND (" +
+            "       m.text LIKE CONCAT('%',:subs,'%')" +
             "    OR u.name LIKE CONCAT('%',:subs,'%')" +
-            "    OR EXISTS(SELECT * FROM answers a WHERE a.mind_id=m.id AND a.text LIKE CONCAT('%',:subs,'%'))" +
+            "    OR EXISTS(SELECT * FROM answers a WHERE a.mind_id=m.id AND a.text LIKE CONCAT('%',:subs,'%')))" +
             " ORDER BY m.time DESC"
             , nativeQuery=true)
-    Page<Mind> findLike(@Param("subs") String name, Pageable pageable);
+    Page<Mind> findLike(@Param("subs") String subs, @Param("user_id") int userId, Pageable pageable);
 
     Mind findByTextContaining(@Param("subs") String name);
 }
