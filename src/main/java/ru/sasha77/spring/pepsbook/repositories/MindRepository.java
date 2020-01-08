@@ -3,11 +3,9 @@ package ru.sasha77.spring.pepsbook.repositories;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import ru.sasha77.spring.pepsbook.models.Mind;
-import java.util.List;
 
 public interface MindRepository extends PagingAndSortingRepository<Mind, Integer> {
 //  Old variants wo search in answers

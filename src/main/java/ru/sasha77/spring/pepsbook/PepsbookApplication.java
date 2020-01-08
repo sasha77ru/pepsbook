@@ -23,6 +23,5 @@ public class PepsbookApplication {
  */
 
 // Pagination in users
-// See only friends minds
 // Friends-only tick for minds
 // Labels in registration form

@@ -2,7 +2,6 @@ package ru.sasha77.spring.pepsbook
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.cache.annotation.CacheEvict
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import ru.sasha77.spring.pepsbook.TestApplicationObject.TstUser
@@ -107,7 +106,7 @@ class TestApplicationObject (private val usersRepo: UserRepository,
                             feignUsername(rand(8, 12)),
                             mutableSetOf())
                 }.toMutableList()
-                println(actualUsersArray.map { "${it.name}\t${it.username}\t${it.email}" }.joinToString("\n"))
+//                println(actualUsersArray.map { "${it.name}\t${it.username}\t${it.email}" }.joinToString("\n"))
                 // make random friendship bw users
                 if (friendship) {
                     actualUsersArray.forEach { user ->

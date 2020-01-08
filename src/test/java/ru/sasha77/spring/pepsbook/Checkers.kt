@@ -1,12 +1,8 @@
 package ru.sasha77.spring.pepsbook
 
-import org.aspectj.lang.JoinPoint
 import org.junit.Assert
 import org.openqa.selenium.By
-import org.openqa.selenium.JavascriptExecutor
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.ImportResource
 import org.springframework.stereotype.Component
 
 /**

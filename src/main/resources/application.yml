@@ -11,7 +11,7 @@ spring:
     username: myuser
     password: motamota
   cache:
-    type: redis
+    type: ehcache
     redis:
       key-prefix: "pb-cache::"
       time-to-live: 86400000
@@ -89,6 +89,6 @@ my:
 
       seeds: 0
       #2,2,2,3,3,3
-      rounds: 5
+      rounds: 15
       steps:  300
       failImmediately: false
