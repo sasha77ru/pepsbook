@@ -72,7 +72,7 @@
       "description": "Number of users to feign."
     },
     {
-      "name": "my.tst.monkey.feignDB.max-friends",
+      "name": "my.tst.monkey.feignDB.friendships",
       "type": "java.lang.Integer",
       "description": "Max number of friends per user."
     },

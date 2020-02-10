@@ -4,6 +4,13 @@ target/
 !**/src/main/**
 !**/src/test/**
 
+### node ###
+node_modules
+node
+built
+dump.rdb
+package-lock.json
+
 ### STS ###
 .apt_generated
 .classpath

@@ -45,8 +45,9 @@ public class RestContr {
      * @throws IOException
      */
     @GetMapping(path = "/getUser", produces = "application/json")
-    public UserSimple getUser(@NotNull Principal principal) {
+    public UserSimple getUser(@NotNull Principal principal, HttpServletResponse response) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
+        if (user == null) {response.sendError(HttpServletResponse.SC_FORBIDDEN);return null;}
         return new UserSimple(user);
     }
 
@@ -93,7 +94,7 @@ public class RestContr {
         User user = userRepository.findByUsername(authentication.getName());
         Page<Mind> pagePage = mindService.loadMinds(subs,user,page,size);
         //if such page doesn't exist anymore, return last page
-        if (page != null && page != 0 && pagePage.getTotalPages() <= page)
+        if (page != null && page != 0 && pagePage.getTotalPages() <= page && pagePage.getTotalPages() != 0)
             pagePage =  mindService.loadMinds(subs,user,pagePage.getTotalPages()-1,size);
         return pagePage.map(it -> new MindsResponse(it,authentication.getName()));
     }
@@ -144,7 +145,7 @@ public class RestContr {
     @PostMapping(path = "/saveMind")
     @SuppressWarnings("Duplicates")
     public void saveMind(Principal principal,
-                           String text,
+                           @RequestParam String text,
                            Integer id,
                            HttpServletResponse response) throws IOException {
         Mind mind = (id == null || id == 0) ?
@@ -164,7 +165,7 @@ public class RestContr {
     @DeleteMapping(path = "/removeMind")
     @SuppressWarnings("Duplicates")
     public void removeMind(Authentication authentication,
-                           Integer id,
+                           @RequestParam Integer id,
                            HttpServletResponse response) throws IOException {
         Mind mind = mindService.getMind(id);
         if (mind == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}
@@ -183,7 +184,7 @@ public class RestContr {
     @PostMapping(path = "/saveAnswer")
     @SuppressWarnings("Duplicates")
     public void saveAnswer(Principal principal,
-                           String text,
+                           @RequestParam String text,
                            Integer id,
                            @RequestParam Integer parentMind,
                            HttpServletResponse response) throws IOException {
@@ -206,7 +207,7 @@ public class RestContr {
     @DeleteMapping(path = "/removeAnswer")
     @SuppressWarnings("Duplicates")
     public void removeAnswer(Authentication authentication,
-                             Integer id,
+                             @RequestParam Integer id,
                              HttpServletResponse response) throws IOException {
         Answer answer = mindService.getAnswer(id);
         if (answer == null) {response.sendError(HttpServletResponse.SC_NOT_FOUND);return;}

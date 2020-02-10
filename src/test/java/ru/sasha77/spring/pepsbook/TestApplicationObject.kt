@@ -110,7 +110,7 @@ class TestApplicationObject (private val usersRepo: UserRepository,
                 // make random friendship bw users
                 if (friendship) {
                     actualUsersArray.forEach { user ->
-                        repeat (randZero(tstProps.monkey.feignDB.maxFriends)) {
+                        repeat (tstProps.monkey.feignDB.friendships) {
                             var name : String
                             do {
                                 name = actualUsersArray.random(randomer).name
@@ -126,7 +126,7 @@ class TestApplicationObject (private val usersRepo: UserRepository,
                             TstMind(feignString(400),actualUsersArray.random(randomer).name,mockDate())
                         )
                     }
-                    repeat (randZero(tstProps.monkey.feignDB.answers)) {
+                    repeat (tstProps.monkey.feignDB.answers) {
                         actualMindsArray.random(randomer).run {
                             answers.add(TstAnswer(feignString(400), this,
                                 actualUsersArray.random(randomer).name, mockDate()))

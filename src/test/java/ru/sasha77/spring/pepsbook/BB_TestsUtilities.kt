@@ -10,15 +10,25 @@ import ru.sasha77.spring.pepsbook.MyUtilities.myDate
 import java.lang.RuntimeException
 import java.util.*
 
+//<editor-fold desc="Some funs to compare strings from db and from page">
+fun dbRegExp (s : String) = s.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+        .replace(Regex("\\[ "), "[")
+fun pageRegExp (s : String) = s.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
+        .replace(Regex("\\[ "), "[")
+//        .replace("&lt;","<") // because noTag is on duty
+//        .replace("&gt;",">")
+fun myCompare (dbString : String, pageString : String) = dbRegExp(dbString) == pageRegExp(pageString)
+//</editor-fold>
+
 enum class For {LOAD,SEE,REPEAT,LONG_LOAD}
 fun pause (x : For) = Thread.sleep(when (x) {
-    For.LOAD -> 300
+    For.LOAD -> 600 /*todo debug 300*/
     For.LONG_LOAD -> 1000
     For.SEE -> 0
     For.REPEAT -> 100})
 
 /**
- * Pause until predicate it truw. Try it every For.REPEAT ms
+ * Pause until predicate is true. Try it every For.REPEAT ms
  */
 fun pause (attempts : Int = 50, predicate : () -> Boolean) {
     pause(For.LOAD)
@@ -66,7 +76,7 @@ class TstProps {
         open class FeignDB {
             var enabled = "no"
             var users = 30
-            var maxFriends = 10
+            var friendships = 10
             var minds = 200
             var answers = 300
         }

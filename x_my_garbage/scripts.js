@@ -353,7 +353,7 @@ function placeCaretAtEnd(el) {
  * @param startText Text, that will be inserted in the beginning. e.g. "@vasya " to write answers like "@vasya blablabla"
  * @param mindId undefined if new mind
  */
-function openNewMindWindow(moa, menuThis, mindId, parentMind, startText) {
+function openNewMindWindow (moa, menuThis, mindId, parentMind, startText) {
     if (document.getElementById("mindWindow")) return; //to not open second window
     var win = document.createElement("div");
     if (startText==='@') startText += $(menuThis).closest("."+moa+"Entity").find("."+moa+"User")[0].innerHTML+"&nbsp;"; //CRUTCH: user is got from the page

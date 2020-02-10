@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component
  */
 @Component
 open class Checkers {
+    private fun String.dbRegExp() : String = dbRegExp(this)
+    private fun String.pageRegExp() : String = pageRegExp(this)
     @Value("\${my.tst.strict}") var STRICT = true
     open fun WebApplicationObject.checkMinds() {
         Assert.assertEquals("Different Minds",
@@ -18,9 +20,7 @@ open class Checkers {
                     mind.answers.sortedBy { it.time }.map {answer -> 
                         "${answer.text} / ${mind.text} / ${answer.user} / ${if (STRICT) MyUtilities.myDate(answer.time) else ""}"}
                     }"
-                }
-                        .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                        .replace(Regex("\\[ "), "[")
+                }.dbRegExp()
                 ,
                 driver.findElements(By.className("mindEntity"))
                         .joinToString("\n") { mindEntity ->
@@ -33,9 +33,7 @@ open class Checkers {
                                         " / " + answerEntity.findElement(By.className("answerUser")).text +
                                         " / " + if (STRICT) answerEntity.findElement(By.className("answerTime")).text else ""
                             }.toString()
-                        }
-                        .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
-                        .replace(Regex("\\[ "), "[")
+                        }.pageRegExp()
         )
     }
     open fun WebApplicationObject.checkUsers() {
@@ -43,7 +41,7 @@ open class Checkers {
                 visibleUsers
                         .sortedBy { it.name }
                         .joinToString("\n") { "${it.name} / ${it.country} / ${isFriendToCurr(it)} / ${isMateToCurr(it)}" }
-                        .replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
+                        .dbRegExp()
                 ,
                 driver.findElements(By.className("userEntity"))
                         .joinToString("\n") { userEntity ->
@@ -53,7 +51,7 @@ open class Checkers {
                                     || userEntity.findElements(By.className("badge-primary")).size > 0) +
                                     " / " + (userEntity.findElements(By.className("badge-success")).size > 0
                                     || userEntity.findElements(By.className("badge-secondary")).size > 0)
-                        }.replace(Regex("^ +| +(?= )| +$", RegexOption.MULTILINE), "")
+                        }.pageRegExp()
         )
     }
 }

@@ -1,0 +1,42 @@
+@media (min-width: 768px) {
+    html {font-size: 36px;}
+}
+@media (min-width: 1200px) {
+    html {font-size: 16px;}
+}
+#mindWindow {
+    position:   fixed;
+    left:       20px;
+    top:        20px;
+    right:      20px;
+}
+#mindTextArea {
+    background-color: white;
+    min-height: 5em;
+    max-height: 30em;
+    overflow: auto;
+}
+#mainFilter {
+    margin:         1em auto;
+}
+#subMain {
+    width:          95%;
+    margin:         1em auto;
+}
+.mindDropDown {
+    display:        inline;
+}
+.forDropDown {
+    position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(0px, 40px, 0px);
+}
+.answerEntity {
+    margin-left:    2em;
+}
+.modalWindow {
+    max-width:  90%;
+}
+#newMind {
+    display:    block;
+    width:      40%;
+    margin:     1em auto;
+}

@@ -43,55 +43,35 @@ open class Clickers {
     }
     open fun ObjWithDriver.clickUserToFriends (userName: String) {
         driver.findElements(By.className("userEntity"))
-                .find {
-                    it.findElement(By.className("userName")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            userName.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                .find {myCompare(userName,it.findElement(By.className("userName")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("toFriends")).click()
         }
     }
     open fun ObjWithDriver.clickUserFromFriends (userName: String) {
         driver.findElements(By.className("userEntity"))
-                .find {
-                    it.findElement(By.className("userName")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            userName.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                .find {myCompare(userName,it.findElement(By.className("userName")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("fromFriends")).click()
         }
     }
     open fun ObjWithDriver.clickEditMind (mindText: String) {
         driver.findElements(By.className("mindEntity"))
-                .find {
-                    it.findElement(By.className("mindText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                .find {myCompare(mindText,it.findElement(By.className("mindText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("editMind")).click()
         }
     }
     open fun ObjWithDriver.clickDelMind (mindText: String) {
         driver.findElements(By.className("mindEntity"))
-                .find {
-                    it.findElement(By.className("mindText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                .find {myCompare(mindText,it.findElement(By.className("mindText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("delMind")).click()
         }
     }
     open fun ObjWithDriver.clickAnswerMind (mindText: String) {
         driver.findElements(By.className("mindEntity"))
-                .find {
-                    it.findElement(By.className("mindText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            mindText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                .find {myCompare(mindText,it.findElement(By.className("mindText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("answerMind")).click()
         }
@@ -99,10 +79,7 @@ open class Clickers {
     open fun ObjWithDriver.clickEditAnswer (answerText: String) {
         driver.findElements(By.className("answerEntity"))
                 .find {
-                    it.findElement(By.className("answerText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                    myCompare(answerText,it.findElement(By.className("answerText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("editAnswer")).click()
         }
@@ -110,10 +87,7 @@ open class Clickers {
     open fun ObjWithDriver.clickDelAnswer (answerText: String) {
         driver.findElements(By.className("answerEntity"))
                 .find {
-                    it.findElement(By.className("answerText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                    myCompare(answerText,it.findElement(By.className("answerText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("delAnswer")).click()
         }
@@ -121,16 +95,14 @@ open class Clickers {
     open fun ObjWithDriver.clickAnswerAnswer (answerText: String) {
         driver.findElements(By.className("answerEntity"))
                 .find {
-                    it.findElement(By.className("answerText")).text
-                            .replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"") ==
-                            answerText.replace(Regex("^ +| +(?= )| +$",RegexOption.MULTILINE),"")
-                }!!.run {
+                    myCompare(answerText,it.findElement(By.className("answerText")).text)}!!.run {
             findElement(By.className("dropdown-toggle")).click()
             findElement(By.className("answerAnswer")).click()
         }
     }
     open fun ObjWithDriver.clickLogout () {
-        (driver as JavascriptExecutor).executeScript("logOff();")
+//        (driver as JavascriptExecutor).executeScript("logOff();")
+        (driver as JavascriptExecutor).executeScript("localStorage.removeItem(\"jwtToken\");document.location.assign(\"/logout\")")
     }
     open fun ObjWithDriver.typeFilter (filterText: String, clear : Boolean = true) {
         driver.findElement(By.id("mainFilter")).run {
@@ -142,7 +114,7 @@ open class Clickers {
         driver.findElement(By.id("newMind")).click()
     }
     open fun ObjWithDriver.clickCloseMind () {
-        driver.findElement(By.id("closeMind")).click()
+        driver.findElement(By.id("mindWindow")).findElement(By.className("close")).click()
     }
     open fun ObjWithDriver.typeMindText (mindText: String, clear : Boolean = true) {
         driver.findElement(By.id("mindTextArea")).run { if (clear) clear();sendKeys(mindText) }

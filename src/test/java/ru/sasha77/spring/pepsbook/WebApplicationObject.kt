@@ -120,8 +120,8 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             var f = loginForm() as? () -> Any
             try {
                 while (step++ < steps) {
-                if (step >= 10000) {
-                    println("JOPA") // place for a breakpoint on certain step
+                if (step >= 100000) {
+                    println("JOPA") // place for a breakpoint on a certain step
 //                    Thread.sleep(10000)
                 }
 
@@ -276,10 +276,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             //if mindsPage doesn't exist anymore (e.g. deleted last mind) it should be the last one
             if (mindsPage != 0 && numberOfMindsPages <= mindsPage) mindsPage = numberOfMindsPages - 1
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
-            what = js.executeScript("return nowInMain;") as String
-            if (what == "minds") { // If minds in subMain, check page about minds
-                with (chk) {checkMinds()}
-            }
+            with (chk) {checkMinds()}
             return ::mainPage
         }
 
@@ -291,10 +288,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         private fun users () : Any? {
             stepVlog("users what=$what filter=$filter currUser=${currUser.name}")
             pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
-            what = js.executeScript("return nowInMain;") as String
-            if (what in listOf("users","friends","mates")) { // If "users","friends","mates" in subMain, check page about users
-                with (chk) {checkUsers()}
-            }
+            with (chk) {checkUsers()}
             return ::mainPage
         }
 
@@ -345,7 +339,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                 { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
                 { clickLogout()     ;changeWhat("")         ;::loginForm}.also { repeat(if (step < 10) 60 else 10)  {_ -> caseMatrix.add(it)} }
                 if (what == "minds" || what == "users") {
-                    { typeFilter(syLIST.random(randomer).also { filter = it })
+                    { typeFilter(syLIST.random(randomer).also { filter = it });pause(For.LOAD)
                         if (what == "minds") mindsPage=0;whatLambda}
                             .also { repeat(5)  { _ -> caseMatrix.add(it)} } }
                 if (what == "minds") {
@@ -379,8 +373,6 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                     //<editor-fold desc="Pagination">
                     if (numberOfMindsPages > 1) {
                         { currMind = null;mindWinWhich = "mind"
-                            pause {runCatching {js.executeScript("return subMainReady;") as Boolean}.getOrDefault(false)}
-                            what = js.executeScript("return nowInMain;") as String
                             if (numberOfMindsPages > tao.PAGINATOR_MAX_SIZE)
                                 // boiled mode of paginator. we test only pressings to prev,first,last,next
                                 when (val r = rand(4)-3) {

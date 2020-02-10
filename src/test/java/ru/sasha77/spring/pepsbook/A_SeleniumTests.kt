@@ -126,13 +126,14 @@ class ASeleniumTests : ObjWithDriver {
         tao.fillDB(friendship = false)
         login("porky","pig")
         with(clk) {
+            pause(For.LOAD)
             clickMainUsers()
             mvc.checkAllDB()
             chk.run { wao.what="users";wao.checkUsers() }
             //<editor-fold desc="Add users to friends">
-            clickUserToFriends("Pluto");tao.doToFriends("Porky","Pluto")
-            clickUserToFriends("Luntik");tao.doToFriends("Porky","Luntik")
-            clickUserToFriends("Masha");tao.doToFriends("Porky","Masha")
+            clickUserToFriends("Pluto");tao.doToFriends("Porky","Pluto");pause(For.LOAD)
+            clickUserToFriends("Luntik");tao.doToFriends("Porky","Luntik");pause(For.LOAD)
+            clickUserToFriends("Masha");tao.doToFriends("Porky","Masha");pause(For.LOAD)
             pause(For.LOAD)
             mvc.checkAllDB()
             chk.run { wao.what="users";wao.checkUsers() }
@@ -209,6 +210,48 @@ class ASeleniumTests : ObjWithDriver {
         }
     }
 
+
+    @Test fun uiTest003_Minds_2 () {
+        //Works only with my.mindsPageSize: 2 !!!!!!!!!!!!!
+        tao.fillDB()
+        login("masha", "child")
+        with(clk) {
+            //<editor-fold desc="Submit mind">
+            (2..4).forEach {
+                clickNewMind()
+                typeMindText("Мысля $it")
+                submitMind();pause(For.LOAD)
+                tao.doAddMind("Masha", "Мысля $it")
+                //check if after adding a new mind page goes to 0
+                chk.run { wao.mindsPage = 0;wao.what = "minds";wao.checkMinds() }
+                if (it > 2) {
+                    clickPaginator(1);pause(For.LOAD)
+                    chk.run { wao.mindsPage = 1;wao.what = "minds";wao.checkMinds() }
+                }
+            }
+            mvc.checkAllDB()
+            //</editor-fold>
+            //<editor-fold desc="Edit mind">
+            clickEditMind("Мысля 2")
+            typeMindText(" поумнее", clear = false)
+            submitMind();pause(For.LOAD)
+            tao.doChangeMind("Мысля 2", "Мысля 2 поумнее")
+            mvc.checkAllDB()
+            //</editor-fold>
+            clickPaginator(1);pause(For.LOAD)
+
+            clickDelMind("Понятненько")
+            tao.doRemoveMind("Понятненько")
+            pause(For.LOAD)
+            clickDelMind("Мысля 2 поумнее")
+            tao.doRemoveMind("Мысля 2 поумнее")
+            pause(For.LOAD)
+            //check that if empty page goes to previous
+            chk.run { wao.mindsPage = 0;wao.what = "minds";wao.checkMinds() }
+            mvc.checkAllDB()
+        }
+    }
+
     @Test fun uiTest004_Answers() {
         tao.fillDB()
         login("masha","child")
@@ -244,7 +287,7 @@ class ASeleniumTests : ObjWithDriver {
             //</editor-fold>
             //<editor-fold desc="Delete answer">
             clickDelAnswer("Хохохо - ого")
-            tao.doRemoveAnswer("Хохохо - ого",mindText)
+            tao.doRemoveAnswer("Хохохо - ого",mindText);pause(For.LOAD)
             mvc.checkAllDB()
             chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
