@@ -4,55 +4,16 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 import {ajax, noTag, removeJwtToken} from "./utils";
-import {SubMain} from './submain.js'
-import {mainMenuIds,loc} from './config.js'
+import {SubMain} from './SubMain/SubMain.js'
+import {loc} from './config.js'
 import {connect, Provider} from "react-redux";
 import {configureStore} from "./redux/configureStore";
 import {ajaxDataAction} from "./redux/actionCreators";
-
-class MainMenuItem extends React.Component {
-    static propTypes = {
-        what    : PropTypes.string.isRequired,
-        props   : PropTypes.exact({ //MainMenuItem receive all props of MainMenu as is
-            switchTo    : PropTypes.func.isRequired,
-            nowInMain   : PropTypes.string.isRequired,
-        }).isRequired,
-    }
-    handleClick = (e) => {
-        e.preventDefault()
-        this.props.props.switchTo(this.props.what)
-    }
-    render () {
-        return (
-            <a className={this.props.props.nowInMain === this.props.what ? "nav-link active" : "nav-link"}
-               id={mainMenuIds[this.props.what]}
-               href={"#"+loc.mainMenuTexts[this.props.what]}
-               onClick={this.handleClick}>{loc.mainMenuTexts[this.props.what]}</a>
-        )
-    }
-}
-
-class MainMenu extends React.Component {
-    static propTypes = {
-        switchTo    : PropTypes.func.isRequired,
-        nowInMain   : PropTypes.oneOf(["minds","users","friends","mates"]).isRequired,
-    }
-    render() {
-        return (
-            <ul className="navbar-nav mr-auto" id="menuBar">
-                {Object.keys(mainMenuIds).map((i) => {
-                    return (<li className="nav-item" key={i}>
-                        <MainMenuItem key={i} what={i} props={this.props}/>
-                    </li>)
-                })}
-            </ul>
-        )
-    }
-}
+import {MainMenu} from "./MainMenu/MainMenu";
 
 const App = connect(null,dispatch => ({
     fetchData: (...args) => dispatch(ajaxDataAction(...args))
-}))(class extends React.Component {
+}))(class extends React.PureComponent {
         static propTypes = {
             fetchData   : PropTypes.func.isRequired,
         }

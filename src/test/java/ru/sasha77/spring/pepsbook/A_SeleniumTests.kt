@@ -262,7 +262,7 @@ class ASeleniumTests : ObjWithDriver {
             clickAnswerMind(mindText)
             typeMindText("Хохохо")
             submitMind()
-            tao.doAddAnswer("Masha","Хохохо", mindText)
+            tao.doAddAnswer("Masha","Хохохо", mindText);pause(For.LOAD)
             mvc.checkAllDB()
             chk.run { wao.what="minds";wao.checkMinds() }
             pause(For.LOAD)
@@ -271,7 +271,7 @@ class ASeleniumTests : ObjWithDriver {
             clickEditAnswer("Хохохо")
             typeMindText(" - ого",false)
             submitMind()
-            tao.doChangeAnswer("Хохохо - ого", mindText, "Хохохо")
+            tao.doChangeAnswer("Хохохо - ого", mindText, "Хохохо");pause(For.LOAD)
             mvc.checkAllDB()
             chk.run { wao.what="minds";wao.checkMinds() }
             pause(For.LOAD)
