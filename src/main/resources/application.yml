@@ -90,6 +90,6 @@ my:
       seeds: 0
       #6062440044954098445
       #2,2,2,3,3,3
-      rounds: 10
+      rounds: 20
       steps:  100
-      failImmediately: true
+      failImmediately: false

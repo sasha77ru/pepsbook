@@ -1,6 +1,4 @@
-'use strict';
-
-import React from 'react'
+import React, {memo, useEffect, useState} from 'react'
 import PropTypes from 'prop-types'
 import {connect} from "react-redux"
 import {loc, WAIT_BEFORE_SUBMIT_FILTER} from "../config";
@@ -9,60 +7,41 @@ import {Minds} from "./Minds/Minds";
 import {Users} from "./Users/Users";
 import {Paginator} from "./Paginator";
 
-export const SubMain = connect(state => ({
-    isLoaded: state.isLoaded,
-    data    : state.data,
-}),dispatch => ({
-    fetchData: (...args) => dispatch(ajaxDataAction(...args))
-}))(class SubMain extends React.PureComponent {
-    static propTypes = {
-        nowInMain   : PropTypes.string.isRequired,
-        isLoaded    : PropTypes.bool,
-        data        : PropTypes.any, // sometimes it's null
-    }
-    constructor(props) {
-        super(props);
-        this.state = {page : props.page}
-        this.y = null // scroll position
-    }
+export let SubMain = props => {
+    const [state,setMyState] = useState({page : props.page})
+    const setState = (x) => {setMyState({...state,...x})}
+    const [y] = useState({value : null})
 
     /** Remember scroll position */
-    getSnapshotBeforeUpdate(prevProps, prevState) {
-        if (!this.props.isLoaded) this.y = window.pageYOffset
-        return null
-    }
-
-    /** Rstor scroll position */
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.y !== null) window.scrollTo(0,this.y)
-    }
+    if (!props.isLoaded) y.value = window.pageYOffset
+    useEffect(() => {if (y.value !== null) window.scrollTo(0,y.value)})
 
     /** Change the pages and refresh it. Eventual page number will be gotten from Rest */
-    setPage = (page) => {
-        this.freshPage(page)
+    const setPage = (page) => {
+        freshPage(page)
     }
     /** Refreshes the page. Eventual page number will be gotten from Rest */
-    freshPage = (page) => {
-        page = page!==undefined ? page : this.state.page
+    const freshPage = (page) => {
+        page = page!==undefined ? page : state.page
         let filter = ("mainFilter" in window) ? mainFilter.value : ""
-        this.props.fetchData(this.props.nowInMain,{subs:filter, page:page})
+        props.fetchData(props.nowInMain,{subs:filter, page:page})
     }
-    onChangeFilter = () => {
-        this.timer && clearTimeout(this.timer)
-        this.timer = setTimeout(() => this.freshPage(0),WAIT_BEFORE_SUBMIT_FILTER)
+    const onChangeFilter = () => {
+        window.filterTimer && clearTimeout(window.filterTimer)
+        window.filterTimer = setTimeout(() => freshPage(0),WAIT_BEFORE_SUBMIT_FILTER)
     }
     /** Shows the filter for "minds" and "users" only. Not for "friends" and "mates" */
-    filter () {
-        if (this.props.nowInMain === "minds" || this.props.nowInMain === "users") {
+    const filter = () => {
+        if (props.nowInMain === "minds" || props.nowInMain === "users") {
             return <input className="form-control form-control-lg" type="text" placeholder={loc.filterPlaceHolder}
                           id="mainFilter"
-                          onKeyUp={this.onChangeFilter}/>
+                          onKeyUp={onChangeFilter}/>
         } else return null
     }
     /** Renders SubMain body depends on nowInMain */
-    subSub () {
+    const subSub = () => {
         subMainReady = false
-        if (!this.props.isLoaded) return null
+        if (!props.isLoaded) return null
         subMainReady = true // sets testing global var
         {/*<>*/}
         {/*<div style={{textAlign: "center"}}>*/}
@@ -75,27 +54,38 @@ export const SubMain = connect(state => ({
         {/*    </div>*/}
         {/*</div>*/}
         {/*</>*/}
-        let {nowInMain,data} = this.props
+        let {nowInMain,data} = props
         switch (nowInMain) {
             case "minds"    :
-                return <Minds data={data} freshPage={this.freshPage}/>
+                return <Minds data={data} freshPage={freshPage}/>
             case "users"    :
-                return <Users what={nowInMain} data={data} freshPage={this.freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
             case "friends"  :
-                return <Users what={nowInMain} data={data} freshPage={this.freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
             case "mates"    :
-                return <Users what={nowInMain} data={data} freshPage={this.freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
         }
     }
-    render () {
-        this.state.page = this.props.data.number
-        return <div id="subMain">
-            {this.filter()}
-            {(this.props.nowInMain === "minds" && this.props.data.totalPages > 1)?<Paginator data={this.props.data} setPage={this.setPage}/>:""}
-            {this.subSub()}
-            {(this.props.nowInMain === "minds" && this.props.data.totalPages > 1)?<Paginator data={this.props.data} setPage={this.setPage}/>:""}
-        </div>
-    }
-})
+    
+    state.page = props.data.number
+    return <div id="subMain">
+        {filter()}
+        {(props.nowInMain === "minds" && props.data.totalPages > 1)?<Paginator data={props.data} setPage={setPage}/>:""}
+        {subSub()}
+        {(props.nowInMain === "minds" && props.data.totalPages > 1)?<Paginator data={props.data} setPage={setPage}/>:""}
+    </div>
+}
+SubMain.propTypes = {
+    nowInMain   : PropTypes.string.isRequired,
+    isLoaded    : PropTypes.bool,
+    data        : PropTypes.any, // sometimes it's null
+}
+// noinspection JSValidateTypes
+SubMain = React.memo(connect(state => ({
+    isLoaded: state.isLoaded,
+    data    : state.data,
+}),dispatch => ({
+    fetchData: (...args) => dispatch(ajaxDataAction(...args))
+}))(SubMain))
 
 

@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Hides all > and <
  * Became unused with React

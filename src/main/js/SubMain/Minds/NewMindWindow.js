@@ -1,13 +1,12 @@
-import React, {Component} from "react";
+import React, {PureComponent} from "react";
 import PropTypes from "prop-types";
 import {ajax, placeCaretAtEnd} from "../../utils";
 import {loc, restPrefix} from "../../config";
 import {Alert, Button, Modal} from "react-bootstrap";
 
 /** Renders modalWindow to create and edit minds and answers */
-export class NewMindWindow extends Component {
+export class NewMindWindow extends PureComponent {
     static propTypes = {
-        setNewMindWindow: PropTypes.func,
         freshPage: PropTypes.func,
     }
 
