@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import PropTypes from "prop-types";
 
 /** Renders a paginator according to data from Rest*/
@@ -64,4 +64,4 @@ Paginator.propTypes = {
     setPage: PropTypes.func,
 }
 // noinspection JSValidateTypes
-Paginator = React.memo(Paginator)
+Paginator = memo(Paginator)

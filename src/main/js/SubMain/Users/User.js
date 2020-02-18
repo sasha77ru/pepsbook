@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
 import {loc, restPrefix} from "../../config";
@@ -73,4 +73,4 @@ User.propTypes = {
     }).isRequired,
 }
 // noinspection JSValidateTypes
-User = React.memo(User)
+User = memo(User)

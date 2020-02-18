@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {memo} from 'react'
 import {loc} from "../../config";
 import {User} from "./User";
 
@@ -17,4 +17,4 @@ export let Users = props => {
     </table>
 }
 // noinspection JSValidateTypes
-Users = React.memo(Users)
+Users = memo(Users)

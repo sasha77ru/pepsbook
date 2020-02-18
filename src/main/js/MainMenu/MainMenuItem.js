@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {loc, mainMenuIds} from "../config";
 
@@ -20,4 +20,4 @@ MainMenuItem.propTypes = {
     nowInMain:  PropTypes.string.isRequired,
 }
 // noinspection JSValidateTypes
-MainMenuItem = React.memo(MainMenuItem)
+MainMenuItem = memo(MainMenuItem)

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {mainMenuIds} from "../config";
 import {MainMenuItem} from "./MainMenuItem";
@@ -19,4 +19,4 @@ MainMenu.propTypes = {
     nowInMain: PropTypes.oneOf(["minds", "users", "friends", "mates"]).isRequired,
 }
 // noinspection JSValidateTypes
-MainMenu = React.memo(MainMenu)
+MainMenu = memo(MainMenu)

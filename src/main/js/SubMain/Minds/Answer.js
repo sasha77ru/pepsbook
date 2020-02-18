@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
 import {loc, restPrefix} from "../../config";
@@ -66,4 +66,4 @@ Answer.propTypes = {
     freshPage: PropTypes.func,
 }
 // noinspection JSValidateTypes
-Answer = React.memo(Answer)
+Answer = memo(Answer)

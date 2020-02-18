@@ -66,7 +66,7 @@ export let SubMain = props => {
                 return <Users what={nowInMain} data={data} freshPage={freshPage}/>
         }
     }
-    
+
     state.page = props.data.number
     return <div id="subMain">
         {filter()}
@@ -81,7 +81,7 @@ SubMain.propTypes = {
     data        : PropTypes.any, // sometimes it's null
 }
 // noinspection JSValidateTypes
-SubMain = React.memo(connect(state => ({
+SubMain = memo(connect(state => ({
     isLoaded: state.isLoaded,
     data    : state.data,
 }),dispatch => ({
