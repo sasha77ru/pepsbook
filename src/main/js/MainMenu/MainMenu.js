@@ -1,9 +1,9 @@
 import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {mainMenuIds} from "../config";
-import {MainMenuItem} from "./MainMenuItem";
+import MainMenuItem from "./MainMenuItem";
 
-export let MainMenu = props => {
+const MainMenu = props => {
     return (
         <ul className="navbar-nav mr-auto" id="menuBar">
             {Object.keys(mainMenuIds).map((i) => {
@@ -18,5 +18,4 @@ MainMenu.propTypes = {
     switchTo: PropTypes.func.isRequired,
     nowInMain: PropTypes.oneOf(["minds", "users", "friends", "mates"]).isRequired,
 }
-// noinspection JSValidateTypes
-MainMenu = memo(MainMenu)
+export default memo(MainMenu)

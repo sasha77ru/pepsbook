@@ -5,7 +5,7 @@ import {loc, restPrefix} from "../../config";
 import {Alert, Button, Modal} from "react-bootstrap";
 
 /** Renders modalWindow to create and edit minds and answers */
-export let NewMindWindow = (props) => {
+const NewMindWindow = (props) => {
     const [state,setMyState] = useState({
         show:   false, // is modal active
         error:  false, // should we render the error banner
@@ -90,5 +90,4 @@ NewMindWindow.propTypes = {
     freshPage:  PropTypes.func,
     setONMWFun: PropTypes.func,
 }
-// noinspection JSValidateTypes
-NewMindWindow = memo(NewMindWindow)
+export default (NewMindWindow)

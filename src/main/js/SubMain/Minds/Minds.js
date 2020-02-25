@@ -2,10 +2,10 @@ import React, {memo, useState} from 'react'
 import {loc} from "../../config";
 import {Button} from "react-bootstrap";
 import PropTypes from "prop-types";
-import {Mind} from "./Mind";
-import {NewMindWindow} from "./NewMindWindow";
+import Mind from "./Mind";
+import NewMindWindow from "./NewMindWindow";
 
-export let Minds = props => {
+const Minds = props => {
     const [state] = useState({onmwFun : null})
     const handleNewMind = () => {
         window.scrollTo(0, 0)
@@ -26,5 +26,4 @@ export let Minds = props => {
 Minds.propTypes = {
     freshPage: PropTypes.func.isRequired,
 }
-// noinspection JSValidateTypes
-Minds = memo(Minds)
+export default memo(Minds)

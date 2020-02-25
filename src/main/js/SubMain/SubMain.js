@@ -3,11 +3,11 @@ import PropTypes from 'prop-types'
 import {connect} from "react-redux"
 import {loc, WAIT_BEFORE_SUBMIT_FILTER} from "../config";
 import {ajaxDataAction} from "../redux/actionCreators";
-import {Minds} from "./Minds/Minds";
-import {Users} from "./Users/Users";
-import {Paginator} from "./Paginator";
+import Minds from "./Minds/Minds";
+import Users from "./Users/Users";
+import Paginator from "./Paginator";
 
-export let SubMain = props => {
+const SubMain = props => {
     const [state,setMyState] = useState({page : props.page})
     const setState = (x) => {setMyState({...state,...x})}
     const [y] = useState({value : null})
@@ -80,12 +80,11 @@ SubMain.propTypes = {
     isLoaded    : PropTypes.bool,
     data        : PropTypes.any, // sometimes it's null
 }
-// noinspection JSValidateTypes
-SubMain = memo(connect(state => ({
+export default connect(state => ({
     isLoaded: state.isLoaded,
     data    : state.data,
 }),dispatch => ({
     fetchData: (...args) => dispatch(ajaxDataAction(...args))
-}))(SubMain))
+}))(SubMain)
 
 

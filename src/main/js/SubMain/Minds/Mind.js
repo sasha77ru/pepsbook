@@ -1,10 +1,10 @@
 import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
-import {Answer} from "./Answer"
+import Answer from "./Answer"
 import {loc, restPrefix} from "../../config";
 
-export let Mind = (props) => {
+const Mind = (props) => {
     const handleClickAnswer = e => {
         e.preventDefault()
         props.openNewMindWindow("answer", props.mind)
@@ -42,7 +42,8 @@ export let Mind = (props) => {
             </span>
         )
     }
-    let {mind} = props;
+    let {mind} = props
+    renderLog += "Mind\n"
     return (
         <div className={"card mb-3 mindEntity " + (mind.isAuthor ? "border-primary" : "border-light")}>
             <div className="card-header">
@@ -73,5 +74,4 @@ Mind.propTypes = {
     openNewMindWindow: PropTypes.func.isRequired,
     freshPage: PropTypes.func,
 }
-// noinspection JSValidateTypes
-Mind = memo(Mind)
+export default memo(Mind)

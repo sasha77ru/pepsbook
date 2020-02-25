@@ -1,8 +1,8 @@
 import React, {memo} from 'react'
 import {loc} from "../../config";
-import {User} from "./User";
+import User from "./User";
 
-export let Users = props => {
+const Users = props => {
     return <table className="table table-hover">
         <thead>
         <tr>
@@ -16,5 +16,4 @@ export let Users = props => {
         </tbody>
     </table>
 }
-// noinspection JSValidateTypes
-Users = memo(Users)
+export default memo(Users)

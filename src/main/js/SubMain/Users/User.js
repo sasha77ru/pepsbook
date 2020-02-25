@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
 import {loc, restPrefix} from "../../config";
 
-export let User = props => {
+const User = props => {
     const toFriends = e => {
         e.preventDefault()
         ajax(restPrefix + "toFriends", {friend_id: props.user.id}, "PATCH")
@@ -48,6 +48,7 @@ export let User = props => {
         } else return null
     }
     let {user} = props
+    renderLog += "User\n"
     return <tr className="userEntity">
         <td className="userName">{noTag(user.name)}</td>
         <td className="userCountry">{noTag(user.country)}</td>
@@ -72,5 +73,4 @@ User.propTypes = {
         isMate: PropTypes.bool.isRequired,
     }).isRequired,
 }
-// noinspection JSValidateTypes
-User = memo(User)
+export default memo(User)

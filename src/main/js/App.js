@@ -2,12 +2,12 @@ import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 import {ajax, noTag, removeJwtToken} from "./utils";
-import {SubMain} from './SubMain/SubMain.js'
+import SubMain from './SubMain/SubMain.js'
 import {loc} from './config.js'
 import {connect, Provider} from "react-redux";
 import {configureStore} from "./redux/configureStore";
 import {ajaxDataAction} from "./redux/actionCreators";
-import {MainMenu} from "./MainMenu/MainMenu";
+import MainMenu from "./MainMenu/MainMenu";
 
 let App = props => {
     const [state, setMyState] = useState({nowInMain : "minds"})

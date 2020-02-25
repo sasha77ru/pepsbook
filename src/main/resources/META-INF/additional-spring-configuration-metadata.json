@@ -90,5 +90,10 @@
       "name": "my.tst.strict",
       "type": "java.lang.Boolean",
       "description": "Strict check: Compare times of minds and answers."
+    },
+    {
+      "name": "my.tst.checkRenders",
+      "type": "java.lang.Boolean",
+      "description": "Should React renders be tested?."
     }
   ] }

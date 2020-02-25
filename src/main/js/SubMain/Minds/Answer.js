@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
 import {loc, restPrefix} from "../../config";
 
-export let Answer = props => {
+const Answer = props => {
     const handleClickAnswer = (e) => {
         e.preventDefault()
         let {answer, mind} = props;
@@ -65,5 +65,4 @@ Answer.propTypes = {
     openNewMindWindow: PropTypes.func.isRequired,
     freshPage: PropTypes.func,
 }
-// noinspection JSValidateTypes
-Answer = memo(Answer)
+export default memo(Answer)

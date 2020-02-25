@@ -13,7 +13,12 @@ open class Checkers {
     private fun String.dbRegExp() : String = dbRegExp(this)
     private fun String.pageRegExp() : String = pageRegExp(this)
     @Value("\${my.tst.strict}") var STRICT = true
+    @Value("\${my.tst.checkRenders}") var CHECK_RENDERS = true
     open fun WebApplicationObject.checkMinds() {
+        if (CHECK_RENDERS) {
+            Assert.assertEquals((1..visibleMinds.size).fold("") { acc: String, _ -> "${acc}Mind\n" }, checkRenderLog(js))
+        }
+        
         Assert.assertEquals("Different Minds",
                 visibleMinds.joinToString ("\n") { mind ->
                     "${mind.text} / ${mind.user} / ${if (STRICT) MyUtilities.myDate(mind.time) else ""} / ${
@@ -37,6 +42,10 @@ open class Checkers {
         )
     }
     open fun WebApplicationObject.checkUsers() {
+        if (CHECK_RENDERS) {
+            Assert.assertEquals((1..visibleUsers.size).fold("") { acc: String, _ -> "${acc}User\n" }, checkRenderLog(js))
+        }
+
         Assert.assertEquals("Different Users",
                 visibleUsers
                         .sortedBy { it.name }

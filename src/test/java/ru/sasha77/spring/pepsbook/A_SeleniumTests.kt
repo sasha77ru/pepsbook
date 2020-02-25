@@ -125,6 +125,7 @@ class ASeleniumTests : ObjWithDriver {
     @Test fun uiTest002_Friendship () {
         tao.fillDB(friendship = false)
         login("porky","pig")
+        clearRenderLog(wao.js)
         with(clk) {
             pause(For.LOAD)
             clickMainUsers()
@@ -132,11 +133,12 @@ class ASeleniumTests : ObjWithDriver {
             chk.run { wao.what="users";wao.checkUsers() }
             //<editor-fold desc="Add users to friends">
             clickUserToFriends("Pluto");tao.doToFriends("Porky","Pluto");pause(For.LOAD)
-            clickUserToFriends("Luntik");tao.doToFriends("Porky","Luntik");pause(For.LOAD)
-            clickUserToFriends("Masha");tao.doToFriends("Porky","Masha");pause(For.LOAD)
-            pause(For.LOAD)
-            mvc.checkAllDB()
             chk.run { wao.what="users";wao.checkUsers() }
+            clickUserToFriends("Luntik");tao.doToFriends("Porky","Luntik");pause(For.LOAD)
+            chk.run { wao.what="users";wao.checkUsers() }
+            clickUserToFriends("Masha");tao.doToFriends("Porky","Masha");pause(For.LOAD)
+            chk.run { wao.what="users";wao.checkUsers() }
+            mvc.checkAllDB()
             //</editor-fold>
             //<editor-fold desc="Remove users from friends">
             clickUserFromFriends("Masha");tao.doFromFriends("Porky","Masha")
@@ -172,6 +174,7 @@ class ASeleniumTests : ObjWithDriver {
             submitMind();pause(For.LOAD)
             tao.doAddMind("Porky","Мысля")
             mvc.checkAllDB()
+            chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
             clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
@@ -181,6 +184,7 @@ class ASeleniumTests : ObjWithDriver {
             submitMind();pause(For.LOAD)
             tao.doChangeMind("Мысля","Мысля поумнее")
             mvc.checkAllDB()
+            chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             clickPaginator(1);pause(For.LOAD);chk.run { wao.mindsPage = 1;wao.what="minds";wao.checkMinds() }
             clickPaginator(0);pause(For.LOAD);chk.run { wao.mindsPage = 0;wao.what="minds";wao.checkMinds() }
             //</editor-fold>
@@ -206,7 +210,6 @@ class ASeleniumTests : ObjWithDriver {
             wao.mindsPage = 0
             chk.run { wao.what="minds";wao.checkMinds() }
             //</editor-fold>
-
         }
     }
 
@@ -216,6 +219,7 @@ class ASeleniumTests : ObjWithDriver {
         tao.fillDB()
         login("masha", "child")
         with(clk) {
+            chk.run { wao.mindsPage = 0;wao.what = "minds";wao.checkMinds() }
             //<editor-fold desc="Submit mind">
             (2..4).forEach {
                 clickNewMind()
@@ -236,13 +240,15 @@ class ASeleniumTests : ObjWithDriver {
             typeMindText(" поумнее", clear = false)
             submitMind();pause(For.LOAD)
             tao.doChangeMind("Мысля 2", "Мысля 2 поумнее")
+            chk.run { wao.mindsPage = 1;wao.what = "minds";wao.checkMinds() }
             mvc.checkAllDB()
             //</editor-fold>
             clickPaginator(1);pause(For.LOAD)
-
+            chk.run { wao.mindsPage = 1;wao.what = "minds";wao.checkMinds() }
             clickDelMind("Понятненько")
             tao.doRemoveMind("Понятненько")
             pause(For.LOAD)
+            chk.run { wao.mindsPage = 1;wao.what = "minds";wao.checkMinds() }
             clickDelMind("Мысля 2 поумнее")
             tao.doRemoveMind("Мысля 2 поумнее")
             pause(For.LOAD)
@@ -256,6 +262,7 @@ class ASeleniumTests : ObjWithDriver {
         tao.fillDB()
         login("masha","child")
         with(clk) {
+            chk.run { wao.mindsPage = 0;wao.what = "minds";wao.checkMinds() }
             //take first mind and answer it
             val mindText = driver.findElement(By.className("mindEntity")).findElement(By.className("mindText")).getAttribute("innerHTML")
             //<editor-fold desc="Answer mind">

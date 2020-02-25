@@ -2,7 +2,7 @@ import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {loc, mainMenuIds} from "../config";
 
-export let MainMenuItem = props => {
+const MainMenuItem = props => {
     const handleClick = e => {
         e.preventDefault()
         props.switchTo(props.what)
@@ -19,5 +19,4 @@ MainMenuItem.propTypes = {
     switchTo:   PropTypes.func.isRequired,
     nowInMain:  PropTypes.string.isRequired,
 }
-// noinspection JSValidateTypes
-MainMenuItem = memo(MainMenuItem)
+export default memo(MainMenuItem)

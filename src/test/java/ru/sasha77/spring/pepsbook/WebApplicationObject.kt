@@ -120,7 +120,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             var f = loginForm() as? () -> Any
             try {
                 while (step++ < steps) {
-                if (step >= 100000) {
+                if (step >= 10000) {
                     println("JOPA") // place for a breakpoint on a certain step
 //                    Thread.sleep(10000)
                 }
@@ -301,7 +301,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
         private fun mindWin () : Any? {
             stepVlog("mindWin which=$mindWinWhich")
             clk.run {
-                if (rand() < 5) { clickCloseMind();return ::minds }
+                if (rand() < 5) { clickCloseMind();pause(For.LOAD);return ::mainPage }
                 if (rand() < 2) {
                     typeMindText(feignString(4002)) //Invalid length
                     submitMind()
@@ -333,7 +333,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
             clk.run {
                 //caseMatrix contains lambdas to random run. Lambda can be added many times to increase its probability weight
                 val caseMatrix = mutableListOf({ clickLogo();changeWhat("minds");onEnterSite();::minds});
-                { clickMainMinds()  ;changeWhat("minds")    ;::minds    }.also { repeat(16)  {_ -> caseMatrix.add(it)} };
+                { clickMainMinds()  ;changeWhat("minds");mindsPage=0; ::minds    }.also { repeat(16)  {_ -> caseMatrix.add(it)} };
                 { clickMainUsers()  ;changeWhat("users")    ;::users    }.also { repeat(10)  {_ -> caseMatrix.add(it)} };
                 { clickMainFriends();changeWhat("friends")  ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
                 { clickMainMates()  ;changeWhat("mates")    ;::users    }.also { repeat(3)   {_ -> caseMatrix.add(it)} };
@@ -343,7 +343,7 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                         if (what == "minds") mindsPage=0;whatLambda}
                             .also { repeat(5)  { _ -> caseMatrix.add(it)} } }
                 if (what == "minds") {
-                    { currMind = null;mindWinWhich = "mind"
+                    { currMind = null;mindWinWhich = "mind";mindsPage=0
                         clickNewMind();::mindWin }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                 }
                 if (what == "minds" && visibleMinds.isNotEmpty()) {
@@ -372,23 +372,24 @@ class WebApplicationObject (val tao : TestApplicationObject, val port : Int) : O
                     }
                     //<editor-fold desc="Pagination">
                     if (numberOfMindsPages > 1) {
-                        { currMind = null;mindWinWhich = "mind"
+                        { currMind = null;mindWinWhich = "mind";var fired = false
                             if (numberOfMindsPages > tao.PAGINATOR_MAX_SIZE)
                                 // boiled mode of paginator. we test only pressings to prev,first,last,next
                                 when (val r = rand(4)-3) {
-                                     0 -> {mindsPage=0;clickPaginator(r)}
-                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r)}
-                                    -2 -> if (mindsPage < numberOfMindsPages - 1) {mindsPage++;clickPaginator(r)}
-                                    -3 -> {mindsPage = numberOfMindsPages - 1;clickPaginator(r)}
+                                     0 -> {mindsPage=0;clickPaginator(r);fired=true}
+                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r);fired=true}
+                                    -2 -> if (mindsPage < numberOfMindsPages - 1) {mindsPage++;clickPaginator(r);fired=true}
+                                    -3 -> {mindsPage = numberOfMindsPages - 1;clickPaginator(r);fired=true}
                                 }
                             else
                                 // not-boiled mode of paginator (when number of pages < PAGINATOR_MAX_SIZE)
                                 when (val r = rand(numberOfMindsPages+2)-2) {
-                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r)}
-                                    -2 -> if (mindsPage < numberOfMindsPages-1) {mindsPage++;clickPaginator(r)}
-                                    else -> {mindsPage = r;clickPaginator(r)}
+                                    -1 -> if (mindsPage > 0) {mindsPage--;clickPaginator(r);fired=true}
+                                    -2 -> if (mindsPage < numberOfMindsPages-1) {mindsPage++;clickPaginator(r);fired=true}
+                                    else -> {mindsPage = r;clickPaginator(r);fired=true}
                                 }
-                            ::minds }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
+                            if (fired) ::minds else ::mainPage
+                        }.also { repeat(10)  { _ -> caseMatrix.add(it)} }
                     }
                     //</editor-fold>
                 }

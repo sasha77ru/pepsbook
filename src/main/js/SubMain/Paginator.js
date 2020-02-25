@@ -2,7 +2,7 @@ import React, {memo} from "react";
 import PropTypes from "prop-types";
 
 /** Renders a paginator according to data from Rest*/
-export let Paginator = props => {
+const Paginator = props => {
     const handleClick = (e, page) => {
         e.preventDefault()
         props.setPage(page)
@@ -63,5 +63,4 @@ Paginator.propTypes = {
     }),
     setPage: PropTypes.func,
 }
-// noinspection JSValidateTypes
-Paginator = memo(Paginator)
+export default memo(Paginator)

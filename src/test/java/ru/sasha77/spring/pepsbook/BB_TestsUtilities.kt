@@ -1,7 +1,9 @@
 package ru.sasha77.spring.pepsbook
 
 import org.aspectj.lang.ProceedingJoinPoint
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -162,6 +164,15 @@ abstract class FeignMixin {
             append((syLIST+listOf(String(listOf(invalidChar(),invalidChar()).toCharArray()))).random(randomer))
         } }.toString()
             .let { if (it in usedStrings) feignString(len+2) else {usedStrings.add(it);it} } //to eliminate dups
+}
+
+fun clearRenderLog (js : JavascriptExecutor) {
+    js.executeScript("renderLog = ''")
+}
+fun checkRenderLog (js : JavascriptExecutor) : String {
+    val renderLog = js.executeScript("return renderLog").toString()
+    js.executeScript("renderLog = ''")
+    return renderLog
 }
 
 //fun fillDBwithSQL () {
