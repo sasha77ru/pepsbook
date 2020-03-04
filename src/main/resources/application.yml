@@ -88,9 +88,8 @@ my:
         minds: 200
         answers: 300
 
-      seeds: 8116881503742029605
-      #8349522794318904161 - uncaught error on step 96 if no pause after clickCloseMind()
+      seeds: 0
       #2,2,2,3,3,3
       rounds: 10
       steps:  100
-      failImmediately: true
+      failImmediately: false
