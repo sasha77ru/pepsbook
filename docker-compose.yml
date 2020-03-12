@@ -1,0 +1,21 @@
+version: '3'
+services:
+  sql:
+    restart: always
+    image: mysql:8.0
+    ports:
+      - 3306:3306
+    volumes:
+      - pb_sql:/var/lib/mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_DATABASE: pepsbook
+      MYSQL_USER:     myuser
+      MYSQL_PASSWORD: motamota
+  redis:
+    restart: always
+    image: redis:6.0-rc
+    ports:
+      - 6379:6379
+volumes:
+  pb_sql: {}

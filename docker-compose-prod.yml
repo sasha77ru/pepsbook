@@ -1,0 +1,29 @@
+version: '3'
+services:
+  sql:
+    restart: always
+    image: mysql:8.0
+    volumes:
+      - pb_sql:/var/lib/mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_DATABASE: pepsbook
+      MYSQL_USER:     myuser
+      MYSQL_PASSWORD: motamota
+  redis:
+    restart: always
+    image: redis:6.0-rc
+  java:
+    restart: always
+    image: pepsbook
+    ports:
+      - 8585:8080
+    links:
+      - sql
+      - redis
+    environment:
+      spring_datasource_url: jdbc:mysql://sql:3306/pepsbook?serverTimezone=Europe/Moscow&useUnicode=yes&characterEncoding=UTF-8
+      spring_redis_host: redis
+
+volumes:
+  pb_sql: {}
