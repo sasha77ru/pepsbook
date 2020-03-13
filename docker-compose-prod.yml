@@ -15,9 +15,9 @@ services:
     image: redis:6.0-rc
   java:
     restart: always
-    image: pepsbook
+    image: sasha77ru/pepsbook
     ports:
-      - 8585:8080
+      - 8080:8080
     links:
       - sql
       - redis
