@@ -14,7 +14,7 @@ export const loc = {
                     users   : "Другие",
                     friends : "Друзья",
                     mates   : "Почитатели"},
-    filterPlaceHolder   : "Фильтр",
+    filterPlaceHolder   : "фильтр",
     toLogOut            : "Выдти",
     toAnswer            : "Ответить",
     toEdit              : "Редактировать",
