@@ -1,0 +1,14 @@
+#It is a Dockerfile to build preparing image - with all nmp and maven libs
+#To decrease DockerHub build time
+#It would be nice to renew this image from time to time as shown bellow:
+#docker build -f Dockerfile-pre -t sasha77ru/pepsbook:prep .
+#docker push sasha77ru/pepsbook:prep
+FROM maven
+COPY ./ /root/pepsbook
+WORKDIR /root/pepsbook
+RUN apt-get update || true \
+    && apt-get install -y npm \
+    && npm install \
+    && npm run build \
+    && mvn package -DskipTests \
+    && rm -rf $(ls -a | grep -v "^\\.\$\|^\\..\$\|node_modules")
