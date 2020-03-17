@@ -1,3 +1,13 @@
+yum install -y docker
+curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+systemctl enable docker
+systemctl start docker
+cat > mymysql.cnf <<!
+[mysqld]
+performance_schema = off
+!
+cat > docker-compose.yml <<!
 version: '3'
 services:
   sql:
@@ -5,6 +15,7 @@ services:
     image: mysql:8.0
     volumes:
       - pb_sql:/var/lib/mysql
+      - /root/mymysql.cnf:/etc/mysql/conf.d/mymysql.cnf
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
       MYSQL_DATABASE: pepsbook
@@ -13,11 +24,6 @@ services:
   redis:
     restart: always
     image: redis:6.0-rc
-  mongo:
-    restart: always
-    image: mongo:4.2.3-bionic
-    volumes:
-      - pb_mongo:/data/db
   java:
     restart: always
     image: sasha77ru/pepsbook
@@ -26,10 +32,11 @@ services:
     links:
       - sql
       - redis
-      - mongo
     environment:
       spring_datasource_url: jdbc:mysql://sql:3306/pepsbook?serverTimezone=Europe/Moscow&useUnicode=yes&characterEncoding=UTF-8
       spring_redis_host: redis
+
 volumes:
   pb_sql: {}
-  pb_mongo: {}
+!
+docker-compose up -d && docker-compose logs -f

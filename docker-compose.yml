@@ -17,5 +17,13 @@ services:
     image: redis:6.0-rc
     ports:
       - 6379:6379
+  mongo:
+    restart: always
+    image: mongo:4.2.3-bionic
+    volumes:
+      - pb_mongo:/data/db
+    ports:
+      - 27017:27017
 volumes:
   pb_sql: {}
+  pb_mongo: {}

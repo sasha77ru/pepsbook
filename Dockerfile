@@ -1,6 +1,7 @@
 FROM sasha77ru/pepsbook:prep
 COPY ./ /root/pepsbook
 WORKDIR /root/pepsbook
+EXPOSE 80
 RUN npm install \
     && npm run build \
     && mvn package -DskipTests \
