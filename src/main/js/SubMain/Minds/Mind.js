@@ -52,7 +52,7 @@ const Mind = (props) => {
             </div>
             <div className="card-body">
                 <h4 className="card-title mindUser">{noTag(mind.author)}</h4>
-                <p className="card-text mindText">{noTag(mind.text)}</p>
+                <p className="card-text mindText" style={{whiteSpace: "pre-wrap"}}>{noTag(mind.text)}</p>
                 {mind.answers.map((answer) =>
                     <Answer key={answer.id} mind={mind} answer={answer}
                             openNewMindWindow={props.openNewMindWindow}

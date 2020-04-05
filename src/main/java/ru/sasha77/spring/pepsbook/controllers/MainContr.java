@@ -34,6 +34,7 @@ public class MainContr {
 	private final TokenProvider tokenProvider;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
 	@Value("${my.mindsPageSize}") Integer mindsPageSize;
+	@Value("${my.messagesPageSize}") Integer messagesPageSize;
 	@Value("${my.paginatorMaxSize}") Integer paginatorMaxSize;
 	@Value("${my.paginatorWide}") Integer paginatorWide;
 
@@ -59,6 +60,7 @@ public class MainContr {
 //				+"?r="+((int) (Math.random() * 1000000 + 1)));
 		ModelAndView mnv =  new ModelAndView("main.html");
 		mnv.addObject("mindsPageSize",mindsPageSize);
+		mnv.addObject("messagesPageSize",messagesPageSize);
 		mnv.addObject("paginatorMaxSize",paginatorMaxSize);
 		mnv.addObject("paginatorWide",paginatorWide);
 		return mnv;

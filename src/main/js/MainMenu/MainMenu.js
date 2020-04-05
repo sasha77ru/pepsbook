@@ -2,6 +2,7 @@ import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {mainMenuIds} from "../config";
 import MainMenuItem from "./MainMenuItem";
+import MessageItem from "./MessagesItem";
 
 const MainMenu = props => {
     return (
@@ -11,11 +12,12 @@ const MainMenu = props => {
                     <MainMenuItem key={i} what={i} {...props}/>
                 </li>)
             })}
+            <MessageItem {...props}/>
         </ul>
     )
 }
 MainMenu.propTypes = {
     switchTo: PropTypes.func.isRequired,
-    nowInMain: PropTypes.oneOf(["minds", "users", "friends", "mates"]).isRequired,
+    nowInMain: PropTypes.oneOf(["minds", "users", "friends", "mates", "messages"]).isRequired,
 }
 export default memo(MainMenu)

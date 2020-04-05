@@ -47,7 +47,7 @@ const Answer = props => {
     return (
         <div className="answerEntity">
             <strong className="answerUser" style={{marginRight: "1em"}}>{noTag(answer.author)}</strong>
-            <span className="answerText">{noTag(answer.text)}</span>
+            <span className="answerText" style={{whiteSpace: "pre-wrap"}}>{noTag(answer.text)}</span>
             <em className="answerTime" style={{marginLeft: "1em"}}>{answer.time}</em>
             {dropDown()}
         </div>

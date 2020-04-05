@@ -5,7 +5,7 @@ import {initialState, reducer} from "./reducer";
 export const configureStore = () => {
     return createStore(
         reducer,
-        initialState,
+        {},
         applyMiddleware(apiMidW)
     )
 };

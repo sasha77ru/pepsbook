@@ -40,3 +40,53 @@
     width:      40%;
     margin:     1em auto;
 }
+#interlocutors {
+    vertical-align: top;
+    padding-right: 1em;
+    float: left;
+    width: 20%;
+    height: 70vh;
+    overflow-y: auto;
+}
+.interlocutor {
+    margin-bottom: 0.5em;
+    width: 100%;
+}
+#messages {
+    border: deepskyblue 2px solid;
+    border-radius: 2px;
+    margin-bottom: 1em;
+    float: left;
+    width: 80%;
+}
+#messagesScroll {
+    height: 75vh;
+    overflow-y: scroll;
+    padding: 0.5em;
+}
+#messageInput {
+
+}
+#messageTextArea {
+    width: 80%;
+    border: deepskyblue 1px solid;
+    margin: 0.2em;
+    float: left;
+    min-height: 2.5em;
+}
+#messageSendButton {
+    width: 19%;
+    float: left;
+    height: 2.8em;
+}
+
+.message {
+    margin-bottom: 0.2em;
+    width: 85%;
+}
+.ownMessage {
+    margin-left: 15%;
+}
+.foreignMessage {
+
+}

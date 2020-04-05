@@ -121,8 +121,39 @@ class ABackEndTests {
 
             mvc.mvcRemoveAnswer(currName, "anotherText", "Master Mind")
             mvc.checkAllDB()
+        }
+    }
 
+    @Test
+    @Throws(Exception::class)
+    fun tst0005_Messages() {
+        with (tao) {
             fillDB()
+            val currName = "Porky"
+
+            mvc.mvcStartMessaging(currName,"Masha")
+            mvc.mvcStartMessaging(currName,"Pluto")
+
+            mvc.mvcNewMessage(currName,"Masha","Hi")
+
+            mvc.mvcNewMessage("Masha",currName,"Hello")
+            mvc.mvcNewMessage(currName,"Masha","Hi1")
+            mvc.mvcNewMessage(currName,"Pluto","By")
+
+            mvc.mvcNewMessage("Pluto",currName,"Aloha")
+
+            mvc.checkInterlocutors(currName)
+
+            mvc.checkMessages(currName,"Masha", page = 0)
+
+            mvc.checkInterlocutors(currName)
+
+            mvc.checkMessages(currName,"Masha",page = 1,size = 2) // Check 2nd page
+            mvc.mvcRemoveMessage(currName,"Hi1") // Remove th only message on page
+            mvc.checkMessages(currName,"Masha",page = 0,size = 2,deceivePage = 1) // Try to see an empty page
+
+            mvc.mvcRemoveMessage(currName,"Hello") // Won't be removed, bc he isn't an owner
+            mvc.checkAllDB() // Overall check, even not removing
         }
     }
 }

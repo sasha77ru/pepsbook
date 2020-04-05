@@ -63,7 +63,27 @@ data class TstAnswer(
     val time : Date) {
     override fun toString(): String = "$text / ${mind.text} / $user / ${myDate(time)}"
 }
+data class TstMessage(
+        val user : String,
+        val whom : String,
+        var text : String,
+        val time : Date) {
+    override fun toString(): String = "$text / $user / $whom / ${myDate(time)}"
+}
 
+data class TstInterlocutor(
+        val user  : String,
+        val whose : String) {
+    // other things shouldn't participate in equals() and hashCode()
+    var numNewMessages = 0
+    var hasPreMessages = false
+    var time = Date()
+
+    constructor(user : String, whose : String, time : Date) : this(user,whose) {
+        this.time = time
+    }
+    override fun toString(): String = "$user / $whose / $numNewMessages / $hasPreMessages / ${myDate(time)}"
+}
 
 /**
  * Properties holder

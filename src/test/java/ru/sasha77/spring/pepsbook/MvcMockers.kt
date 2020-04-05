@@ -4,7 +4,6 @@ import org.hamcrest.Matchers
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.web.servlet.MockMvc
@@ -135,13 +134,16 @@ open class MvcMockers {
     open fun checkAllDB () {tao.actualUsersArray.forEach {checkDB(it.name)}}
 
     /**
-     * Performs GET MockMvc and compares result with TAO
+     * Performs All GET MockMvc and compares result with TAO
      */
     fun checkDB (name: String, subs : String = "") {
         val currUser = tao.getUserByName(name)
         val token = tokenProvider.createTestToken(currUser.username)
         checkUsers(name, subs, token = token)
         checkMinds(name, subs, token = token)
+        checkInterlocutors(name, token = token)
+        tao.actualUsersArray.forEach { checkMessages(name, it.name, token = token) }
+        checkInterlocutors(name, token = token)
     }
     fun checkUsers (name: String,
                     subs: String = "",
@@ -277,5 +279,143 @@ open class MvcMockers {
                                     }.joinToString("\n")
                     )
                 }
+    }
+
+    fun checkMessages (name: String,
+                       whomName: String,
+                       subs: String = "",
+                       page: Int? = null,
+                       size: Int? = null,
+                       token: String = tokenProvider.createTestToken(tao.getUserByName(name).username),
+                       deceivePage : Int? = page /*to try to get page that doesn't exist*/,
+                       log : org.slf4j.Logger? = null) {
+        val currUser = tao.getUserByName(name)
+        val whomUser = tao.getUserByName(whomName)
+        val timeBefore = System.currentTimeMillis()
+
+        if (page==0) tao.doClearInterlocutorState(whomName,currUser.name)
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/messages")
+                .param("whomId", whomUser.user.id.toString())
+                .apply {
+                    if (subs!="") param("subs", subs)
+                }
+                .apply {
+                    if (page!=null) param("page",deceivePage.toString())
+                    if (size!=null) param("size",size.toString()) }
+                .header("Authorization", "Bearer $token"))
+                .andDo { mvcResult ->
+                    log?.debug("${System.currentTimeMillis()-timeBefore}")
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualMessagesArray
+                                    .filter { (it.user == currUser.name && it.whom == whomUser.name
+                                                    || it.user == whomUser.name && it.whom == currUser.name )
+                                            &&
+                                              (it.text.contains(subs,true)
+                                                    || it.whom.contains(subs,true)) }
+                                    .sortedByDescending { it.time }
+                                    .let { if (page == null || size == null)
+                                        it else it.subList(page*size, minOf((page+1) *size,it.size))}
+                                    .joinToString("\n") {message ->
+                                        with(message) {"$text / $user / $whom / ${myDate(time)}"}}
+                            ,
+                            JSONObject(mvcResult.response.contentAsString).getJSONArray("content")
+                                    .let { response ->
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until response.length()) {
+                                            list.add(JSONObject(response.getString(i)).run {
+                                                getString("text") + " / " +
+                                                        getString("userName") + " / " +
+                                                        getString("whomName") + " / " +
+                                                        getString("time")
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
+    }
+
+
+    fun checkInterlocutors (name: String,
+                       subs: String = "",
+                       token: String = tokenProvider.createTestToken(tao.getUserByName(name).username),
+                       log : org.slf4j.Logger? = null) {
+        val currUser = tao.getUserByName(name)
+        val timeBefore = System.currentTimeMillis()
+        mockMvc.perform(MockMvcRequestBuilders.get("/rest/interlocutors")
+                .apply {
+                    if (subs!="") param("subs", subs)
+                }
+                .header("Authorization", "Bearer $token"))
+                .andDo { mvcResult ->
+                    log?.debug("${System.currentTimeMillis()-timeBefore}")
+                    @Suppress("UNCHECKED_CAST")
+                    Assert.assertEquals("Different lists",
+                            tao.actualInterlocutorsArray
+                                    .filter { it.whose == currUser.name && it.user.contains(subs,true) }
+                                    .sortedByDescending { it.time }
+                                    .joinToString("\n") {interlocutor ->
+                                        with(interlocutor) {"$user / ${currUser.user.id} / $numNewMessages / $hasPreMessages / ${myDate(time)}"}}
+                            ,
+                            JSONArray(mvcResult.response.contentAsString)
+                                    .let { response ->
+                                        // Parse response JSON to compare
+                                        val list = mutableListOf<String>()
+                                        for (i in 0 until response.length()) {
+                                            list.add(JSONObject(response.getString(i)).run {
+                                                getString("userName") + " / " +
+                                                        getString("whoseId") + " / " +
+                                                        getString("numNewMessages") + " / " +
+                                                        getString("hasPreMessages") + " / " +
+                                                        getString("time")
+                                            })
+                                        }
+                                        list
+                                    }.joinToString("\n")
+                    )
+                }
+    }
+
+    fun mvcNewMessage (name : String, whomName : String, text : String) {
+        val user = tao.getUserByName(name)
+        val whom = tao.getUserByName(whomName)
+        val token = tokenProvider.createTestToken(user.username)
+
+        tao.doAddMessage(name,whomName,text)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/rest/newMessage")
+                .header("Authorization", "Bearer $token")
+                .param("whomId",whom.user.id.toString())
+                .param("text",text))
+                    .andExpect(MockMvcResultMatchers.status().isOk)
+    }
+
+    fun mvcRemoveMessage (name : String, oldText : String) {
+        val user = tao.getUserByName(name)
+        val token = tokenProvider.createTestToken(user.username)
+        val dbMessage = tao.getDBMessageByText(oldText)
+
+        tao.doRemoveMessage(user.name,oldText)
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/rest/removeMessage")
+                .header("Authorization", "Bearer $token")
+                .param("messageId",dbMessage._id.toString()))
+                    .andExpect(MockMvcResultMatchers.status().isOk)
+    }
+
+    fun mvcStartMessaging (name : String, whomName : String) {
+        val user = tao.getUserByName(name)
+        val whom = tao.getUserByName(whomName)
+        val token = tokenProvider.createTestToken(user.username)
+
+        tao.doStartMessaging(name,whomName)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/rest/startMessaging")
+                .header("Authorization", "Bearer $token")
+                .param("whomId",whom.user.id.toString()))
+                    .andExpect(MockMvcResultMatchers.status().isOk)
     }
 }

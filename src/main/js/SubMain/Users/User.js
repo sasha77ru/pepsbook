@@ -2,8 +2,29 @@ import React, {memo} from "react";
 import PropTypes from "prop-types";
 import {ajax, noTag} from "../../utils";
 import {loc, restPrefix} from "../../config";
+import {store} from "../../App"
+import {connect} from "react-redux";
+import {setMessagesParamAction} from "../../redux/actionCreators";
 
 const User = props => {
+    const jump2Messages = interlocutorId => {
+        props.changeActiveInterlocutorId(interlocutorId)
+        props.switchTo("messages")
+    }
+    const startMessaging = e => {
+        e.preventDefault()
+        // try to find the User in interlocutors in store
+        let interlocutor = (store.getState().interlocReducer.isLoaded)
+            ? store.getState().interlocReducer.data.find((x) => {if (x.userId == props.user.id) return x})
+            : undefined
+        //if it isn't found - report to server, to add a new interlocutor
+        if (!interlocutor) {
+            ajax(restPrefix + "startMessaging", {whomId: props.user.id}, "POST")
+                .then(() => {
+                    jump2Messages(props.user.id)
+                })
+        } else jump2Messages(props.user.id)
+    }
     const toFriends = e => {
         e.preventDefault()
         ajax(restPrefix + "toFriends", {friend_id: props.user.id}, "PATCH")
@@ -27,6 +48,9 @@ const User = props => {
                      left: "0px",
                      transform: "translate3d(0px, 40px, 0px)"
                  }}>
+                <a className="dropdown-item startMessaging"
+                   onClick={startMessaging}
+                   href="#">{loc.startMessaging}</a>
                 <a className="dropdown-item toFriends"
                    style={{display: (user.isFriend ? "none" : "")}}
                    onClick={toFriends}
@@ -72,5 +96,8 @@ User.propTypes = {
         isFriend: PropTypes.bool.isRequired,
         isMate: PropTypes.bool.isRequired,
     }).isRequired,
+    switchTo : PropTypes.func.isRequired,
 }
-export default memo(User)
+export default connect(null,dispatch => ({
+    changeActiveInterlocutorId: (interlocutorId) => dispatch(setMessagesParamAction({activeInterlocutorId: interlocutorId})),
+}))(User)

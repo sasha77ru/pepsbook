@@ -6,20 +6,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.*;
 import ru.sasha77.spring.pepsbook.models.Answer;
+import ru.sasha77.spring.pepsbook.models.Message;
 import ru.sasha77.spring.pepsbook.models.Mind;
 import ru.sasha77.spring.pepsbook.models.User;
 import ru.sasha77.spring.pepsbook.repositories.UserRepository;
+import ru.sasha77.spring.pepsbook.services.InterlocService;
+import ru.sasha77.spring.pepsbook.services.MessageService;
 import ru.sasha77.spring.pepsbook.services.MindService;
 import ru.sasha77.spring.pepsbook.services.UserService;
-import ru.sasha77.spring.pepsbook.webModels.MindsResponse;
-import ru.sasha77.spring.pepsbook.webModels.UserSimple;
-import ru.sasha77.spring.pepsbook.webModels.UsersResponse;
+import ru.sasha77.spring.pepsbook.webModels.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("JavaDoc")
@@ -30,13 +33,19 @@ public class RestContr {
     private UserRepository userRepository;
     private UserService userService;
     private MindService mindService;
+    private MessageService messageService;
+    private InterlocService interlocService;
 
     RestContr(UserRepository userRepository,
               UserService userService,
-              MindService mindService) {
+              MindService mindService,
+              MessageService messageService,
+              InterlocService interlocService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.mindService = mindService;
+        this.messageService = messageService;
+        this.interlocService = interlocService;
     }
 
     /**
@@ -214,5 +223,67 @@ public class RestContr {
         if (!answer.getUser().getUsername().equals(authentication.getName()))
             {response.sendError(HttpServletResponse.SC_FORBIDDEN);return;}
         mindService.deleteAnswer(answer);
+    }
+
+
+    /**
+     * @return Page of messages. And clears interlocutor's counters
+     */
+    @GetMapping(path = "/messages", produces = "application/json")
+    public Page<MessagesResponse> getMessages(@NotNull Authentication authentication,
+                                           Integer whomId,
+                                           Integer page,
+                                           Integer size,
+                                           String subs) {
+        User user = userRepository.findByUsername(authentication.getName());
+        Integer userId = user.getId();
+        //If user reads messages on 0 page. it means he see new messages, we should clear interlocutor's counters
+        if (page == 0) interlocService.clearInterlocutorState(whomId,userId);
+
+        Page<Message> pagePage = messageService.loadMessages(userId,whomId,page,size,subs);
+        //if such page doesn't exist anymore, return last page
+        if (page != null && page != 0 && pagePage.getTotalPages() <= page && pagePage.getTotalPages() != 0)
+            pagePage =  messageService.loadMessages(userId,whomId,pagePage.getTotalPages()-1,size,subs);
+        return pagePage.map(MessagesResponse::new);
+    }
+
+    @PostMapping(path = "/newMessage")
+    public String newMessage(@NotNull Authentication authentication,
+                           @RequestParam Integer whomId,
+                           @RequestParam String text,
+                           Boolean unReady) {
+        return messageService.newMessage(authentication.getName(),whomId,text,unReady);
+    }
+
+    @PatchMapping(path = "/updateMessage")
+    public void updateMessage(@NotNull Authentication authentication,
+                           @RequestParam String _id,
+                           @RequestParam String text,
+                           Boolean unReady) {
+        messageService.updateMessage(_id,text,unReady, new Date());
+    }
+
+    @DeleteMapping(path = "/removeMessage")
+    public void removeMessage(Principal principal, @RequestParam String _id) {
+        User user = userRepository.findByUsername(principal.getName());
+        messageService.removeMessage(user.getId(),_id);
+    }
+
+    /**
+     * @return List of interlocutors
+     */
+    @GetMapping(path = "/interlocutors", produces = "application/json")
+    public List getInterlocutors(@NotNull Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName());
+        return interlocService.loadInterlocutors(user.getId())
+                .stream().map(InterlocResponse::new).collect(Collectors.toList());
+    }
+
+    @PostMapping(path = "/startMessaging")
+    public void startMessaging(@NotNull Authentication authentication,
+                           @RequestParam Integer whomId) {
+        User user = Objects.requireNonNull(userRepository.findByUsername(authentication.getName()),"No such user");
+        User interlocutor = userRepository.findById(whomId).orElseThrow(() -> new NullPointerException("No such whomId"));
+        interlocService.newInterlocutors(user,interlocutor);
     }
 }

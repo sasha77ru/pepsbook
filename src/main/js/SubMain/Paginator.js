@@ -15,7 +15,7 @@ const Paginator = props => {
             if (data.number === page) {
                 out.push(
                     <li key={out.length} className="page-item active">
-                        <a className="page-link" href="#" onClick={(e,) => handleClick(e, page)}>{page + 1}</a>
+                        <a className="page-link" href="#" onClick={(e) => handleClick(e, page)}>{page + 1}</a>
                     </li>)
             } else {
                 //to do less page buttons

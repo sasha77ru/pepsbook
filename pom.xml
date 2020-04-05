@@ -194,7 +194,7 @@
 			<version>${jjwt.version}</version>
 		</dependency>
 
-		<!-- For comparing MVC results in tests -->
+		<!-- For comparing MVC results in tests USELESS -->
 <!--		<dependency>-->
 <!--			<groupId>org.json</groupId>-->
 <!--			<artifactId>json</artifactId>-->
@@ -216,13 +216,41 @@
 			<version>2.8.1</version>
 		</dependency>
 
-		<!-- EhCache to get keys and Evict them in a rught way -->
+		<!-- EhCache to get keys and Evict them in a right way -->
 		<dependency>
 			<groupId>net.sf.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
 			<version>2.10.6</version>
 		</dependency>
 
+		<!-- Mongo -->
+
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-mongodb</artifactId>
+			<version>2.1.9.RELEASE</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-releasetrain</artifactId>
+			<version>Lovelace-SR9</version>
+			<type>pom</type>
+		</dependency>
+
+		<!-- To see jsons in debug -->
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.10.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.10.3</version>
+		</dependency>
 
 	</dependencies>
 

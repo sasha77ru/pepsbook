@@ -1,5 +1,7 @@
 package ru.sasha77.spring.pepsbook
 
+import com.mongodb.client.MongoClients
+import org.bson.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -9,6 +11,7 @@ import ru.sasha77.spring.pepsbook.models.Answer
 import ru.sasha77.spring.pepsbook.models.Mind
 import ru.sasha77.spring.pepsbook.models.User
 import ru.sasha77.spring.pepsbook.repositories.AnswerRepository
+import ru.sasha77.spring.pepsbook.repositories.MessageRepository
 import ru.sasha77.spring.pepsbook.repositories.MindRepository
 import ru.sasha77.spring.pepsbook.repositories.UserRepository
 import ru.sasha77.spring.pepsbook.services.UserService
@@ -25,7 +28,8 @@ import kotlin.random.Random
 @Component("Tao")
 class TestApplicationObject (private val usersRepo: UserRepository,
                              private val mindsRepo: MindRepository,
-                             private val answersRepo: AnswerRepository) {
+                             private val answersRepo: AnswerRepository,
+                             private val messageRepo: MessageRepository) {
     inner class TstUser(
             val name: String,
             val email: String,
@@ -55,12 +59,18 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     lateinit var passwordEncoder: PasswordEncoder
 
     @Value("\${my.mindsPageSize}") var MINDS_PAGE_SIZE : Int = 0
+    @Value("\${my.messagesPageSize}") var MESSAGES_PAGE_SIZE : Int = 0
     @Value("\${my.paginatorMaxSize}") var PAGINATOR_MAX_SIZE : Int = 0
     @Value("\${my.paginatorWide}") var PAGINATOR_WIDE : Int = 0
+    @Value("\${spring.data.mongodb.database}") val mongoDBname : String = ""
 
     var actualUsersArray = mutableListOf<TstUser>() // DATA STORAGE FOR TESTS
 
     val actualMindsArray = mutableListOf<TstMind>() // DATA STORAGE FOR TESTS
+
+    val actualMessagesArray = mutableListOf<TstMessage>() // DATA STORAGE FOR TESTS
+
+    val actualInterlocutorsArray = mutableSetOf<TstInterlocutor>() // DATA STORAGE FOR TESTS
 
     fun isFriend (currUser : TstUser, x : TstUser) : Boolean  = currUser.friendsNames.contains(x.name)
     fun isMate (currUser : TstUser, x : TstUser) = currUser.matesNames.contains(x.name)
@@ -74,6 +84,13 @@ class TestApplicationObject (private val usersRepo: UserRepository,
         userService.deleteAll()
         actualUsersArray.clear()
         actualMindsArray.clear()
+
+        //		context.getBean(MyMongoTestRepository.class).deleteAll();
+        MongoClients.create().run {
+            getDatabase(mongoDBname).getCollection("messages").deleteMany(Document())
+            getDatabase(mongoDBname).getCollection("interlocutors").deleteMany(Document())
+            close()
+        }
     }
 
     /**
@@ -196,6 +213,9 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     fun getMindByText(text : String) = actualMindsArray.find { it.text == text} ?: throw IllegalArgumentException("No such TSTMIND $text")
     fun getDBMindByText(text : String): Mind = mindsRepo.findByTextContaining(text)
     fun getDBAnswerByText(text : String) = answersRepo.findByText(text)!!
+    fun getMessageByText(user : String, text : String) = actualMessagesArray.find { it.text == text && it.user == user}
+    fun getDBMessageByText(text : String) = messageRepo.findByText(text)!!
+    fun getInterlocutor(name : String, whose : String) = actualInterlocutorsArray.find { it.user == name && it.whose == whose }
 
     fun doToFriends (name : String, friendName : String) {
         getUserByName(name).friendsNames.add(friendName)
@@ -222,6 +242,20 @@ class TestApplicationObject (private val usersRepo: UserRepository,
     }
     fun doRemoveAnswer (answerText : String, mindText: String) {
         getMindByText(mindText).removeAnswer(answerText)
+    }
+    fun doAddMessage (name : String, whom : String, text: String, date: Date = Date()) {
+        actualMessagesArray.add(TstMessage(name,whom,text,date))
+        getInterlocutor(name,whom)!!.run {numNewMessages++;hasPreMessages = false}
+    }
+    fun doRemoveMessage (name : String, text: String) {
+        actualMessagesArray.remove(getMessageByText(name,text))
+    }
+    fun doStartMessaging (name : String, whom : String, date: Date = Date()) {
+        actualInterlocutorsArray.add(TstInterlocutor(name,whom,date))
+        actualInterlocutorsArray.add(TstInterlocutor(whom,name,date))
+    }
+    fun doClearInterlocutorState(name : String, whose : String) {
+        getInterlocutor(name,whose)?.run {numNewMessages = 0;hasPreMessages = false}
     }
 
 //    fun getUser (sc: Int = 200) {

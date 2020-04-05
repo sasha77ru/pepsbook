@@ -36,6 +36,11 @@
       "description": "Page size for paginator in minds list."
     },
     {
+      "name": "my.messagesPageSize",
+      "type": "java.lang.String",
+      "description": "Page size for paginator in messages list."
+    },
+    {
       "name": "my.paginatorMaxSize",
       "type": "java.lang.String",
       "description": "Max width of paginator before we start to boil it down."

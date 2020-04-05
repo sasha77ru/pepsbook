@@ -6,8 +6,13 @@ import {ajaxDataAction} from "../redux/actionCreators";
 import Minds from "./Minds/Minds";
 import Users from "./Users/Users";
 import Paginator from "./Paginator";
+import Messages from "./Messaging/Messages/Messages";
+import Interlocutors from "./Messaging/Interlocutors/Interlocutors";
+import Messaging from "./Messaging/Messaging";
+import User from "./Users/User";
 
 const SubMain = props => {
+    console.log("SubMain RENDER")
     const [state,setMyState] = useState({page : props.page})
     const setState = (x) => {setMyState({...state,...x})}
     const [y] = useState({value : null})
@@ -59,11 +64,13 @@ const SubMain = props => {
             case "minds"    :
                 return <Minds data={data} freshPage={freshPage}/>
             case "users"    :
-                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage} switchTo={props.switchTo}/>
             case "friends"  :
-                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage} switchTo={props.switchTo}/>
             case "mates"    :
-                return <Users what={nowInMain} data={data} freshPage={freshPage}/>
+                return <Users what={nowInMain} data={data} freshPage={freshPage} switchTo={props.switchTo}/>
+            case "messages" :
+                return <Messaging/>
         }
     }
 
@@ -77,12 +84,13 @@ const SubMain = props => {
 }
 SubMain.propTypes = {
     nowInMain   : PropTypes.string.isRequired,
+    switchTo    : PropTypes.func,
     isLoaded    : PropTypes.bool,
     data        : PropTypes.any, // sometimes it's null
 }
 export default connect(state => ({
-    isLoaded: state.isLoaded,
-    data    : state.data,
+    isLoaded: state.mainReducer.isLoaded,
+    data    : state.mainReducer.data,
 }),dispatch => ({
     fetchData: (...args) => dispatch(ajaxDataAction(...args))
 }))(SubMain)

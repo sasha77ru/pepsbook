@@ -1,3 +1,4 @@
+import 'react-app-polyfill/ie9';
 import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
@@ -6,8 +7,9 @@ import SubMain from './SubMain/SubMain.js'
 import {loc} from './config.js'
 import {connect, Provider} from "react-redux";
 import {configureStore} from "./redux/configureStore";
-import {ajaxDataAction} from "./redux/actionCreators";
+import {ajaxDataAction, ajaxInterlocAction} from "./redux/actionCreators";
 import MainMenu from "./MainMenu/MainMenu";
+import User from "./SubMain/Users/User";
 
 let App = props => {
     const [state, setMyState] = useState({nowInMain : "minds"})
@@ -17,13 +19,15 @@ let App = props => {
     useEffect(() => {
         ajax("/rest/getUser")
             .then((data) => {
-                nameField.innerHTML = noTag(JSON.parse(data).name);
+                let result = JSON.parse(data)
+                nameField.innerHTML = noTag(result.name);
+                window.userId = result.id
             })
     },[])/** Fun that changes nowInMain and starts fetching data from Rest*/
     const switchTo = what => {
         if ('mainFilter' in window) mainFilter.value = ""
         setState({nowInMain : what})
-        props.fetchData(what,{page:0,size:MINDS_PAGE_SIZE})
+        if (what !== "messages") props.fetchData(what,{page:0,size:MINDS_PAGE_SIZE})
     }
     const logOut = e => {
         removeJwtToken()
@@ -52,17 +56,17 @@ let App = props => {
                 </div>
             </div>
         </nav>
-        <SubMain nowInMain={state.nowInMain}/>
+        <SubMain nowInMain={state.nowInMain} switchTo={switchTo}/>
     </>
 }
 App.propTypes = {
     fetchData   : PropTypes.func,
 }
 App = connect(null,dispatch => ({
-    fetchData: (...args) => dispatch(ajaxDataAction(...args))
+    fetchData: (...args) => dispatch(ajaxDataAction(...args)),
 }))(App)
 
-const store = configureStore()
+export const store = configureStore()
 ReactDOM.render(
     <Provider store={store}>
         <App/>
@@ -70,3 +74,4 @@ ReactDOM.render(
     document.getElementById('react')
 )
 store.dispatch(ajaxDataAction("minds"))
+store.dispatch(ajaxInterlocAction())

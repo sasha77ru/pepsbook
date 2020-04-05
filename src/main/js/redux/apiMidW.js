@@ -13,5 +13,5 @@ export const apiMidW = store => next => action => {
             delete newAction.meta
             store.dispatch(newAction)
         })
-    return next({...action,payload: {isLoaded: false,data: {}}})
+    return next({...action,payload: {...action.payload,isLoaded: false,data: {}}})
 }

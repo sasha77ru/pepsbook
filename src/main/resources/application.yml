@@ -2,6 +2,9 @@ spring:
   profiles:
     active: dev
 
+  main:
+    # Otherwise MongoRep says bean with that name has already been defined
+    allow-bean-definition-overriding: true
   jpa:
     open-in-view: true
     hibernate:
@@ -22,6 +25,11 @@ spring:
       cleanup-cron: "*/1 * * * * *"
   redis:
     host: localhost
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: pepsbook
 jwt:
   header: Authorization
   # This token must be encoded using Base64 with mininum 88 Bits (you can type `echo 'secret-key'|base64` on your command line)
@@ -36,6 +44,7 @@ jwt:
       refresh: refresh
 my:
   mindsPageSize: 10
+  messagesPageSize: 9
   paginatorMaxSize: 12
   paginatorWide: 3
   #should be more than 1 min. Otherwise cleanup-cron won't have time to kill the old session
@@ -60,6 +69,7 @@ spring:
   profiles: tst-simple
 my:
   mindsPageSize: 2
+  messagesPageSize: 2
   paginatorMaxSize: 8
   paginatorWide: 1
 
@@ -67,14 +77,15 @@ my:
 
 spring:
   profiles: tst
-  datasource:
-    url: jdbc:h2:mem:pepsbook;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate.ddl-auto: none
-    properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
+  #todo debug
+#  datasource:
+#    url: jdbc:h2:mem:pepsbook;DB_CLOSE_ON_EXIT=FALSE
+#    driverClassName: org.h2.Driver
+#    username: sa
+#    password:
+#  jpa:
+#    hibernate.ddl-auto: none
+#    properties.hibernate.dialect: org.hibernate.dialect.H2Dialect
 my:
   tst:
     strict: false

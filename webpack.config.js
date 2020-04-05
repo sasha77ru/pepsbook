@@ -9,6 +9,10 @@ module.exports = {
         path: __dirname,
         filename: './src/main/resources/static/built/bundle.js'
     },
+    devServer: {
+        stats: 'errors-only',
+        clientLoglevel: 'error',
+    },
     module: {
         rules: [
             {
