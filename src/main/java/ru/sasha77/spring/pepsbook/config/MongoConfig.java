@@ -11,13 +11,17 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories(basePackages = "ru.sasha77.spring.pepsbook.repositories")
 @Configuration
 public class MongoConfig extends AbstractMongoClientConfiguration {
+    @Value("${spring.data.mongodb.host}")
+    private String host;
+    @Value("${spring.data.mongodb.port}")
+    private String port;
     @Value("${spring.data.mongodb.database}")
     private String database;
 
     @NotNull
     @Override
     public MongoClient mongoClient() {
-        return MongoClients.create();
+        return MongoClients.create("mongodb://"+host+":"+port);
     }
 
     @NotNull

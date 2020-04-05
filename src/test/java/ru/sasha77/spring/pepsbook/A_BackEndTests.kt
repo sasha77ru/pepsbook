@@ -144,7 +144,7 @@ class ABackEndTests {
 
             mvc.checkInterlocutors(currName)
 
-            mvc.checkMessages(currName,"Masha", page = 0)
+            mvc.checkMessages(currName,"Masha", page = 0,size = 2)
 
             mvc.checkInterlocutors(currName)
 

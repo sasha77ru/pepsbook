@@ -4,6 +4,7 @@ import com.mongodb.client.MongoClients
 import org.bson.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.mongodb.core.MongoOperations
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import ru.sasha77.spring.pepsbook.TestApplicationObject.TstUser
@@ -29,7 +30,8 @@ import kotlin.random.Random
 class TestApplicationObject (private val usersRepo: UserRepository,
                              private val mindsRepo: MindRepository,
                              private val answersRepo: AnswerRepository,
-                             private val messageRepo: MessageRepository) {
+                             private val messageRepo: MessageRepository,
+                             private val mongoOperations: MongoOperations) {
     inner class TstUser(
             val name: String,
             val email: String,
@@ -86,11 +88,8 @@ class TestApplicationObject (private val usersRepo: UserRepository,
         actualMindsArray.clear()
 
         //		context.getBean(MyMongoTestRepository.class).deleteAll();
-        MongoClients.create().run {
-            getDatabase(mongoDBname).getCollection("messages").deleteMany(Document())
-            getDatabase(mongoDBname).getCollection("interlocutors").deleteMany(Document())
-            close()
-        }
+        mongoOperations.getCollection("messages").deleteMany(Document())
+        mongoOperations.getCollection("interlocutors").deleteMany(Document())
     }
 
     /**
