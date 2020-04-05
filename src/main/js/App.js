@@ -75,3 +75,19 @@ ReactDOM.render(
 )
 store.dispatch(ajaxDataAction("minds"))
 store.dispatch(ajaxInterlocAction())
+setInterval(() => {
+    store.dispatch(ajaxInterlocAction())
+},10000)
+
+//todo test
+setTimeout(() => {
+    mainMessages.click()
+    setTimeout(() => {
+        document.querySelectorAll("button.interlocutor")[0].click()
+        // mainMates.click()
+        // setTimeout(() => {
+        //     document.querySelector(".userEntity .dropdown-toggle").click()
+        //     document.querySelector(".startMessaging").click()
+        // },1000)
+    },1000)
+},1000)
