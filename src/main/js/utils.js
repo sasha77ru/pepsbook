@@ -84,3 +84,74 @@ export function placeCaretAtEnd(el) {
         textRange.select();
     }
 }
+
+// export function cursorTo(el,x) {
+//     el.focus()
+//     let range = document.createRange();
+//     let sel = window.getSelection();
+//     console.log(el )
+//     range.setStart(el.firstChild, x);
+//     range.collapse(true);
+//     sel.removeAllRanges();
+//     sel.addRange(range);
+// }
+
+//not mine
+function getTextNodesIn(node) {
+    var textNodes = [];
+    if (node.nodeType == 3) {
+        textNodes.push(node);
+    } else {
+        var children = node.childNodes;
+        for (var i = 0, len = children.length; i < len; ++i) {
+            textNodes.push.apply(textNodes, getTextNodesIn(children[i]));
+        }
+    }
+    return textNodes;
+}
+//not mine
+export function cursorTo(el, start, end) {
+    if (end === undefined) end = start
+    if (document.createRange && window.getSelection) {
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        var textNodes = getTextNodesIn(el);
+        var foundStart = false;
+        var charCount = 0, endCharCount;
+
+        for (var i = 0, textNode; textNode = textNodes[i++]; ) {
+            endCharCount = charCount + textNode.length;
+            if (!foundStart && start >= charCount
+                && (start < endCharCount ||
+                    (start == endCharCount && i <= textNodes.length))) {
+                range.setStart(textNode, start - charCount);
+                foundStart = true;
+            }
+            if (foundStart && end <= endCharCount) {
+                range.setEnd(textNode, end - charCount);
+                break;
+            }
+            charCount = endCharCount;
+        }
+
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else if (document.selection && document.body.createTextRange) {
+        var textRange = document.body.createTextRange();
+        textRange.moveToElementText(el);
+        textRange.collapse(true);
+        textRange.moveEnd("character", end);
+        textRange.moveStart("character", start);
+        textRange.select();
+    }
+}
+
+export function getCursorPos(el) {
+    el.focus()
+    let _range = document.getSelection().getRangeAt(0)
+    let range = _range.cloneRange()
+    range.selectNodeContents(el)
+    range.setEnd(_range.endContainer, _range.endOffset)
+    return range.toString().length;
+}

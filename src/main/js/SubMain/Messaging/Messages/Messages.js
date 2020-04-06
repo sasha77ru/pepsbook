@@ -7,8 +7,6 @@ import {ajaxMessagesAction} from "../../../redux/actionCreators";
 import {store} from "../../../App"
 
 const Messages = props => {
-    console.log("Messages render",props.data)
-
     useEffect(() => {
         let timer = setInterval(() => {
             props.fetchMessages(store.getState().messageReducer.activeInterlocutorId)

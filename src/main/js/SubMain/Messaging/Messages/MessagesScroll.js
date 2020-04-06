@@ -35,7 +35,6 @@ const MessagesScroll = props => {
             else messagesScroll.scrollTop = messagesScroll.scrollHeight;
         }
     })
-    console.log("messagesScroll RENDER data=",props.data)
     return <div id={"messagesScroll"}>
         <InfiniteScroll
             isReverse={true}

@@ -2,7 +2,7 @@ import React, {memo, useEffect, useState} from 'react'
 import {connect} from "react-redux";
 import {ajaxDataAction, ajaxInterlocAction, ajaxMessagesAction} from "../../redux/actionCreators";
 import Button from "react-bootstrap/Button";
-import {ajax, placeCaretAtEnd} from "../../utils";
+import {ajax, placeCaretAtEnd, cursorTo, getCursorPos} from "../../utils";
 import {loc, restPrefix} from "../../config";
 import {Alert} from "react-bootstrap";
 import {store} from "../../App"
@@ -12,31 +12,42 @@ import {store} from "../../App"
  */
 const MessageInput = ({fetchMessages}) => {
     const initialState = {
+        cursorPos   : 0,
         text        : "",
         error       : false, // should we render the error banner
     }
     const [state,setState] = useState(initialState)
-    const [id,setId] = useState(null)
+    const [idStore,setIdStore] = useState({id : null})
+    const id = idStore.id
+    const setId = (x) => idStore.id = x
 
     useEffect(() => {
-        // just place the caret to the end of the text
-        if ("messageTextArea" in window) {
-            messageTextArea.focus()
-            placeCaretAtEnd(messageTextArea)
-        }
+        cursorTo(messageTextArea,state.cursorPos)
     })
+
+    // useEffect(() => {
+    //     // just place the caret to the end of the text
+    //     if ("messageTextArea" in window) {
+    //         placeCaretAtEnd(messageTextArea)
+    //     }
+    // },[])
 
     let interlocutorId = store.getState().messageReducer.activeInterlocutorId
 
     const updateMessage = (text, unReady) => {
-        console.log(`updateMessage ${text} ${unReady} ${id}`)
         ajax(restPrefix + "updateMessage", {_id : id, text: text, unReady : unReady}, "PATCH")
             .then((result) => {
                 fetchMessages(interlocutorId) //todo optimize
             })
     }
 
-    const handleChange = () => {
+    const handleChange = e => {
+        console.log("handleChange",messageTextArea.innerText, state)
+        if (e.keyCode === 13 && !e.ctrlKey && !e.shiftKey && messageTextArea.innerText.match(/\n$/)) {
+            messageTextArea.innerText = messageTextArea.innerText.replace(/\n$/,"")
+            handleSubmit(e)
+            return
+        }
         let text = messageTextArea.innerText
         if (text.length > 4000) {
             setState({...state,...{error: true},...{text:messageTextArea.innerText}})
@@ -44,7 +55,7 @@ const MessageInput = ({fetchMessages}) => {
         }
         //if text has been changed
         if (state.text !== text) {
-            let newState = {text:text}
+            let newState = {text : text,cursorPos : getCursorPos(messageTextArea)}
             //if it is the first change
             if (id === null) {
                 setId("0")
@@ -53,10 +64,12 @@ const MessageInput = ({fetchMessages}) => {
                     .then((result) => {
                         // if text has been changed during waiting for _id
                         setId(result)
+                        console.log("updateMessage I")
                         if (messageTextArea.innerText !== text) updateMessage(messageTextArea.innerText, true) /* I */
                         fetchMessages(interlocutorId) //todo optimize
                     })
             } else if (id !== "0") {
+                console.log("updateMessage II")
                 updateMessage(text, true) /* II */
             }
             setState(newState)
@@ -64,16 +77,18 @@ const MessageInput = ({fetchMessages}) => {
     }
 
     const handleSubmit = () => {
+        console.log("handleSubmit",messageTextArea.innerText,state)
         let text = messageTextArea.innerText
-        setState({text: text}) // to force render
+        // setState({text: text}) // to force render
         // input field is too long
         if (text.length > 4000) {
             setState({...state,error: true})
             return
         }
-        updateMessage(messageTextArea.innerText,false) /* III */
-        setId(null)
         setState(initialState)
+        setId(null)
+        console.log("updateMessage III")
+        updateMessage(text,false) /* III */
     }
 
     console.log(`INPUT RENDER state=`,state)
@@ -89,7 +104,7 @@ const MessageInput = ({fetchMessages}) => {
 
     return <div>
         {state.error && <div><Alert id="messageErrSign" variant="danger">{loc.messageIsTooLong}</Alert></div>}
-        <div contentEditable id="messageTextArea" onKeyUp={handleChange} suppressContentEditableWarning={true}>
+        <div contentEditable id="messageTextArea" onKeyUp={handleChange} style={{whiteSpace: "pre-wrap"}} suppressContentEditableWarning={true}>
             {state.text}
         </div>
         <Button variant="primary" id="messageSendButton"

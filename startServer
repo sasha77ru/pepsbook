@@ -24,6 +24,13 @@ services:
   redis:
     restart: always
     image: redis:6.0-rc
+  mongo:
+    restart: always
+    image: mongo:4.2.3-bionic
+    volumes:
+      - pb_mongo:/data/db
+    ports:
+      - 27017:27017
   java:
     restart: always
     image: sasha77ru/pepsbook
@@ -32,11 +39,13 @@ services:
     links:
       - sql
       - redis
+      - mongo
     environment:
       spring_datasource_url: jdbc:mysql://sql:3306/pepsbook?serverTimezone=Europe/Moscow&useUnicode=yes&characterEncoding=UTF-8
       spring_redis_host: redis
-
+      spring_data_mongodb_host: mongo
 volumes:
   pb_sql: {}
+  pb_mongo: {}
 !
 docker-compose up -d && docker-compose logs -f

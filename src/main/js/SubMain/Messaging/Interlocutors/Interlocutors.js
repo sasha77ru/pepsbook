@@ -10,12 +10,14 @@ const Interlocutors = props => {
             return props.data.map(x => <Interlocutor key={x._id} x={x}
                                                      isActive={props.activeInterlocutorId == x.userId}/>);
         } else {
-            return <Card border="danger">
-                <Card.Header>{loc.noInterlocutors}</Card.Header>
-                <Card.Body>
-                    <Card.Text>{loc.addInterlocutors}</Card.Text>
-                </Card.Body>
-            </Card>
+            return <div style={{position:"absolute",left:"1rem",right:"1rem"}}>
+                <Card border="danger">
+                    <Card.Header>{loc.noInterlocutors}</Card.Header>
+                    <Card.Body>
+                        <Card.Text>{loc.addInterlocutors}</Card.Text>
+                    </Card.Body>
+                </Card>
+            </div>
         }
     } else return false
 }
