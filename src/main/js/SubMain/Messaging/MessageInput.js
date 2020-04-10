@@ -10,7 +10,7 @@ import {store} from "../../App"
 /**
  * Edit and send unReady or Ready message. See messageSendDiagrams.svg
  */
-const MessageInput = ({fetchMessages}) => {
+const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
     const initialState = {
         cursorPos   : 0,
         text        : "",
@@ -18,8 +18,11 @@ const MessageInput = ({fetchMessages}) => {
     }
     const [state,setState] = useState(initialState)
     const [idStore,setIdStore] = useState({id : null})
-    const id = idStore.id
     const setId = (x) => idStore.id = x
+
+    useEffect(() => {
+        setState(initialState)
+    },[activeInterlocutorId])
 
     useEffect(() => {
         cursorTo(messageTextArea,state.cursorPos)
@@ -35,14 +38,14 @@ const MessageInput = ({fetchMessages}) => {
     let interlocutorId = store.getState().messageReducer.activeInterlocutorId
 
     const updateMessage = (text, unReady) => {
-        ajax(restPrefix + "updateMessage", {_id : id, text: text, unReady : unReady}, "PATCH")
+        ajax(restPrefix + "updateMessage", {_id : idStore.id, text: text, unReady : unReady}, "PATCH")
             .then((result) => {
                 fetchMessages(interlocutorId) //todo optimize
             })
     }
 
     const handleChange = e => {
-        console.log("handleChange",messageTextArea.innerText, state)
+        console.log(`handleChange idStore.id=${idStore.id} messageTextArea=${messageTextArea.innerText} state=`,state)
         if (e.keyCode === 13 && !e.ctrlKey && !e.shiftKey && messageTextArea.innerText.match(/\n$/)) {
             messageTextArea.innerText = messageTextArea.innerText.replace(/\n$/,"")
             handleSubmit(e)
@@ -57,19 +60,19 @@ const MessageInput = ({fetchMessages}) => {
         if (state.text !== text) {
             let newState = {text : text,cursorPos : getCursorPos(messageTextArea)}
             //if it is the first change
-            if (id === null) {
+            if (idStore.id === null) {
                 setId("0")
                 console.log(`newMessage "${text}"`)
                 ajax(restPrefix + "newMessage", {whomId : interlocutorId, text: text, unReady : true}, "POST")
                     .then((result) => {
                         // if text has been changed during waiting for _id
                         setId(result)
-                        console.log("updateMessage I")
+                        console.log("updateMessage I id="+result)
                         if (messageTextArea.innerText !== text) updateMessage(messageTextArea.innerText, true) /* I */
                         fetchMessages(interlocutorId) //todo optimize
                     })
-            } else if (id !== "0") {
-                console.log("updateMessage II")
+            } else if (idStore.id !== "0") {
+                console.log("updateMessage II text=",text)
                 updateMessage(text, true) /* II */
             }
             setState(newState)
@@ -78,6 +81,7 @@ const MessageInput = ({fetchMessages}) => {
 
     const handleSubmit = () => {
         console.log("handleSubmit",messageTextArea.innerText,state)
+        if (idStore.id === null || idStore.id === "0") return
         let text = messageTextArea.innerText
         // setState({text: text}) // to force render
         // input field is too long
@@ -85,17 +89,17 @@ const MessageInput = ({fetchMessages}) => {
             setState({...state,error: true})
             return
         }
-        setState(initialState)
-        setId(null)
         console.log("updateMessage III")
         updateMessage(text,false) /* III */
+        setState(initialState)
+        setId(null)
     }
 
-    console.log(`INPUT RENDER state=`,state)
+    console.log(`INPUT RENDER id=${idStore.id} state=`,state)
 
     //If user has deleted all chars - remove the message
-    if (id !== null && id !== "0" && state.text === "") {
-        ajax(restPrefix + "removeMessage", {_id : id }, "DELETE")
+    if (idStore.id !== null && idStore.id !== "0" && state.text === "") {
+        ajax(restPrefix + "removeMessage", {_id : idStore.id }, "DELETE")
             .then((result) => {
                 setId(null)
                 fetchMessages(interlocutorId) //todo optimize
@@ -109,10 +113,12 @@ const MessageInput = ({fetchMessages}) => {
         </div>
         <Button variant="primary" id="messageSendButton"
                 onClick={handleSubmit}
-                disabled={id === null || id === "0" || state.error || state.text === ""}
+                disabled={state.error || state.text === ""}
         >{loc.sendMessage}</Button>
     </div>
 }
-export default connect(null,dispatch => ({
+export default connect(state => ({
+    activeInterlocutorId: state.messageReducer.activeInterlocutorId,
+}),dispatch => ({
     fetchMessages       : (...args) => dispatch(ajaxMessagesAction(...args)),
-}),null,{pure : false})(MessageInput)
+}))(MessageInput)

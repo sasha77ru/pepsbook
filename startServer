@@ -31,6 +31,12 @@ services:
       - pb_mongo:/data/db
     ports:
       - 27017:27017
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 50M
   java:
     restart: always
     image: sasha77ru/pepsbook
@@ -48,4 +54,4 @@ volumes:
   pb_sql: {}
   pb_mongo: {}
 !
-docker-compose up -d && docker-compose logs -f
+docker-compose --compatibility up -d && docker-compose logs -f

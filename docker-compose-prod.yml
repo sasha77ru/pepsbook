@@ -21,6 +21,12 @@ services:
       - pb_mongo:/data/db
     ports:
       - 27017:27017
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 50M
   java:
     restart: always
     image: sasha77ru/pepsbook

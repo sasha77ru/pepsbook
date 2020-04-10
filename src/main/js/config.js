@@ -40,7 +40,8 @@ loc = {...loc,
     sendMessage         : "Отправить",
     noInterlocutors     : "Нет собеседников",
     addInterlocutors    : `Выберете собеседника в разделах `+
-                          `${loc.mainMenuTexts.users}, ${loc.mainMenuTexts.friends}, ${loc.mainMenuTexts.mates} `+
-                          ` и нажмите "Написать сообщение" в его всплывающем меню"`,
+        `${loc.mainMenuTexts.users}, ${loc.mainMenuTexts.friends}, ${loc.mainMenuTexts.mates} `+
+        ` и нажмите "Написать сообщение" в его всплывающем меню"`,
+    chooseInterlocutors : `Выберете собеседника слева`,
 }
 

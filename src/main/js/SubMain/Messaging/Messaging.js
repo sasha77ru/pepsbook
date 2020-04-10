@@ -6,6 +6,8 @@ import Interlocutors from "./Interlocutors/Interlocutors";
 import Messages from "./Messages/Messages";
 import {store} from "../../App";
 import MessageInput from "./MessageInput";
+import Card from "react-bootstrap/Card";
+import {loc} from "../../config";
 
 const Messaging = ({activeInterlocutorId,fetchMessages,fetchInterlocutors}) => {
     console.log("Messaging RENDER")
@@ -15,10 +17,19 @@ const Messaging = ({activeInterlocutorId,fetchMessages,fetchInterlocutors}) => {
     },[activeInterlocutorId])
     return <>
         <div id={"interlocutors"}><Interlocutors/></div>
-        {activeInterlocutorId && <div id={"messages"}>
-            <Messages activeInterlocutorId={activeInterlocutorId}/>
-            <div id={"messageInput"}><MessageInput /></div>
-        </div>}
+        {(activeInterlocutorId)
+            ?   <div id={"messages"}>
+                    <Messages activeInterlocutorId={activeInterlocutorId}/>
+                    <div id={"messageInput"}><MessageInput /></div>
+                </div>
+            :   <div style={{zIndex : -1}}>
+                    <Card border="danger">
+                        <Card.Body>
+                            <Card.Text>{loc.chooseInterlocutors}</Card.Text>
+                        </Card.Body>
+                    </Card>
+                </div>
+        }
     </>
 }
 export default connect(state => ({
