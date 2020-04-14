@@ -74,6 +74,7 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
 //            .httpBasic()
 //        .and()
             .authorizeRequests()
+                .antMatchers("/ws/**").authenticated()
                 .antMatchers("/rest/**").authenticated()
                 .antMatchers("/**").access("permitAll")
 //        .and()

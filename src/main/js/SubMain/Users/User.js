@@ -8,7 +8,8 @@ import {setMessagesParamAction} from "../../redux/actionCreators";
 
 const User = props => {
     const jump2Messages = interlocutorId => {
-        props.changeActiveInterlocutorId(interlocutorId)
+        let interlocutor = store.getState().interlocReducer.data.find(x => (x.userId === interlocutorId))
+        props.changeActiveInterlocutor(interlocutor)
         props.switchTo("messages")
     }
     const startMessaging = e => {
@@ -99,5 +100,5 @@ User.propTypes = {
     switchTo : PropTypes.func.isRequired,
 }
 export default connect(null,dispatch => ({
-    changeActiveInterlocutorId: (interlocutorId) => dispatch(setMessagesParamAction({activeInterlocutorId: interlocutorId})),
+    changeActiveInterlocutor : (interlocutor) => dispatch(setMessagesParamAction({activeInterlocutor: interlocutor})),
 }))(User)

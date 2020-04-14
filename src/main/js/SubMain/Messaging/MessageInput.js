@@ -1,6 +1,11 @@
 import React, {memo, useEffect, useState} from 'react'
 import {connect} from "react-redux";
-import {ajaxDataAction, ajaxInterlocAction, ajaxMessagesAction} from "../../redux/actionCreators";
+import {
+    ajaxDataAction,
+    ajaxInterlocAction,
+    ajaxMessagesAction,
+    setMessagesParamAction
+} from "../../redux/actionCreators";
 import Button from "react-bootstrap/Button";
 import {ajax, placeCaretAtEnd, cursorTo, getCursorPos} from "../../utils";
 import {loc, restPrefix} from "../../config";
@@ -10,7 +15,7 @@ import {store} from "../../App"
 /**
  * Edit and send unReady or Ready message. See messageSendDiagrams.svg
  */
-const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
+const MessageInput = ({activeInterlocutor,fetchMessages,setMessagesParam,changeLastMessage}) => {
     const initialState = {
         cursorPos   : 0,
         text        : "",
@@ -22,7 +27,7 @@ const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
 
     useEffect(() => {
         setState(initialState)
-    },[activeInterlocutorId])
+    },[activeInterlocutor])
 
     useEffect(() => {
         cursorTo(messageTextArea,state.cursorPos)
@@ -35,12 +40,16 @@ const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
     //     }
     // },[])
 
-    let interlocutorId = store.getState().messageReducer.activeInterlocutorId
-
     const updateMessage = (text, unReady) => {
-        ajax(restPrefix + "updateMessage", {_id : idStore.id, text: text, unReady : unReady}, "PATCH")
+        changeLastMessage(text)
+        ajax(restPrefix + "updateMessage", {
+            _id     : idStore.id,
+            text    : text,
+            whomId  : activeInterlocutor.userId,
+            unReady : unReady
+        }, "PATCH")
             .then((result) => {
-                fetchMessages(interlocutorId) //todo optimize
+                if (!unReady) fetchMessages(activeInterlocutor)
             })
     }
 
@@ -63,13 +72,27 @@ const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
             if (idStore.id === null) {
                 setId("0")
                 console.log(`newMessage "${text}"`)
-                ajax(restPrefix + "newMessage", {whomId : interlocutorId, text: text, unReady : true}, "POST")
+                ajax(restPrefix + "newMessage", {whomId : activeInterlocutor.userId, text: text, unReady : true}, "POST")
                     .then((result) => {
                         // if text has been changed during waiting for _id
                         setId(result)
                         console.log("updateMessage I id="+result)
                         if (messageTextArea.innerText !== text) updateMessage(messageTextArea.innerText, true) /* I */
-                        fetchMessages(interlocutorId) //todo optimize
+                        let data = store.getState().messageReducer.data
+                        let newData = {...data,content : [{
+                                _id     : result,
+                                text    : messageTextArea.innerText,
+                                time    : `${(new Date()).getHours()}:${(new Date()).getMinutes()}`,
+                                unReady : true,
+                                userId  : window.userId,
+                                userName: window.userName,
+                                whomName: activeInterlocutor.userName,
+                                whomId  : activeInterlocutor.userId,
+                                manual  : true,
+                            },...data.content]}
+                        console.log("data",data)
+                        console.log("newData",newData)
+                        setMessagesParam({data : newData})
                     })
             } else if (idStore.id !== "0") {
                 console.log("updateMessage II text=",text)
@@ -99,10 +122,10 @@ const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
 
     //If user has deleted all chars - remove the message
     if (idStore.id !== null && idStore.id !== "0" && state.text === "") {
-        ajax(restPrefix + "removeMessage", {_id : idStore.id }, "DELETE")
+        ajax(restPrefix + "removeMessage", {_id : idStore.id, whomId : activeInterlocutor.userId}, "DELETE")
             .then((result) => {
                 setId(null)
-                fetchMessages(interlocutorId) //todo optimize
+                fetchMessages(activeInterlocutor)
             })
     }
 
@@ -118,7 +141,8 @@ const MessageInput = ({activeInterlocutorId,fetchMessages}) => {
     </div>
 }
 export default connect(state => ({
-    activeInterlocutorId: state.messageReducer.activeInterlocutorId,
+    activeInterlocutor  : state.messageReducer.activeInterlocutor,
 }),dispatch => ({
     fetchMessages       : (...args) => dispatch(ajaxMessagesAction(...args)),
+    setMessagesParam    : (...args) => dispatch(setMessagesParamAction(...args)),
 }))(MessageInput)

@@ -9,7 +9,10 @@
     "react-redux": "^7.1.3",
     "react-bootstrap": "^1.0.0-beta.16",
     "react-app-polyfill": "^1.0.6",
-    "react-infinite-scroller": "^1.2.4"
+    "react-infinite-scroller": "^1.2.4",
+    "net": "^1.0.2",
+    "sockjs-client": "^1.4.0",
+    "stompjs": "^2.3.3"
   },
   "scripts": {
     "build": "webpack",

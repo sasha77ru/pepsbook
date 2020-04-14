@@ -238,7 +238,7 @@ public class RestContr {
         User user = userRepository.findByUsername(authentication.getName());
         Integer userId = user.getId();
         //If user reads messages on 0 page. it means he see new messages, we should clear interlocutor's counters
-        if (page == 0) interlocService.clearInterlocutorState(whomId,userId);
+        if (page == 0) interlocService.clearInterlocutorState(userId, whomId, authentication.getName());
 
         Page<Message> pagePage = messageService.loadMessages(userId,whomId,page,size,subs);
         //if such page doesn't exist anymore, return last page
@@ -259,14 +259,18 @@ public class RestContr {
     public void updateMessage(@NotNull Authentication authentication,
                            @RequestParam String _id,
                            @RequestParam String text,
+                           @RequestParam Integer whomId,
                            Boolean unReady) {
-        messageService.updateMessage(_id,text,unReady, new Date());
+        messageService.updateMessage(_id, authentication.getName(), whomId, text, unReady, new Date());
     }
 
     @DeleteMapping(path = "/removeMessage")
-    public void removeMessage(Principal principal, @RequestParam String _id) {
-        User user = userRepository.findByUsername(principal.getName());
-        messageService.removeMessage(user.getId(),_id);
+    public void removeMessage(@NotNull Authentication authentication,
+                              @RequestParam String _id,
+                              @RequestParam Integer whomId
+                              ) {
+        User user = userRepository.findByUsername(authentication.getName());
+        messageService.removeMessage(user.getId(), authentication.getName(), whomId);
     }
 
     /**

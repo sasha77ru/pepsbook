@@ -8,8 +8,9 @@ import static ru.sasha77.spring.pepsbook.MyUtilities.myDate;
 public class InterlocResponse {
     private String  _id;
     private String  userName;
-    private String  userId;
-    private String  whoseId;
+    private Integer userId;
+    private String  whoseName;
+    private Integer whoseId;
     private Integer numNewMessages;
     private Boolean hasPreMessages;
     private String  time;
@@ -17,8 +18,9 @@ public class InterlocResponse {
     public InterlocResponse(Interlocutor interlocutor) {
         this._id            = interlocutor.get_id();
         this.userName       = interlocutor.getUserName();
-        this.userId         = interlocutor.getUserId().toString();
-        this.whoseId        = interlocutor.getWhoseId().toString();
+        this.userId         = interlocutor.getUserId();
+        this.whoseName      = interlocutor.getWhoseName();
+        this.whoseId        = interlocutor.getWhoseId();
         this.numNewMessages = interlocutor.getNumNewMessages();
         this.hasPreMessages = interlocutor.getHasPreMessages();
         this.time           = myDate(interlocutor.getTime());

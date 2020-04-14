@@ -13,6 +13,7 @@ public class Interlocutor {
     @Id private String  _id;
     private String  userName;
     private Integer userId;
+    private String whoseName;
     private Integer whoseId;
     private Integer numNewMessages;
     private Boolean hasPreMessages;
@@ -22,6 +23,7 @@ public class Interlocutor {
     public Interlocutor(String   _id,
                         String   userName,
                         Integer  userId,
+                        String   whoseName,
                         Integer  whoseId,
                         Integer  numNewMessages,
                         Boolean  hasPreMessages,
@@ -29,6 +31,7 @@ public class Interlocutor {
         this._id            = _id;
         this.userName       = userName;
         this.userId         = userId;
+        this.whoseName      = whoseName;
         this.whoseId        = whoseId;
         this.numNewMessages = numNewMessages;
         this.hasPreMessages = hasPreMessages;
@@ -37,12 +40,14 @@ public class Interlocutor {
 
     public Interlocutor(String   userName,
                         Integer  userId,
+                        String   whoseName,
                         Integer  whoseId,
                         Integer  numNewMessages,
                         Boolean  hasPreMessages,
                         Date     time) {
         this.userName       = userName;
         this.userId         = userId;
+        this.whoseName      = whoseName;
         this.whoseId        = whoseId;
         this.numNewMessages = numNewMessages;
         this.hasPreMessages = hasPreMessages;

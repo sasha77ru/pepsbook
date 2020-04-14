@@ -8,16 +8,20 @@ import {store} from "../../../App"
 
 const Messages = props => {
     useEffect(() => {
-        let timer = setInterval(() => {
-            props.fetchMessages(store.getState().messageReducer.activeInterlocutorId)
-        },2000)
-        return () => {
-            clearInterval(timer)
-        }
+        // let timer = setInterval(() => {
+        //     props.fetchMessages(store.getState().messageReducer.activeInterlocutor.userId)
+        // },2000)
+        // return () => {
+        //     clearInterval(timer)
+        // }
     })
+    console.log("Messages RENDER data=",props.data)
     if (props.isLoaded) {
         // todo crutch with random key
-        return <MessagesScroll key={Math.random()} data={props.data} activeInterlocutorId={props.activeInterlocutorId}/>
+        return <MessagesScroll key={Math.random()}
+                               data={props.data}
+                               activeInterlocutor={props.activeInterlocutor}
+                               setLastMessageFunc={props.setLastMessageFunc}/>
     } else return false
 }
 export default connect(state => ({

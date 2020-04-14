@@ -5,8 +5,10 @@ import {ajax, placeCaretAtEnd} from "../../../utils";
 import InfiniteScroll from 'react-infinite-scroller'
 import {restPrefix} from "../../../config";
 import Badge from "react-bootstrap/Badge";
+import Messages from "./Messages";
 
 const MessagesScroll = props => {
+    console.log("MessagesScroll RENDER data=",props.data)
     const initialState = {
         messages    : props.data.content.reverse(),
         page        : 0,
@@ -15,7 +17,7 @@ const MessagesScroll = props => {
     }
     const [state,setState] = useState(initialState)
     const loadFunc = page => {
-        ajax(restPrefix + "messages", {whomId: props.activeInterlocutorId,page:page,size:MESSAGES_PAGE_SIZE}, "GET")
+        ajax(restPrefix + "messages", {whomId: props.activeInterlocutor.userId,page:page,size:MESSAGES_PAGE_SIZE}, "GET")
             .then((response) => {
                 let result = JSON.parse(response)
                 setState({
@@ -44,7 +46,7 @@ const MessagesScroll = props => {
             loader={<div key={0}><Badge pill variant={"secondary"}>{Math.round((state.page+1) / state.totalPages * 100) + "%"}</Badge></div>}
             useWindow={false}
         >
-            {state.messages.map(x => <Message key={x._id} x={x}/>)}
+            {state.messages.map(x => <Message key={x._id} x={x} setLastMessageFunc={props.setLastMessageFunc}/>)}
         </InfiniteScroll>
     </div>
 }

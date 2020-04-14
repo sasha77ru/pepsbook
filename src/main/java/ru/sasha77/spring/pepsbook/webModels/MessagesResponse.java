@@ -10,9 +10,9 @@ public class MessagesResponse {
     private String  _id;
     private String  text;
     private String  userName;
-    private String  userId;
+    private Integer userId;
     private String  whomName;
-    private String  whomId;
+    private Integer whomId;
     private String  time;
     private Boolean unReady;
 
@@ -20,9 +20,9 @@ public class MessagesResponse {
         this._id        = message.get_id();
         this.text       = message.getText();
         this.userName   = message.getUserName();
-        this.userId     = message.getUserId().toString();
+        this.userId     = message.getUserId();
         this.whomName   = message.getWhomName();
-        this.whomId     = message.getWhomId().toString();
+        this.whomId     = message.getWhomId();
         this.time       = myDate(message.getTime());
         this.unReady    = message.getUnReady();
     }

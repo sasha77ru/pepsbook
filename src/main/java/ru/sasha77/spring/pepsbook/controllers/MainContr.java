@@ -21,6 +21,7 @@ import ru.sasha77.spring.pepsbook.security.TokenProvider;
 import ru.sasha77.spring.pepsbook.webModels.UserLogin;
 import ru.sasha77.spring.pepsbook.webModels.UserRegister;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;

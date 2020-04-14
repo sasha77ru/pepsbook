@@ -216,7 +216,7 @@
 			<version>2.8.1</version>
 		</dependency>
 
-		<!-- EhCache to get keys and Evict them in a right way -->
+		<!-- EhCache to get keys and Evict them in a right way and stale cache -->
 		<dependency>
 			<groupId>net.sf.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
@@ -250,6 +250,14 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.10.3</version>
+		</dependency>
+
+		<!-- WebSocket for messaging -->
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+			<version>2.1.7.RELEASE</version>
 		</dependency>
 
 	</dependencies>

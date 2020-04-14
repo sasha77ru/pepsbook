@@ -2,7 +2,7 @@ import 'react-app-polyfill/ie9';
 import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import {ajax, noTag, removeJwtToken} from "./utils";
+import {ajax, noTag, removeJwtToken, wSocket} from "./utils";
 import SubMain from './SubMain/SubMain.js'
 import {loc} from './config.js'
 import {connect, Provider} from "react-redux";
@@ -10,6 +10,8 @@ import {configureStore} from "./redux/configureStore";
 import {ajaxDataAction, ajaxInterlocAction} from "./redux/actionCreators";
 import MainMenu from "./MainMenu/MainMenu";
 import User from "./SubMain/Users/User";
+import SockJS from "sockjs-client"
+import "stompjs"
 
 let App = props => {
     const [state, setMyState] = useState({nowInMain : "minds"})
@@ -22,6 +24,7 @@ let App = props => {
                 let result = JSON.parse(data)
                 nameField.innerHTML = noTag(result.name);
                 window.userId = result.id
+                window.userName = result.name
             })
     },[])/** Fun that changes nowInMain and starts fetching data from Rest*/
     const switchTo = what => {
@@ -75,19 +78,24 @@ ReactDOM.render(
 )
 store.dispatch(ajaxDataAction("minds"))
 store.dispatch(ajaxInterlocAction())
-setInterval(() => {
+
+wSocket("interlocutorsUpdate","updateInterlocutors",(answer) => {
     store.dispatch(ajaxInterlocAction())
-},10000)
+})
+
+// setInterval(() => {
+//     store.dispatch(ajaxInterlocAction())
+// },10000)
 
 //todo test
-setTimeout(() => {
-    mainMessages.click()
-    setTimeout(() => {
-        document.querySelectorAll("button.interlocutor")[0].click()
-        // mainMates.click()
-        // setTimeout(() => {
-        //     document.querySelector(".userEntity .dropdown-toggle").click()
-        //     document.querySelector(".startMessaging").click()
-        // },1000)
-    },1000)
-},1000)
+// setTimeout(() => {
+//     mainMessages.click()
+//     setTimeout(() => {
+//         document.querySelectorAll("button.interlocutor")[0].click()
+//         // mainMates.click()
+//         // setTimeout(() => {
+//         //     document.querySelector(".userEntity .dropdown-toggle").click()
+//         //     document.querySelector(".startMessaging").click()
+//         // },1000)
+//     },1000)
+// },1000)

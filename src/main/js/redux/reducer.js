@@ -28,7 +28,7 @@ const interlocReducer = (state = initialState,action) => {
 const messageReducer = (state = {
         isLoaded            : false,
         data                : {},
-        activeInterlocutorId: null,
+        activeInterlocutor  : null,
     },action) => {
     switch (action.type) {
         case "fetchMessages" : {

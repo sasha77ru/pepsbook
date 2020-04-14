@@ -10,7 +10,7 @@ const Interlocutor = props => {
         <Button
             className={"interlocutor"}
             variant={props.isActive ? "success" : "primary"}
-            onClick={() => props.changeActiveInterlocutorId(props.x.userId)}
+            onClick={() => props.changeActiveInterlocutor(props.x)}
         >
             {props.x.userName}{" "}
             {(props.x.numNewMessages > 0)
@@ -25,7 +25,7 @@ const Interlocutor = props => {
 Interlocutor.propTypes = {
     x : PropTypes.shape({
         userName        : PropTypes.string.isRequired,
-        userId          : PropTypes.string.isRequired,
+        userId          : PropTypes.number.isRequired,
         numNewMessages  : PropTypes.number.isRequired,
         hasPreMessages  : PropTypes.bool.isRequired,
     }).isRequired,
@@ -33,5 +33,7 @@ Interlocutor.propTypes = {
     fetchMessages : PropTypes.func,
 }
 export default connect(null,dispatch => ({
-    changeActiveInterlocutorId: (interlocutorId) => dispatch(setMessagesParamAction({activeInterlocutorId: interlocutorId})),
+    changeActiveInterlocutor: (x) => dispatch(setMessagesParamAction({
+        activeInterlocutor  : x,
+    })),
 }))(Interlocutor)

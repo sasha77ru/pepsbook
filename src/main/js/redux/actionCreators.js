@@ -27,13 +27,13 @@ export const ajaxInterlocAction = () => ({
     }
 })
 
-export const ajaxMessagesAction = (activeInterlocutorId,params) => ({
+export const ajaxMessagesAction = (activeInterlocutor,params) => ({
     type: "fetchMessages",
     payload: null,
     meta: {
         type    : "api",
         url     : restPrefix + "messages",
-        params  : {whomId: activeInterlocutorId,page:0,size:MESSAGES_PAGE_SIZE,...params},
+        params  : {whomId: activeInterlocutor.userId,page:0,size:MESSAGES_PAGE_SIZE,...params},
         method  : "GET",
     }
 })

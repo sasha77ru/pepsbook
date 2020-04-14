@@ -1,3 +1,5 @@
+import SockJS from "sockjs-client";
+
 /**
  * Hides all > and <
  * Became unused with React
@@ -64,6 +66,17 @@ export function ajax (url,data = {},method = 'GET') {
                 }
             }, noInternet)
     } catch (e) {}
+}
+
+export function wSocket (endpoint, target, callBack) {
+    const socket = SockJS(`/ws/${endpoint}?jwt=${getJwtToken()}`);
+    const stompClient = Stomp.over(socket);
+    stompClient.connect({}, function(frame) {
+        stompClient.subscribe(`/topic/${target}`, (message) => {
+            callBack(JSON.parse(message.body))
+        });
+    });
+    return socket
 }
 
 //not mine

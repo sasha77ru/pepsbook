@@ -9,18 +9,21 @@ import MessageInput from "./MessageInput";
 import Card from "react-bootstrap/Card";
 import {loc} from "../../config";
 
-const Messaging = ({activeInterlocutorId,fetchMessages,fetchInterlocutors}) => {
+const Messaging = ({activeInterlocutor,fetchMessages,fetchInterlocutors}) => {
     console.log("Messaging RENDER")
     useEffect(() => {fetchInterlocutors()},[])
     useEffect(() => {
-        activeInterlocutorId && fetchMessages(activeInterlocutorId)
-    },[activeInterlocutorId])
+        activeInterlocutor && fetchMessages(activeInterlocutor)
+    },[activeInterlocutor])
+
+    let changeLastMessage = null
+    const setLastMessageFunc = x => {changeLastMessage = x}
     return <>
         <div id={"interlocutors"}><Interlocutors/></div>
-        {(activeInterlocutorId)
+        {(activeInterlocutor)
             ?   <div id={"messages"}>
-                    <Messages activeInterlocutorId={activeInterlocutorId}/>
-                    <div id={"messageInput"}><MessageInput /></div>
+                    <Messages activeInterlocutor={activeInterlocutor} setLastMessageFunc={setLastMessageFunc}/>
+                    <div id={"messageInput"}><MessageInput changeLastMessage={(...args) => changeLastMessage(...args)} /></div>
                 </div>
             :   <div style={{zIndex : -1}}>
                     <Card border="danger">
@@ -33,7 +36,7 @@ const Messaging = ({activeInterlocutorId,fetchMessages,fetchInterlocutors}) => {
     </>
 }
 export default connect(state => ({
-    activeInterlocutorId: state.messageReducer.activeInterlocutorId,
+    activeInterlocutor  : state.messageReducer.activeInterlocutor,
 }),dispatch => ({
     fetchInterlocutors  : (...args) => dispatch(ajaxInterlocAction(...args)),
     fetchMessages       : (...args) => dispatch(ajaxMessagesAction(...args)),
