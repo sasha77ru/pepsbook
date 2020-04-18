@@ -1,4 +1,4 @@
-import React, {memo, useEffect} from 'react'
+import React from 'react'
 import {connect} from "react-redux";
 import Interlocutor from "./Interlocutor";
 import Card from "react-bootstrap/Card";
@@ -6,12 +6,15 @@ import {loc} from "../../../config"
 import {ajaxMessagesAction} from "../../../redux/actionCreators";
 
 const Interlocutors = props => {
+    console.log("Interlocutors RENDER activeInterlocutor=",props.activeInterlocutor)
     if (props.isLoaded) { // noinspection EqualityComparisonWithCoercionJS
         if (props.data.length > 0) {
             return props.data.map(x => {
                 if (props.activeInterlocutor && (x.hasPreMessages || x.numNewMessages))
                     props.fetchMessages(props.activeInterlocutor)
-                return <Interlocutor key={x._id} x={x} isActive={props.activeInterlocutor == x}/>
+                return <Interlocutor key={x._id}
+                                     x={x}
+                                     isActive={props.activeInterlocutor && props.activeInterlocutor._id === x._id}/>
             });
         } else {
             return <div style={{position:"absolute",left:"1rem",right:"1rem",zIndex : 1}}>

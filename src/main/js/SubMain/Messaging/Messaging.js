@@ -1,10 +1,8 @@
 import React, {memo, useEffect, useState} from 'react'
-import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {ajaxDataAction, ajaxInterlocAction, ajaxMessagesAction} from "../../redux/actionCreators";
 import Interlocutors from "./Interlocutors/Interlocutors";
 import Messages from "./Messages/Messages";
-import {store} from "../../App";
 import MessageInput from "./MessageInput";
 import Card from "react-bootstrap/Card";
 import {loc} from "../../config";
@@ -16,14 +14,12 @@ const Messaging = ({activeInterlocutor,fetchMessages,fetchInterlocutors}) => {
         activeInterlocutor && fetchMessages(activeInterlocutor)
     },[activeInterlocutor])
 
-    let changeLastMessage = null
-    const setLastMessageFunc = x => {changeLastMessage = x}
     return <>
         <div id={"interlocutors"}><Interlocutors/></div>
         {(activeInterlocutor)
             ?   <div id={"messages"}>
-                    <Messages activeInterlocutor={activeInterlocutor} setLastMessageFunc={setLastMessageFunc}/>
-                    <div id={"messageInput"}><MessageInput changeLastMessage={(...args) => changeLastMessage(...args)} /></div>
+                    <Messages activeInterlocutor={activeInterlocutor} />
+                    <div id={"messageInput"}><MessageInput /></div>
                 </div>
             :   <div style={{zIndex : -1}}>
                     <Card border="danger">

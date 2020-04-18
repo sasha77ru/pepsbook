@@ -25,8 +25,12 @@ let App = props => {
                 nameField.innerHTML = noTag(result.name);
                 window.userId = result.id
                 window.userName = result.name
+                wSocket("interlocutorsUpdate","updateInterlocutors/"+window.userId,(answer) => {
+                    store.dispatch(ajaxInterlocAction())
+                })
             })
-    },[])/** Fun that changes nowInMain and starts fetching data from Rest*/
+    },[])
+    /** Fun that changes nowInMain and starts fetching data from Rest*/
     const switchTo = what => {
         if ('mainFilter' in window) mainFilter.value = ""
         setState({nowInMain : what})
@@ -78,10 +82,6 @@ ReactDOM.render(
 )
 store.dispatch(ajaxDataAction("minds"))
 store.dispatch(ajaxInterlocAction())
-
-wSocket("interlocutorsUpdate","updateInterlocutors",(answer) => {
-    store.dispatch(ajaxInterlocAction())
-})
 
 // setInterval(() => {
 //     store.dispatch(ajaxInterlocAction())

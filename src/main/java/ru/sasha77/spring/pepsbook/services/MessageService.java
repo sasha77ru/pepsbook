@@ -87,20 +87,18 @@ public class MessageService {
             JSONObject json = new JSONObject();
             json.put("_id",_id);
             json.put("text",text);
-            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateMessage", json.toString());
-//            this.websocket.convertAndSendToUser(whom.getUsername(),MESSAGE_PREFIX + "/updateMessage", json.toString());
+            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateMessage/"+whom.getId(), json.toString());
         } catch (JSONException ignored) {}
     }
 
-    public void removeMessage(Integer userId, String messageId, Integer whomId) {
+    public void removeMessage(String messageId, Integer userId, Integer whomId) {
         User whom = userRepository.findById(whomId).orElseThrow(() -> new NullPointerException("No such whomId"));
-        messageRepository.deleteBy_idAndUserId(messageId,userId);
+        messageRepository.deleteBy_id(messageId);
         try {
             JSONObject json = new JSONObject();
             json.put("userId",userId);
             json.put("whoseId",whom);
-            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
-//        this.websocket.convertAndSendToUser(whom.getUsername(),MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
+            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors/"+whom.getId(), json.toString());
         } catch (JSONException ignored) {}
     }
 }

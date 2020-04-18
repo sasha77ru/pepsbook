@@ -1,4 +1,4 @@
-import React, {memo, useEffect} from 'react'
+import React from 'react'
 import {connect} from "react-redux";
 import {setMessagesParamAction} from "../../../redux/actionCreators";
 import * as PropTypes from "prop-types";

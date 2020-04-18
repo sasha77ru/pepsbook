@@ -80,8 +80,7 @@ public class InterlocService {
             JSONObject json = new JSONObject();
             json.put("userId",userId);
             json.put("whoseId",whoseId);
-            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
-//        this.websocket.convertAndSendToUser(whoseName,MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
+            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors/"+whoseId, json.toString());
         } catch (JSONException ignored) {}
     }
 
@@ -99,8 +98,7 @@ public class InterlocService {
             JSONObject json = new JSONObject();
             json.put("userId",userId);
             json.put("whoseId",whoseId);
-            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
-//        this.websocket.convertAndSendToUser(whoseName,MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
+            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors/"+whoseId, json.toString());
         } catch (JSONException ignored) {}
     }
 
@@ -109,18 +107,19 @@ public class InterlocService {
      * @param whoseId whose
      * @param userId interlocutor
      */
-    public void clearInterlocutorState(Integer whoseId, Integer userId, String whoseName) {
-        mongoOperations.updateFirst(new Query(Criteria.where("userId").is(userId).and("whoseId").is(whoseId)),
-                new Update()
-                        .set("numNewMessages", 0)
-                        .set("hasPreMessages",false),
-                Interlocutor.class);
-        try {
-            JSONObject json = new JSONObject();
-            json.put("userId",userId);
-            json.put("whoseId",whoseId);
-            this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
-//        this.websocket.convertAndSendToUser(whoseName,MESSAGE_PREFIX + "/updateInterlocutors", json.toString());
-        } catch (JSONException ignored) {}
+    public void clearInterlocutorState(Integer whoseId, Integer userId) {
+        Interlocutor interlocutor = interlocRepository.getByUserIdAndWhoseId(userId,whoseId).orElseThrow(() -> new NullPointerException("No such Interlocutor"));
+        if (interlocutor.getNumNewMessages() > 0 || interlocutor.getHasPreMessages()) {
+            // to not send ws if it's not necessary. Otherwise - infinity loop
+            interlocutor.setNumNewMessages(0);
+            interlocutor.setHasPreMessages(false);
+            interlocRepository.save(interlocutor);
+            try {
+                JSONObject json = new JSONObject();
+                json.put("userId", userId);
+                json.put("whoseId", whoseId);
+                this.websocket.convertAndSend(MESSAGE_PREFIX + "/updateInterlocutors/" + whoseId, json.toString());
+            } catch (JSONException ignored) {}
+        }
     }
 }

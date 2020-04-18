@@ -29,6 +29,7 @@ const messageReducer = (state = {
         isLoaded            : false,
         data                : {},
         activeInterlocutor  : null,
+        messageEditFields   : {},
     },action) => {
     switch (action.type) {
         case "fetchMessages" : {

@@ -39,7 +39,7 @@ public class JWTFilter extends GenericFilterBean {
 
       if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
          Authentication authentication = tokenProvider.getAuthentication(jwt);
-         System.out.println("uri="+httpServletRequest.getRequestURI()+" authentication="+authentication);
+//         System.out.println("uri="+httpServletRequest.getRequestURI()+" authentication="+authentication);
          SecurityContextHolder.getContext().setAuthentication(authentication);
          log.debug("set Authentication to security context for '{}', uri: {}", authentication.getName(), requestURI);
       } else {

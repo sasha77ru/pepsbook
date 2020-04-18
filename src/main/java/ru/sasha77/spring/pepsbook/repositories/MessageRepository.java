@@ -13,5 +13,5 @@ public interface MessageRepository extends MongoRepository<Message, String> {
 
     Message findByText(String text);
 
-    void deleteBy_idAndUserId(String _id, Integer userId);
+    void deleteBy_id(String _id);
 }
